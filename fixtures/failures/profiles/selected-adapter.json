@@ -4,8 +4,8 @@
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.second-adapter", "demo.simple-runtime", "demo.solid-colour-adapter", "demo.worldspace"],
   "entryPoint": "pkg:demo.worldspace/world/demo",
-  "artifact": { "type": "fpm.render-scene/1", "builder": "handler:demo.scene-toolchain/1" },
+  "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
   "adapterSelections": {
-    "texture.solid-colour/1=>texture.runtime.rgba8-srgb/1": "adapter:demo.solid-colour-to-rgba8-srgb/1"
+    "relation:demo.texture/base-colour-solid-to-runtime/1": "adapter:demo.solid-colour-to-rgba8-srgb/1"
   }
 }

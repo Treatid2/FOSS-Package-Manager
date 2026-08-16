@@ -1,7 +1,7 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.texture-toolchain",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "Apache-2.0",
   "provides": [
     {
@@ -16,8 +16,14 @@
       "handles": [
         "fpm.demo.texture-file/1",
         "fpm.demo.solid-colour/1",
+        "fpm.demo.environment-colour/1",
+        "fpm.demo.slow-colour/1",
         "fpm.demo.transaction-fail/1"
       ],
+      "buildEnvironment": {
+        "schema": "fpm.build-environment/1",
+        "dimensions": ["target.colourVariant"]
+      },
       "execution": {
         "form": "external-process",
         "securityBoundary": "none",

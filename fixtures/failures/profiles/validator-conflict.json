@@ -1,0 +1,26 @@
+{
+  "schema": "fpm.profile/2",
+  "name": "failure-validator-conflict",
+  "packageRoots": ["../../../packages", "../packages"],
+  "distribution": {
+    "roots": [
+      "bad.contradictory-validator",
+      "demo.scene-validator",
+      "demo.simple-runtime",
+      "demo.solid-colour-adapter",
+      "demo.worldspace"
+    ],
+    "entryPoint": "pkg:demo.worldspace/world/demo",
+    "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
+    "activation": "runtime:demo.simple-runtime/browser-svg"
+  },
+  "target": { "platform": "portable-demo", "textureFormat": "rgba8-srgb" },
+  "policy": {
+    "validation": {
+      "id": "policy:demo.reject-unwaived-findings/1",
+      "requiredValidators": ["validator:demo.scene-proposal/1"],
+      "waivers": []
+    }
+  },
+  "user": { "roots": [], "replacements": {} }
+}

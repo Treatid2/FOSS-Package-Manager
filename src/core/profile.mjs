@@ -4,6 +4,36 @@ import path from "node:path";
 import { invariant } from "./errors.mjs";
 import { readJson } from "./io.mjs";
 
+const PROFILE_2_KEYS = new Set(["schema", "name", "packageRoots", "distribution", "target", "policy", "user"]);
+const DISTRIBUTION_KEYS = new Set(["roots", "entryPoint", "artifact", "activation"]);
+const POLICY_KEYS = new Set([
+  "providers", "handlerSelections", "adapterSelections", "validation", "environmentKey", "permissions",
+]);
+const USER_KEYS = new Set(["roots", "replacements", "activation"]);
+
+function validateKeys(value, allowed, layer, profilePath) {
+  for (const key of Object.keys(value ?? {})) {
+    invariant(allowed.has(key), "FPM_PROFILE_AUTHORITY_UNRESOLVED",
+      "A profile statement has no declared authority or merge rule in its layer.", {
+        path: profilePath,
+        layer,
+        field: key,
+        allowed: [...allowed].sort(),
+      });
+  }
+}
+
+function authorityRecord(field, value, sourceLayer, statementKind, mergeRule) {
+  return {
+    field,
+    value,
+    sourceLayer,
+    statementKind,
+    mergeRule,
+    ruleOwner: "spec:fpm.profile/2",
+  };
+}
+
 export async function loadProfile(profilePath) {
   const absolutePath = path.resolve(profilePath);
   const profile = await readJson(absolutePath, "FPM_PROFILE_MALFORMED");
@@ -14,6 +44,7 @@ export async function loadProfile(profilePath) {
   invariant(Array.isArray(profile.packageRoots) && profile.packageRoots.length > 0,
     "FPM_PROFILE_INVALID", "A profile must declare at least one package root.", { path: absolutePath });
   const layered = profile.schema === "fpm.profile/2";
+  if (layered) validateKeys(profile, PROFILE_2_KEYS, "document", absolutePath);
   const distribution = layered ? profile.distribution : {
     roots: profile.roots,
     entryPoint: profile.entryPoint,
@@ -27,6 +58,12 @@ export async function loadProfile(profilePath) {
     adapterSelections: profile.adapterSelections,
   };
   const user = layered ? profile.user : { replacements: profile.replacements };
+
+  if (layered) {
+    validateKeys(distribution, DISTRIBUTION_KEYS, "distribution", absolutePath);
+    validateKeys(policy, POLICY_KEYS, "policy", absolutePath);
+    validateKeys(user, USER_KEYS, "user", absolutePath);
+  }
 
   invariant(distribution && Array.isArray(distribution.roots) && distribution.roots.length > 0,
     "FPM_PROFILE_INVALID", "A profile distribution must declare at least one root package.", { path: absolutePath });
@@ -45,6 +82,33 @@ export async function loadProfile(profilePath) {
   invariant(Array.isArray(userRoots), "FPM_PROFILE_INVALID", "A profile user roots field must be an array.", {
     path: absolutePath,
   });
+  invariant(policy?.environmentKey === undefined || (Array.isArray(policy.environmentKey?.widen)
+    && policy.environmentKey.widen.every((entry) => typeof entry === "string")), "FPM_PROFILE_INVALID",
+  "Policy environment-key widening must be a string array.", { path: absolutePath });
+  invariant(policy?.validation === undefined || (typeof policy.validation?.id === "string"
+    && Array.isArray(policy.validation.requiredValidators ?? [])
+    && Array.isArray(policy.validation.waivers ?? [])), "FPM_PROFILE_INVALID",
+  "Profile validation policy is malformed.", { path: absolutePath });
+
+  const effectiveRoots = [...new Set([...distribution.roots, ...userRoots])];
+  const effectiveActivation = user?.activation ?? distribution.activation;
+  const authority = [
+    authorityRecord("roots", distribution.roots, "distribution", "additive-request", "typed-set-union"),
+    authorityRecord("roots", userRoots, "user", "additive-request", "typed-set-union"),
+    authorityRecord("entryPoint", distribution.entryPoint, "distribution", "fixed-identity", "immutable"),
+    authorityRecord("artifact", distribution.artifact, "distribution", "fixed-requirement", "immutable"),
+    authorityRecord("activation", effectiveActivation, user?.activation === undefined ? "distribution" : "user",
+      user?.activation === undefined ? "default" : "explicit-selection", "user-selectable"),
+    authorityRecord("providers", policy?.providers ?? {}, "policy", "explicit-selection", "keyed-exact-choice"),
+    authorityRecord("handlerSelections", policy?.handlerSelections ?? {}, "policy", "explicit-selection", "keyed-exact-choice"),
+    authorityRecord("adapterSelections", policy?.adapterSelections ?? {}, "policy", "explicit-selection", "keyed-exact-choice"),
+    authorityRecord("validation", policy?.validation ?? null, "policy", "constraint", "monotonic-with-explicit-waivers"),
+    authorityRecord("environmentKey", policy?.environmentKey ?? { widen: [] }, "policy", "constraint", "monotonic-widening"),
+    authorityRecord("replacements", user?.replacements ?? {}, "user", "explicit-selection", "keyed-exact-choice"),
+    ...Object.entries(target ?? {}).map(([key, value]) => authorityRecord(
+      `target.${key}`, value, "target", "observed-target-fact", "immutable",
+    )),
+  ];
 
   const directory = path.dirname(absolutePath);
   return {
@@ -57,14 +121,22 @@ export async function loadProfile(profilePath) {
       policy: policy ?? {},
       user: user ?? {},
     },
-    roots: [...new Set([...distribution.roots, ...userRoots])],
+    authority,
+    roots: effectiveRoots,
     entryPoint: distribution.entryPoint,
     artifact: distribution.artifact,
-    activation: user?.activation ?? distribution.activation,
+    activation: effectiveActivation,
     resolvedPackageRoots: profile.packageRoots.map((root) => path.resolve(directory, root)),
     providers: policy?.providers ?? {},
     handlerSelections: policy?.handlerSelections ?? {},
     adapterSelections: policy?.adapterSelections ?? {},
+    validationPolicy: policy?.validation ?? {
+      id: "policy:fpm.validation/no-unwaived-failures/1",
+      requiredValidators: [],
+      waivers: [],
+    },
+    environmentKeyWidening: policy?.environmentKey?.widen ?? [],
+    permissions: policy?.permissions ?? {},
     replacements: user?.replacements ?? {},
   };
 }

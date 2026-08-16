@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { ArtifactStore } from "./core/artifacts.mjs";
 import { buildProfile, explainProvenance, prepareProfile } from "./core/build.mjs";
 import { formatDiagnostic, FpmError, invariant } from "./core/errors.mjs";
 import { resolvePackageCommand } from "./core/handler.mjs";
@@ -20,6 +21,7 @@ Usage:
   node src/cli.mjs build <profile.json> [--out <directory>]
   node src/cli.mjs run <profile.json> [--out <directory>] [--snapshot <file.svg>]
   node src/cli.mjs explain <provenance.json> <public-id>
+  node src/cli.mjs store-report <artifact-store-directory>
 `;
 }
 
@@ -92,6 +94,16 @@ async function main() {
     invariant(args[0] && args[1], "FPM_CLI_USAGE", "explain requires a provenance file and public identity.");
     const provenance = JSON.parse(await readFile(path.resolve(args[0]), "utf8"));
     console.log(JSON.stringify(explainProvenance(provenance, args[1]), null, 2));
+    return;
+  }
+  if (command === "store-report") {
+    invariant(args[0], "FPM_CLI_USAGE", "store-report requires an artifact store directory.");
+    const store = new ArtifactStore(path.resolve(args[0]), {
+      protocol: "fpm.artifact-transaction/2",
+      facts: {},
+      widenedDimensions: [],
+    });
+    console.log(JSON.stringify(await store.reachabilityReport(), null, 2));
     return;
   }
   throw new FpmError("FPM_CLI_USAGE", "Unknown command.", { command, usage: usage() });

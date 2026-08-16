@@ -4,5 +4,5 @@
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["demo.simple-runtime", "demo.worldspace"],
   "entryPoint": "pkg:demo.worldspace/world/demo",
-  "artifact": { "type": "fpm.render-scene/1", "builder": "handler:demo.scene-toolchain/1" }
+  "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" }
 }

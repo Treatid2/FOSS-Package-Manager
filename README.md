@@ -8,7 +8,7 @@ This repository now tests two related propositions:
 
 > Can independently implemented handler families compose through a manager-owned transactional artifact graph without one handler quietly becoming a monolithic engine?
 
-The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 2 changes how that identical scene is made: file-backed and declarative textures now travel through separate source, adapter, and scene-building actions.
+The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 3A now produces that unchanged scene through governed decisions and a concurrent-safe artifact store whose final root is a two-file canonical tree.
 
 ## Quick start
 
@@ -38,11 +38,16 @@ node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/app
 - out-of-process analysis over versioned JSON/stdin/stdout;
 - package-owned public identifiers, typed hooks, defaults, and reversible replacements;
 - exact nominal matching plus explicit, versioned, one-step adapters;
+- package-governed semantic relation identities for adapter policy;
 - handler-proposed actions validated and scheduled as a generic artifact DAG;
 - dependency and artifact cycle detection;
 - manager-owned staging transactions with hash and size verification;
-- atomic import into a content-addressed artifact store;
+- blob and canonical tree roots in a content-addressed artifact store;
+- concurrent-safe build-key leases, stale recovery, and immutable action-record publication;
 - deterministic action build keys and reuse of verified cached artifacts;
+- handler-declared environment dependencies with monotonic policy widening;
+- independently attributed validator findings and explicit acceptance/waiver decisions;
+- field-level profile authority and merge records;
 - rollback of failed handler actions without committing their output or action record;
 - lockfiles and provenance linking contributions, handlers, source artifacts, adapters, final inputs, and output artifacts;
 - a scene builder that receives only its own normalized scene analyses during planning and its declared texture artifacts during materialisation;
@@ -51,7 +56,7 @@ node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/app
 
 The manager has no texture, mesh, assembly, camera, worldspace, or rendering rules. Those concepts remain in independent example packages.
 
-## Phase 2 resolution and build flow
+## Phase 3A resolution and build flow
 
 ```text
 layered profile + core package manifests
@@ -84,7 +89,7 @@ file texture action     solid-colour action
 runtime texture artifacts -> scene action
                   |
                   v
-scene.json + fpm.lock.json + provenance.json
+scene-bundle tree + fpm.lock.json + provenance.json
 ```
 
 Each action receives manager-supplied input paths and a private staging directory. The manager recomputes the output hash and size before importing it into the store and recording the graph mutation.
@@ -93,9 +98,11 @@ Each action receives manager-supplied input paths and a private staging director
 
 | Package | Role |
 | --- | --- |
-| `demo.scene-toolchain` | Analyzes scene-domain manifests, proposes the final action, and builds `fpm.render-scene/1` from declared runtime textures |
+| `demo.scene-toolchain` | Analyzes scene-domain manifests, proposes the final action, and builds a two-file `fpm.render-bundle/1` tree from declared runtime textures |
 | `demo.texture-toolchain` | Independently analyzes file and solid-colour texture declarations and materializes source artifacts |
 | `demo.solid-colour-adapter` | Explicitly converts `texture.solid-colour/1` to `texture.runtime.rgba8-srgb/1` |
+| `demo.texture-vocabulary` | Governs the reusable base-colour solid-to-runtime semantic relation |
+| `demo.scene-validator` | Produces an attributed proposal finding before policy accepts the render action |
 | `demo.primitives` | Box meshes, a file-backed field texture, and declarative body/head colours |
 | `demo.field` | Field assembly and public runtime-texture hook |
 | `demo.character` | Body/head assembly and public runtime-texture hooks |
@@ -110,8 +117,8 @@ The two toolchains are not profile roots. Packages require their distinct capabi
 
 Building a profile creates:
 
-- `scene.json` — the disposable flat runtime artifact;
-- `fpm.lock.json` — all resolution, environment, action, artifact, handler, and binding decisions;
+- `scene-bundle/scene.json` and `asset-index.json` — one canonical multi-file tree root, with the existing scene as its selected runtime entry;
+- `fpm.lock.json` — all resolution, authority, validation, environment, action, root, handler, and binding decisions;
 - `provenance.json` — an explanation index for exports, hooks, action paths, adapters, and artifacts;
 - a sibling `.fpm-store/` — verified content objects and deterministic action-cache records.
 
@@ -134,9 +141,9 @@ The test suite asserts diagnostic codes and relevant context. It also verifies d
 
 ## Explicit non-goals
 
-This is not yet a production package format, security sandbox, repository client, distributed artifact store, general adapter search, concurrent build executor, cache garbage collector, binary runtime ABI, streaming world, or persistence system. The renderer is intentionally disposable and the formats remain provisional.
+This is not yet a production package format, security sandbox, repository client, distributed artifact store, general adapter search, cache garbage collector, binary runtime ABI, streaming world, or persistence system. The renderer is intentionally disposable and the formats remain provisional.
 
-See [docs/prototype-formats.md](docs/prototype-formats.md) for the public protocol notes and [docs/phase-2-findings.md](docs/phase-2-findings.md) for the architectural findings and open issues.
+See [docs/prototype-formats.md](docs/prototype-formats.md) for the public protocol notes, [docs/phase-2-findings.md](docs/phase-2-findings.md) for the prior gate, and [docs/phase-3-findings.md](docs/phase-3-findings.md) for Phase 3A's evidence and limitations.
 
 ## Security status
 

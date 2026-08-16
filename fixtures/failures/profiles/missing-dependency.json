@@ -4,5 +4,5 @@
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.missing-dependency"],
   "entryPoint": "pkg:bad.missing-dependency/none",
-  "artifact": { "type": "fpm.render-scene/1" }
+  "artifact": { "type": "fpm.render-bundle/1" }
 }

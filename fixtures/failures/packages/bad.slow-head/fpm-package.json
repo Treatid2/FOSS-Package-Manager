@@ -1,0 +1,25 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.slow-head",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    { "package": "demo.character", "range": "^0.1.0" }
+  ],
+  "requires": [
+    { "capability": "fpm.handler.texture", "range": "^1.0.0" }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:bad.slow-head/texture/head",
+      "manifestType": "fpm.demo.slow-colour/1",
+      "manifest": "slow.json"
+    }
+  ],
+  "replacements": [
+    {
+      "target": "pkg:demo.character/appearance/head/base-colour",
+      "with": "pkg:bad.slow-head/texture/head"
+    }
+  ]
+}

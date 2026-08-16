@@ -15,6 +15,7 @@
       {
         "id": "pkg:demo.field/appearance/base-colour",
         "semanticType": "texture.runtime.rgba8-srgb/1",
+        "semanticRelation": "relation:demo.texture/base-colour-solid-to-runtime/1",
         "default": "pkg:demo.primitives/texture/field"
       }
     ]

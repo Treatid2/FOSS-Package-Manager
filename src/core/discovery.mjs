@@ -72,6 +72,15 @@ function validateManifest(manifest, manifestPath) {
       "FPM_MANIFEST_INVALID", "A capability requirement is malformed.", { package: manifest.id, requirement });
   }
 
+  const semanticRelations = array(manifest.semanticRelations, "semanticRelations", manifest.id);
+  for (const relation of semanticRelations) {
+    invariant(typeof relation?.id === "string" && relation.id.startsWith("relation:")
+      && typeof relation.version === "string" && typeof relation.source === "string"
+      && typeof relation.target === "string" && Array.isArray(relation.roles), "FPM_MANIFEST_INVALID",
+    "A governed semantic relation declaration is malformed.", { package: manifest.id, relation });
+    parseVersion(relation.version, "semantic relation version");
+  }
+
   const contributions = array(manifest.contributions, "contributions", manifest.id);
   for (const contribution of contributions) {
     invariant(PUBLIC_ID.test(contribution?.id ?? "") && contribution.id.startsWith(`pkg:${manifest.id}/`),
@@ -91,6 +100,8 @@ function validateManifest(manifest, manifestPath) {
     handles: handler?.handles ?? [],
     builds: handler?.builds ?? [],
     adapts: handler?.adapts ?? [],
+    validates: handler?.validates ?? [],
+    buildEnvironment: handler?.buildEnvironment ?? { schema: "fpm.build-environment/1", dimensions: [] },
     execution: handler?.execution ?? {
       form: "external-process",
       securityBoundary: "none",
@@ -100,15 +111,27 @@ function validateManifest(manifest, manifestPath) {
   for (const handler of handlers) {
     invariant(typeof handler?.id === "string" && handler.protocol === "fpm.handler-stdio/1"
       && Array.isArray(handler.handles) && Array.isArray(handler.builds) && Array.isArray(handler.adapts)
+      && Array.isArray(handler.validates)
       && Array.isArray(handler.command),
     "FPM_MANIFEST_INVALID", "A handler declaration is malformed.", { package: manifest.id, handler });
-    invariant(handler.execution?.form === "external-process" && handler.execution.securityBoundary === "none"
+    invariant(["external-process", "portable-node-permission"].includes(handler.execution?.form)
+      && ["none", "node-permission-model"].includes(handler.execution.securityBoundary)
       && Array.isArray(handler.execution.requestedPowers), "FPM_MANIFEST_INVALID",
     "A handler execution declaration is malformed.", { package: manifest.id, handler: handler.id });
+    invariant(handler.buildEnvironment?.schema === "fpm.build-environment/1"
+      && Array.isArray(handler.buildEnvironment.dimensions)
+      && handler.buildEnvironment.dimensions.every((entry) => typeof entry === "string"), "FPM_MANIFEST_INVALID",
+    "A handler build-environment declaration is malformed.", { package: manifest.id, handler: handler.id });
     for (const adapter of handler.adapts) {
       invariant(typeof adapter?.id === "string" && typeof adapter.from === "string" && typeof adapter.to === "string"
+        && typeof adapter.relation === "string"
         && ["lossless", "lossy", "interpretive"].includes(adapter.conversion), "FPM_MANIFEST_INVALID",
       "A handler adapter declaration is malformed.", { package: manifest.id, handler: handler.id, adapter });
+    }
+    for (const validator of handler.validates) {
+      invariant(typeof validator?.id === "string" && ["proposal", "artifact"].includes(validator.phase)
+        && Array.isArray(validator.subjects) && Array.isArray(validator.rules), "FPM_MANIFEST_INVALID",
+      "A handler validator declaration is malformed.", { package: manifest.id, handler: handler.id, validator });
     }
   }
 
@@ -121,7 +144,7 @@ function validateManifest(manifest, manifestPath) {
       });
   }
 
-  return { dependencies, provides, requires, contributions, handlers, replacements };
+  return { dependencies, provides, requires, semanticRelations, contributions, handlers, replacements };
 }
 
 export async function discoverPackages(packageRoots) {

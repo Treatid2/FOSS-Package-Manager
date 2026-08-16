@@ -4,5 +4,5 @@
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.cycle-a"],
   "entryPoint": "pkg:bad.cycle-a/none",
-  "artifact": { "type": "fpm.render-scene/1" }
+  "artifact": { "type": "fpm.render-bundle/1" }
 }

@@ -1,0 +1,26 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.contradictory-validator",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "handlers": [
+    {
+      "id": "handler:bad.contradictory-validator/1",
+      "protocol": "fpm.handler-stdio/1",
+      "validates": [
+        {
+          "id": "validator:bad.scene-contradiction/1",
+          "phase": "proposal",
+          "subjects": ["fpm.render-bundle/1"],
+          "rules": ["rule:bad.scene/reject-nonempty/1"]
+        }
+      ],
+      "execution": {
+        "form": "external-process",
+        "securityBoundary": "none",
+        "requestedPowers": []
+      },
+      "command": ["node", "./validator.mjs"]
+    }
+  ]
+}

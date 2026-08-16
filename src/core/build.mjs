@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-import { copyFile, mkdir } from "node:fs/promises";
+import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ArtifactStore, executeArtifactGraph } from "./artifacts.mjs";
@@ -29,7 +29,22 @@ function collectHandlers(resolution) {
   return byId;
 }
 
-function collectAdapters(handlers) {
+function collectRelations(resolution) {
+  const relations = new Map();
+  for (const owner of resolution.ordered) {
+    for (const declaration of owner.semanticRelations ?? []) {
+      invariant(!relations.has(declaration.id), "FPM_SEMANTIC_RELATION_DUPLICATE",
+        "Two selected packages govern the same semantic relation identity.", {
+          relation: declaration.id,
+          packages: [relations.get(declaration.id)?.owner.id, owner.id],
+        });
+      relations.set(declaration.id, { ...declaration, owner });
+    }
+  }
+  return relations;
+}
+
+function collectAdapters(handlers, relations) {
   const adapters = [];
   const ids = new Map();
   for (const handler of handlers.values()) {
@@ -40,10 +55,41 @@ function collectAdapters(handlers) {
           handlers: [ids.get(declaration.id), handler.id],
         });
       ids.set(declaration.id, handler.id);
-      adapters.push({ ...declaration, handler });
+      const relation = relations.get(declaration.relation);
+      invariant(relation, "FPM_SEMANTIC_RELATION_MISSING",
+        "An adapter implements a semantic relation that is not governed by the selected package graph.", {
+          adapter: declaration.id,
+          relation: declaration.relation,
+        });
+      invariant(relation.source === declaration.from && relation.target === declaration.to,
+        "FPM_SEMANTIC_RELATION_MISMATCH",
+        "An adapter's source and target types do not match its governed semantic relation.", {
+          adapter: declaration.id,
+          relation: declaration.relation,
+          declared: { from: declaration.from, to: declaration.to },
+          governed: { from: relation.source, to: relation.target },
+        });
+      adapters.push({ ...declaration, relationDeclaration: relation, handler });
     }
   }
   return adapters.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function collectValidators(handlers) {
+  const validators = [];
+  const ids = new Map();
+  for (const handler of handlers.values()) {
+    for (const declaration of handler.validates ?? []) {
+      invariant(!ids.has(declaration.id), "FPM_VALIDATOR_ID_DUPLICATE",
+        "Two selected handlers declare the same validator identity.", {
+          validator: declaration.id,
+          handlers: [ids.get(declaration.id), handler.id],
+        });
+      ids.set(declaration.id, handler.id);
+      validators.push({ ...declaration, handler });
+    }
+  }
+  return validators.sort((left, right) => left.id.localeCompare(right.id));
 }
 
 function selectHandler(handlers, profile, manifestType) {
@@ -79,6 +125,11 @@ function validateAnalysis(analysis, pkg, contribution, handler) {
     invariant(typeof entry.semanticType === "string", "FPM_HANDLER_RESPONSE_INVALID",
       "A handler-reported public entry omitted its semantic type.", { publicId: entry.id });
   }
+  for (const hook of analysis.hooks ?? []) {
+    invariant(hook.semanticRelation === undefined || (typeof hook.semanticRelation === "string"
+      && hook.semanticRelation.startsWith("relation:")), "FPM_HANDLER_RESPONSE_INVALID",
+    "A handler-reported hook semantic relation is malformed.", { publicId: hook.id });
+  }
   const exportIds = new Set((analysis.exports ?? []).map((entry) => entry.id));
   for (const production of analysis.productions ?? []) {
     invariant(typeof production?.id === "string" && exportIds.has(production.source)
@@ -92,7 +143,7 @@ function validateAnalysis(analysis, pkg, contribution, handler) {
   }
 }
 
-function selectArtifactRoute(exported, requiredType, adapters, profile, target) {
+function selectArtifactRoute(exported, requiredType, adapters, profile, target, relationIdentity = null) {
   const productions = exported.productions ?? [];
   const direct = productions.filter((production) => production.output.type === requiredType);
   invariant(direct.length <= 1, "FPM_ARTIFACT_ROUTE_AMBIGUOUS",
@@ -109,17 +160,18 @@ function selectArtifactRoute(exported, requiredType, adapters, profile, target) 
       sourceArtifact: direct[0].output.id,
       producedType: direct[0].output.type,
       requiredType,
+      semanticRelation: relationIdentity,
       adapter: null,
       adapterAction: null,
     };
   }
 
   let candidates = productions.flatMap((production) => adapters
-    .filter((adapter) => adapter.from === production.output.type && adapter.to === requiredType)
+    .filter((adapter) => adapter.from === production.output.type && adapter.to === requiredType
+      && adapter.relation === relationIdentity)
     .map((adapter) => ({ production, adapter })));
-  const pairKeys = [...new Set(candidates.map(({ adapter }) => `${adapter.from}=>${adapter.to}`))];
   const explicit = profile.adapterSelections[target]
-    ?? pairKeys.map((key) => profile.adapterSelections[key]).find(Boolean);
+    ?? (relationIdentity ? profile.adapterSelections[relationIdentity] : null);
   if (explicit) candidates = candidates.filter(({ adapter }) => adapter.id === explicit);
 
   invariant(candidates.length > 0, "FPM_ARTIFACT_ROUTE_MISSING",
@@ -129,6 +181,7 @@ function selectArtifactRoute(exported, requiredType, adapters, profile, target) 
       sourceSemanticType: exported.semanticType,
       producedTypes: productions.map((entry) => entry.output.type).sort(),
       requiredSemanticType: requiredType,
+      semanticRelation: relationIdentity,
       selectedAdapter: explicit ?? null,
     });
   invariant(candidates.length === 1, "FPM_ADAPTER_AMBIGUOUS",
@@ -136,6 +189,7 @@ function selectArtifactRoute(exported, requiredType, adapters, profile, target) 
       target,
       export: exported.id,
       requiredSemanticType: requiredType,
+      semanticRelation: relationIdentity,
       candidates: candidates.map(({ adapter }) => adapter.id).sort(),
     });
 
@@ -149,6 +203,7 @@ function selectArtifactRoute(exported, requiredType, adapters, profile, target) 
     producedType: production.output.type,
     requiredType,
     adapter: adapter.id,
+    semanticRelation: adapter.relation,
     adapterHandler: adapter.handler.id,
     adapterConversion: adapter.conversion,
     adapterAction: `action:${adapter.id}/${suffix}`,
@@ -156,7 +211,7 @@ function selectArtifactRoute(exported, requiredType, adapters, profile, target) 
   };
 }
 
-function resolveBindings(resolution, profile, exportsById, hooksById, adapters) {
+function resolveBindings(resolution, profile, exportsById, hooksById, adapters, relations) {
   const candidatesByTarget = new Map();
   for (const pkg of resolution.ordered) {
     for (const replacement of pkg.replacements) {
@@ -172,12 +227,29 @@ function resolveBindings(resolution, profile, exportsById, hooksById, adapters) 
 
   const bindings = [];
   for (const hook of [...hooksById.values()].sort((a, b) => a.id.localeCompare(b.id))) {
+    if (hook.semanticRelation) {
+      const relation = relations.get(hook.semanticRelation);
+      invariant(relation, "FPM_SEMANTIC_RELATION_MISSING",
+        "A public hook references an ungoverned semantic relation.", {
+          target: hook.id,
+          relation: hook.semanticRelation,
+        });
+      invariant(relation.target === hook.semanticType, "FPM_SEMANTIC_RELATION_MISMATCH",
+        "A hook's required type does not match its governed semantic relation target.", {
+          target: hook.id,
+          relation: hook.semanticRelation,
+          requiredType: hook.semanticType,
+          relationTarget: relation.target,
+        });
+    }
     const defaultExport = exportsById.get(hook.default);
     invariant(defaultExport, "FPM_HOOK_DEFAULT_MISSING", "A public hook's default export does not exist.", {
       target: hook.id,
       default: hook.default,
     });
-    const defaultRoute = selectArtifactRoute(defaultExport, hook.semanticType, adapters, profile, hook.id);
+    const defaultRoute = selectArtifactRoute(
+      defaultExport, hook.semanticType, adapters, profile, hook.id, hook.semanticRelation ?? null,
+    );
     const candidates = candidatesByTarget.get(hook.id) ?? [];
     const candidateRoutes = new Map();
     for (const candidate of candidates) {
@@ -187,7 +259,9 @@ function resolveBindings(resolution, profile, exportsById, hooksById, adapters) 
         providedBy: candidate.with,
         package: candidate.package,
       });
-      candidateRoutes.set(candidate.with, selectArtifactRoute(provided, hook.semanticType, adapters, profile, hook.id));
+      candidateRoutes.set(candidate.with, selectArtifactRoute(
+        provided, hook.semanticType, adapters, profile, hook.id, hook.semanticRelation ?? null,
+      ));
     }
 
     const explicit = profile.replacements[hook.id];
@@ -221,6 +295,7 @@ function resolveBindings(resolution, profile, exportsById, hooksById, adapters) 
     bindings.push({
       target: hook.id,
       semanticType: hook.semanticType,
+      semanticRelation: hook.semanticRelation ?? null,
       default: hook.default,
       selected: selected.with,
       selectedPackage: selected.package,
@@ -236,7 +311,9 @@ export async function prepareProfile(profilePath) {
   const packages = await discoverPackages(profile.resolvedPackageRoots);
   const resolution = resolvePackages(packages, profile);
   const handlers = collectHandlers(resolution);
-  const adapters = collectAdapters(handlers);
+  const relations = collectRelations(resolution);
+  const adapters = collectAdapters(handlers, relations);
+  const validators = collectValidators(handlers);
   const analyses = [];
   const exportsById = new Map();
   const hooksById = new Map();
@@ -320,9 +397,9 @@ export async function prepareProfile(profilePath) {
   }
   invariant(exportsById.has(profile.entryPoint), "FPM_ENTRY_POINT_MISSING",
     "The profile entry point was not exported by the selected graph.", { entryPoint: profile.entryPoint });
-  const bindings = resolveBindings(resolution, profile, exportsById, hooksById, adapters);
+  const bindings = resolveBindings(resolution, profile, exportsById, hooksById, adapters, relations);
   return {
-    profile, packages, resolution, handlers, adapters, analyses, exportsById, hooksById,
+    profile, packages, resolution, handlers, relations, adapters, validators, analyses, exportsById, hooksById,
     bindings, activations, usedHandlers,
   };
 }
@@ -382,14 +459,89 @@ async function managerIdentity() {
   const manifestHash = await hashFile(path.join(projectRoot, "manager.json"));
   return {
     id: "org.foss-package-manager.reference",
-    version: "0.2.0",
+    version: "0.3.0",
     contentHash: `sha256:${sha256(`${sourceHash}\0${manifestHash}`)}`,
   };
 }
 
+async function runProposalValidation(validators, profile, plan, usedHandlers) {
+  const applicable = validators.filter((validator) => validator.phase === "proposal"
+    && validator.subjects.includes(plan.output.type));
+  const findings = [];
+  for (const validator of applicable) {
+    usedHandlers.add(validator.handler.id);
+    const response = invokeHandler(validator.handler, {
+      protocol: "fpm.handler-request/1",
+      action: "validate",
+      phase: "proposal",
+      validator: validator.id,
+      subject: { id: plan.id, type: plan.output.type, proposal: plan },
+    });
+    invariant(Array.isArray(response.findings), "FPM_HANDLER_RESPONSE_INVALID",
+      "A validator response omitted its findings array.", { validator: validator.id });
+    for (const finding of response.findings) {
+      invariant(typeof finding?.id === "string" && validator.rules.includes(finding.rule)
+        && finding.phase === "proposal" && finding.subject === plan.id
+        && ["pass", "fail", "warning", "unknown", "not-applicable"].includes(finding.verdict)
+        && typeof finding.severity === "string", "FPM_HANDLER_RESPONSE_INVALID",
+      "A validator returned a malformed or undeclared finding.", { validator: validator.id, finding });
+      findings.push({
+        ...finding,
+        validator: validator.id,
+        validatorPackage: validator.handler.owner.id,
+        validatorImplementationHash: `sha256:${validator.handler.owner.contentHash}`,
+      });
+    }
+  }
+  findings.sort((left, right) => left.id.localeCompare(right.id));
+
+  const policy = profile.validationPolicy;
+  for (const required of policy.requiredValidators ?? []) {
+    const declaration = validators.find((validator) => validator.id === required);
+    invariant(declaration, "FPM_VALIDATOR_REQUIRED_MISSING",
+      "Validation policy requires a validator that is not selected.", { policy: policy.id, validator: required });
+    invariant(findings.some((finding) => finding.validator === required && finding.verdict === "pass"),
+      "FPM_VALIDATOR_REQUIRED_NO_PASS", "A required validator did not produce a passing finding.", {
+        policy: policy.id,
+        validator: required,
+        findings: findings.filter((finding) => finding.validator === required),
+      });
+  }
+
+  const waived = [];
+  const rejected = [];
+  for (const finding of findings.filter((entry) => entry.verdict === "fail")) {
+    const waiver = (policy.waivers ?? []).find((entry) => entry.validator === finding.validator
+      && entry.rule === finding.rule && (entry.subject === undefined || entry.subject === finding.subject));
+    if (waiver) waived.push({ finding: finding.id, waiver });
+    else rejected.push(finding.id);
+  }
+  const decision = {
+    schema: "fpm.validation-decision/1",
+    policy: policy.id,
+    subject: plan.id,
+    phase: "proposal",
+    consideredFindings: findings.map((finding) => finding.id),
+    requiredValidators: [...(policy.requiredValidators ?? [])].sort(),
+    waived,
+    rejected,
+    accepted: rejected.length === 0,
+  };
+  invariant(decision.accepted, "FPM_VALIDATION_REJECTED",
+    "Validation policy rejected an action proposal after preserving all attributed findings.", {
+      policy: policy.id,
+      subject: plan.id,
+      findings,
+      decision,
+    });
+  return { findings, decision };
+}
+
 export async function buildProfile(profilePath, outputDirectory, options = {}) {
   const prepared = await prepareProfile(profilePath);
-  const { profile, resolution, handlers, adapters, analyses, bindings, activations, usedHandlers, exportsById } = prepared;
+  const {
+    profile, resolution, handlers, adapters, validators, analyses, bindings, activations, usedHandlers, exportsById,
+  } = prepared;
   let builders = [...handlers.values()].filter((handler) => (handler.builds ?? []).includes(profile.artifact.type));
   const explicitBuilder = profile.artifact.builder;
   if (explicitBuilder) builders = builders.filter((handler) => handler.id === explicitBuilder);
@@ -419,6 +571,15 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
     && Array.isArray(plan.inputs) && plan.output?.type === profile.artifact.type
     && typeof plan.output.id === "string" && typeof plan.output.fileName === "string",
   "FPM_HANDLER_RESPONSE_INVALID", "The artifact builder returned a malformed action plan.", { handler: builder.id });
+  if (plan.output.kind === "tree") {
+    invariant(typeof plan.output.entry === "string" && plan.output.entry.length > 0
+      && !path.isAbsolute(plan.output.entry) && !plan.output.entry.startsWith(".."),
+    "FPM_HANDLER_RESPONSE_INVALID", "A tree artifact plan must declare a safe entry path.", {
+      handler: builder.id,
+      output: plan.output,
+    });
+  }
+  const validation = await runProposalValidation(validators, profile, plan, usedHandlers);
 
   const actionsById = new Map();
   const finalInputs = [];
@@ -438,7 +599,9 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
     });
     const binding = bindings.find((entry) => entry.target === input.bindingTarget
       && entry.selected === input.sourceExport && entry.semanticType === input.type);
-    const route = binding?.artifactRoute ?? selectArtifactRoute(exported, input.type, adapters, profile, input.name);
+    const route = binding?.artifactRoute ?? selectArtifactRoute(
+      exported, input.type, adapters, profile, input.name, input.semanticRelation ?? null,
+    );
     const artifactId = addInputRoute(actionsById, exported, input.type, route, adapters);
     finalInputs.push({ name: input.name, artifact: artifactId });
   }
@@ -458,28 +621,49 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
       platform: process.platform,
       architecture: process.arch,
       target: profile.layers.target,
+      protocol: "fpm.artifact-transaction/2",
     },
-    observational: { processSecurityBoundary: "none" },
+    observational: { processSecurityBoundary: "handler-declared" },
   };
-  const environmentKey = {
-    node: environment.build.node,
-    platform: environment.build.platform,
-    architecture: environment.build.architecture,
-    target: environment.build.target,
+  const environmentContext = {
+    protocol: environment.build.protocol,
+    facts: {
+      runtime: { node: environment.build.node },
+      host: { platform: environment.build.platform, architecture: environment.build.architecture },
+      target: environment.build.target,
+    },
+    widenedDimensions: profile.environmentKeyWidening,
   };
   const out = path.resolve(outputDirectory);
   const storeDirectory = path.resolve(options.storeDirectory ?? path.join(path.dirname(out), ".fpm-store"));
-  const store = new ArtifactStore(storeDirectory, environmentKey);
+  const store = new ArtifactStore(storeDirectory, environmentContext, options.storeOptions ?? {});
   const execution = await executeArtifactGraph([...actionsById.values()], handlers, store);
   const finalArtifact = execution.artifacts.get(plan.output.id);
   invariant(finalArtifact, "FPM_ARTIFACT_MISSING", "The completed action graph did not produce its requested artifact.", {
     artifact: plan.output.id,
   });
 
-  await mkdir(out, { recursive: true });
-  const artifactPath = path.join(out, plan.output.fileName);
-  await copyFile(finalArtifact.storePath, artifactPath);
-  const artifact = { type: plan.output.type, fileName: plan.output.fileName };
+  const artifactRootPath = path.join(out, plan.output.fileName);
+  try {
+    const previous = JSON.parse(await readFile(path.join(out, "fpm.lock.json"), "utf8"));
+    const previousName = previous.artifact?.file;
+    if (typeof previousName === "string" && path.basename(previousName) === previousName
+      && previousName !== plan.output.fileName) {
+      await rm(path.join(out, previousName), { recursive: true, force: true });
+    }
+  } catch {
+    // A missing or unreadable previous lockfile does not authorize broader output cleanup.
+  }
+  await store.exportArtifact(finalArtifact, artifactRootPath);
+  const artifactPath = finalArtifact.kind === "tree"
+    ? path.join(artifactRootPath, plan.output.entry)
+    : artifactRootPath;
+  const artifact = {
+    type: plan.output.type,
+    kind: finalArtifact.kind,
+    fileName: plan.output.fileName,
+    entry: plan.output.entry ?? null,
+  };
 
   const packageLocks = resolution.ordered.map((pkg) => ({
     id: pkg.id,
@@ -499,37 +683,55 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
       package: handler.owner.id,
       packageContentHash: `sha256:${handler.owner.contentHash}`,
       execution: handler.execution,
+      buildEnvironment: handler.buildEnvironment,
     }));
   const profileHash = `sha256:${await hashFile(profile.path)}`;
-  const artifactRecords = execution.records.map((record) => ({ ...record.output, producedBy: record.id }));
+  const artifactRecords = execution.records.flatMap((record) => record.outputs.map((output) => ({
+    ...output,
+    producedBy: record.id,
+  })));
   const lockfile = {
-    schema: "fpm.lock/2",
+    schema: "fpm.lock/3",
     manager,
     profile: {
       schema: profile.schema,
       name: profile.name,
       hash: profileHash,
       layers: profile.layers,
+      authority: profile.authority,
       entryPoint: profile.entryPoint,
       artifactType: profile.artifact.type,
     },
     environment,
     packages: packageLocks,
     handlers: selectedHandlers,
+    semanticRelations: [...prepared.relations.values()].map((relation) => ({
+      id: relation.id,
+      version: relation.version,
+      source: relation.source,
+      target: relation.target,
+      roles: relation.roles,
+      stewardPackage: relation.owner.id,
+      stewardPackageHash: `sha256:${relation.owner.contentHash}`,
+    })).sort((left, right) => left.id.localeCompare(right.id)),
+    validation,
     bindings,
     actions: execution.records,
     artifacts: artifactRecords,
     artifact: {
       id: finalArtifact.id,
       type: finalArtifact.type,
+      kind: finalArtifact.kind,
       file: plan.output.fileName,
+      entry: plan.output.entry ?? null,
       hash: finalArtifact.hash,
       size: finalArtifact.size,
+      totalSize: finalArtifact.totalSize,
     },
   };
 
   const provenance = {
-    schema: "fpm.provenance/2",
+    schema: "fpm.provenance/3",
     profile: profile.name,
     profileHash,
     exports: analyses.flatMap((analysis) => analysis.exports.map((entry) => ({
@@ -542,12 +744,16 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
         .map((production) => production.id),
     }))).sort((a, b) => a.id.localeCompare(b.id)),
     hooks: bindings,
+    profileAuthority: profile.authority,
+    validation,
     actions: execution.records,
     artifacts: artifactRecords,
     artifact: {
       id: finalArtifact.id,
       type: finalArtifact.type,
+      kind: finalArtifact.kind,
       file: plan.output.fileName,
+      entry: plan.output.entry ?? null,
       builder: builder.id,
       entryPoint: profile.entryPoint,
       sourceArtifacts: finalInputs.map((input) => input.artifact).sort(),

@@ -2,7 +2,7 @@
 
 # Prototype format notes
 
-All formats are provisional and use exact versioned identifiers. Phase 2 preserves the `fpm.package/1` envelope and `fpm.handler-stdio/1` transport while adding layered profiles, normalized artifact productions, explicit adapters, and transaction actions. Lockfile and provenance documents advance to version 2.
+All formats are provisional and use exact versioned identifiers. Phase 3A preserves the `fpm.package/1` envelope and `fpm.handler-stdio/1` transport while extending artifact roots, decisions, environment contracts, semantic relations, and profile authority. Lockfile and provenance documents advance to version 3.
 
 ## Core package envelope
 
@@ -147,9 +147,56 @@ The action build key covers:
 
 Absolute package and staging paths are transport context, not key inputs. A cache record is reused only when its object still exists and its hash verifies. Cache-hit status is observational and is not included in deterministic lockfiles.
 
+## Phase 3A: blob and tree roots
+
+Every action produces one or more named artifact roots. A root has kind `blob` or `tree`.
+
+- A blob root addresses the exact bytes of one file.
+- A tree root addresses a canonical `fpm.tree/1` manifest. Its entries have normalized slash-separated paths, stable lexical order, explicit `blob` kinds, hashes, and byte sizes.
+
+The manager imports every child blob before importing the tree manifest. It publishes one immutable action record only after every named root verifies. Objects imported before an interrupted publication remain valid but unreferenced; their presence alone never represents a successful action.
+
+## Phase 3A: leases, publication, and reachability
+
+A build-key lease is acquired through atomic directory creation and records owner, action, timestamps, expiry, heartbeat, and current transaction. Other builders verify the action cache while waiting. Expired leases are atomically quarantined and removed before recovery.
+
+Leases reduce duplicate work but do not establish correctness. Immutable object hashes and create-if-absent action-record publication do. If racing executions publish different roots for the same key, the manager emits `FPM_ACTION_NONDETERMINISTIC`; it does not apply first-writer or last-writer policy.
+
+`store-report` performs a non-destructive mark-and-report traversal from retained version-2 action records through tree manifests. It reports invalid records and orphaned objects without deleting them.
+
+## Phase 3A: attributed validation
+
+Handler declarations may expose proposal or artifact validators with exact subject types and rule identities. Findings record subject, validator package/implementation hash, rule/version, phase, verdict, severity, evidence, scope, and conditions.
+
+All findings coexist. The implemented validation policy requires named validators to produce a pass and rejects every unwaived `fail`. A waiver identifies the validator and rule, optionally narrowed to one subject. The finding set, waiver, accepting policy, and final decision are deterministic lockfile/provenance facts.
+
+## Phase 3A: build environment contracts
+
+Each handler declares build-affecting dimensions in `fpm.build-environment/1`. The manager selects those values from normalized runtime, host, and target facts. Policy may monotonically widen the dimension set but cannot remove a handler declaration.
+
+The declaration, widening, values, and artifact transaction protocol are included in the action key and action record. Undeclared facts may remain observational provenance and do not alter that action's key.
+
+## Phase 3A: governed semantic relations
+
+A package may steward a semantic relation with identity, version, exact source and target types, and context roles. An adapter must name a selected relation whose types match its declaration. Adapter policy selects first by exact hook/requirement identity, then by governed relation identity; a raw type pair is diagnostic indexing only and no longer a reusable selection authority.
+
+## Phase 3A: profile authority records
+
+The reference `fpm.profile/2` schema assigns field-level authority and merge rules rather than applying a recursive merge:
+
+- distribution roots and user roots use typed set union;
+- entry point and artifact requirement are fixed distribution statements;
+- activation is a user-selectable distribution default;
+- provider, handler, adapter, and replacement maps are exact selections owned by their declared layers;
+- environment-key policy can only widen dependencies;
+- validation constraints are monotonic except for attributed waivers;
+- target facts are immutable observations.
+
+An unknown statement in a governed layer is unresolved and rejected. Lockfiles record every effective field's source layer, statement kind, merge law, and rule owner.
+
 ## Lockfile and provenance
 
-`fpm.lock/2` records:
+`fpm.lock/3` records:
 
 - manager identity and source-content hash;
 - profile hash and all four input layers;
@@ -160,4 +207,6 @@ Absolute package and staging paths are transport context, not key inputs. A cach
 - every action, input artifact, output artifact, hash, and build key;
 - the final artifact identity, type, file, size, and hash.
 
-`fpm.provenance/2` is optimized for explanation. It links the original contribution and handler finding to the source production, selected adapter when present, final scene input, and render-scene action. `explain` returns this action path for a public export or hook.
+It additionally records root kinds, named action outputs, per-action environment dependencies, governed semantic relations, validator findings/decisions, and resolved profile authority.
+
+`fpm.provenance/3` is optimized for explanation. It links the original contribution and handler finding to the source production, governed relation and selected adapter when present, validation decision, final scene input, and render-bundle tree root. `explain` returns this action path for a public export or hook.

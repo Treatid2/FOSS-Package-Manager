@@ -3,7 +3,7 @@
   "activation": {
     "id": "runtime:demo.simple-runtime/browser-svg",
     "accepts": [
-      "fpm.render-scene/1"
+      "fpm.render-bundle/1"
     ],
     "command": [
       "node",

@@ -1,7 +1,7 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.scene-toolchain",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "Apache-2.0",
   "provides": [
     {
@@ -22,8 +22,12 @@
         "fpm.demo.fail/1"
       ],
       "builds": [
-        "fpm.render-scene/1"
+        "fpm.render-bundle/1"
       ],
+      "buildEnvironment": {
+        "schema": "fpm.build-environment/1",
+        "dimensions": []
+      },
       "execution": {
         "form": "external-process",
         "securityBoundary": "none",

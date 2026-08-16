@@ -4,5 +4,5 @@
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.duplicate-public", "demo.texture-toolchain"],
   "entryPoint": "pkg:bad.duplicate-public/texture/shared",
-  "artifact": { "type": "fpm.render-scene/1" }
+  "artifact": { "type": "fpm.render-bundle/1" }
 }

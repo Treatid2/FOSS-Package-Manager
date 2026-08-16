@@ -97,6 +97,20 @@ async function analyze(request) {
     action = "materialize-solid-colour";
     outputType = exported.semanticType;
     parameters = { colour: exported.colour };
+  } else if (manifest.schema === "fpm.demo.environment-colour/1") {
+    requireCondition(exported.variants && typeof exported.variants === "object",
+      "An environment-controlled colour must declare variants.");
+    for (const colour of Object.values(exported.variants)) validateColour(colour);
+    action = "materialize-environment-colour";
+    outputType = "texture.runtime.rgba8-srgb/1";
+    parameters = { variants: exported.variants };
+  } else if (manifest.schema === "fpm.demo.slow-colour/1") {
+    validateColour(exported.colour);
+    requireCondition(Number.isInteger(exported.delayMs) && exported.delayMs >= 50 && exported.delayMs <= 2000,
+      "A slow-colour fixture delay must be an integer from 50 to 2000 milliseconds.");
+    action = "materialize-slow-colour";
+    outputType = "texture.runtime.rgba8-srgb/1";
+    parameters = { colour: exported.colour, delayMs: exported.delayMs };
   } else if (manifest.schema === "fpm.demo.transaction-fail/1") {
     validateColour(exported.colour);
     action = "fail-after-write";
@@ -142,6 +156,20 @@ async function materialize(request) {
   } else if (kind === "materialize-solid-colour") {
     validateColour(parameters.colour);
     content = { schema: "fpm.texture.solid-colour/1", colour: parameters.colour };
+  } else if (kind === "materialize-environment-colour") {
+    const variant = request.environment?.values?.["target.colourVariant"];
+    const colour = parameters.variants[variant];
+    validateColour(colour);
+    content = { schema: "fpm.texture.runtime.rgba8-srgb/1", width: 1, height: 1, pixels: [...colour, 255] };
+  } else if (kind === "materialize-slow-colour") {
+    await new Promise((resolve) => setTimeout(resolve, parameters.delayMs));
+    validateColour(parameters.colour);
+    content = {
+      schema: "fpm.texture.runtime.rgba8-srgb/1",
+      width: 1,
+      height: 1,
+      pixels: [...parameters.colour, 255],
+    };
   } else if (kind === "fail-after-write") {
     await writeFile(path.join(request.transaction.stagingDirectory, output.relativePath), "partial", "utf8");
     fail("FPM_HANDLER_MATERIALIZATION_FAILED", "The failure fixture stopped after writing an uncommitted output.", {

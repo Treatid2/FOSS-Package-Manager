@@ -4,5 +4,5 @@
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.incompatible-head", "demo.simple-runtime", "demo.solid-colour-adapter", "demo.worldspace"],
   "entryPoint": "pkg:demo.worldspace/world/demo",
-  "artifact": { "type": "fpm.render-scene/1" }
+  "artifact": { "type": "fpm.render-bundle/1" }
 }

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 function response(value) {
@@ -103,6 +102,7 @@ async function analyze(request) {
       hooks = exported.hooks.map((hook) => ({
         id: hook.id,
         semanticType: hook.semanticType,
+        semanticRelation: hook.semanticRelation,
         default: hook.default,
       }));
       payload = { parts: exported.parts };
@@ -199,6 +199,7 @@ function plan(request) {
       inputs.push({
         name: inputName,
         bindingTarget: binding.target,
+        semanticRelation: binding.semanticRelation,
         sourceExport: binding.selected,
         type: binding.semanticType,
       });
@@ -221,13 +222,15 @@ function plan(request) {
     protocol: "fpm.handler-response/1",
     ok: true,
     plan: {
-      id: `action:profile/${request.profile.name}/render-scene`,
-      action: "build-render-scene",
+      id: `action:profile/${request.profile.name}/render-bundle`,
+      action: "build-render-bundle",
       inputs,
       output: {
-        id: `artifact:profile/${request.profile.name}/render-scene`,
-        type: "fpm.render-scene/1",
-        fileName: "scene.json"
+        id: `artifact:profile/${request.profile.name}/render-bundle`,
+        type: "fpm.render-bundle/1",
+        kind: "tree",
+        fileName: "scene-bundle",
+        entry: "scene.json"
       },
       parameters: {
         profile: request.profile.name,
@@ -240,7 +243,7 @@ function plan(request) {
 }
 
 async function materialize(request) {
-  requireCondition(request.proposal.kind === "build-render-scene", "Unsupported scene materialization action.", {
+  requireCondition(request.proposal.kind === "build-render-bundle", "Unsupported scene materialization action.", {
     kind: request.proposal.kind,
   });
   const inputs = new Map(request.inputs.map((input) => [input.name, input]));
@@ -267,18 +270,27 @@ async function materialize(request) {
     objects,
   };
   const output = request.transaction.outputs[0];
+  requireCondition(output.kind === "tree", "The render bundle requires a tree output slot.");
+  const treeDirectory = path.join(request.transaction.stagingDirectory, output.relativePath);
+  await mkdir(treeDirectory, { recursive: true });
   const text = stableJson(content);
-  await writeFile(path.join(request.transaction.stagingDirectory, output.relativePath), text, "utf8");
+  const indexText = stableJson({
+    schema: "fpm.render-bundle-index/1",
+    scene: "scene.json",
+    objects: objects.map((object) => ({ id: object.id, texture: object.sources.textureBinding.selected })),
+  });
+  await writeFile(path.join(treeDirectory, "scene.json"), text, "utf8");
+  await writeFile(path.join(treeDirectory, "asset-index.json"), indexText, "utf8");
   response({
     protocol: "fpm.handler-response/1",
     ok: true,
-    output: {
+    outputs: [{
+      name: output.name,
+      kind: "tree",
       type: output.type,
       relativePath: output.relativePath,
-      size: Buffer.byteLength(text),
-      hash: `sha256:${createHash("sha256").update(text).digest("hex")}`,
       inputs: request.inputs.map((input) => ({ name: input.name, hash: input.hash })),
-    },
+    }],
   });
 }
 

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import assert from "node:assert/strict";
-import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
-import { spawnSync } from "node:child_process";
+import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { spawn, spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { buildProfile, prepareProfile } from "../src/core/build.mjs";
+import { ArtifactStore } from "../src/core/artifacts.mjs";
 import { discoverPackages } from "../src/core/discovery.mjs";
 
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -22,6 +23,31 @@ async function json(filePath) {
   return JSON.parse(await readFile(filePath, "utf8"));
 }
 
+function storeFor(directory, options = {}) {
+  return new ArtifactStore(directory, {
+    protocol: "fpm.artifact-transaction/2",
+    facts: { runtime: { node: process.version }, host: {}, target: {} },
+    widenedDimensions: [],
+  }, options);
+}
+
+function runBuildProcess(profile, output) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [path.join(repository, "src", "cli.mjs"), "build", profile, "--out", output], {
+      cwd: repository,
+      encoding: "utf8",
+      windowsHide: true,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.on("error", reject);
+    child.on("exit", (code) => resolve({ code, stdout, stderr }));
+  });
+}
+
 test("base and Green Head profiles build through the same package graph", async (context) => {
   const root = await temporaryDirectory("vertical-slice");
   context.after(() => rm(root, { recursive: true, force: true }));
@@ -32,7 +58,12 @@ test("base and Green Head profiles build through the same package graph", async 
 
   assert.equal(baseScene.schema, "fpm.render-scene/1");
   assert.equal(baseScene.objects.length, 3);
-  assert.equal(base.lockfile.schema, "fpm.lock/2");
+  assert.equal(base.lockfile.schema, "fpm.lock/3");
+  assert.equal(base.lockfile.artifact.kind, "tree");
+  assert.equal(base.lockfile.artifact.entry, "scene.json");
+  const bundleIndex = await json(path.join(path.dirname(base.artifactPath), "asset-index.json"));
+  assert.equal(bundleIndex.schema, "fpm.render-bundle-index/1");
+  assert.equal(bundleIndex.objects.length, 3);
   assert.ok(base.lockfile.packages.every((entry) => entry.license === "Apache-2.0"));
   assert.deepEqual(baseScene.objects.find((entry) => entry.part === "head").colour, [217, 146, 91]);
   assert.deepEqual(greenScene.objects.find((entry) => entry.part === "head").colour, [72, 183, 104]);
@@ -46,6 +77,8 @@ test("base and Green Head profiles build through the same package graph", async 
   assert.equal(greenBinding.reason, "single-compatible-replacement");
   assert.equal(greenBinding.artifactRoute.kind, "one-step-adapter");
   assert.equal(greenBinding.artifactRoute.adapter, "adapter:demo.solid-colour-to-rgba8-srgb/1");
+  assert.equal(greenBinding.artifactRoute.semanticRelation,
+    "relation:demo.texture/base-colour-solid-to-runtime/1");
 
   const fieldBinding = base.lockfile.bindings.find((entry) => entry.target.endsWith("field/appearance/base-colour"));
   assert.equal(fieldBinding.artifactRoute.kind, "direct-production");
@@ -55,12 +88,21 @@ test("base and Green Head profiles build through the same package graph", async 
   assert.ok(handlerPackages.has("demo.texture-toolchain"));
   assert.ok(handlerPackages.has("demo.scene-toolchain"));
   assert.ok(handlerPackages.has("demo.solid-colour-adapter"));
+  assert.ok(handlerPackages.has("demo.scene-validator"));
 
-  const finalAction = green.lockfile.actions.find((entry) => entry.kind === "build-render-scene");
+  assert.equal(green.lockfile.semanticRelations.length, 1);
+  assert.equal(green.lockfile.validation.decision.accepted, true);
+  assert.equal(green.lockfile.validation.findings[0].verdict, "pass");
+  assert.ok(green.lockfile.profile.authority.some((entry) => entry.field === "artifact"
+    && entry.sourceLayer === "distribution" && entry.mergeRule === "immutable"));
+
+  const finalAction = green.lockfile.actions.find((entry) => entry.kind === "build-render-bundle");
   assert.equal(finalAction.handler, "handler:demo.scene-toolchain/1");
   assert.ok(finalAction.inputs.length > 0);
   assert.ok(finalAction.inputs.every((entry) => entry.type === "texture.runtime.rgba8-srgb/1"));
   assert.ok(finalAction.inputs.every((entry) => !entry.artifact.includes("solid-colour/source")));
+  assert.equal(finalAction.outputs.length, 1);
+  assert.equal(finalAction.outputs[0].kind, "tree");
 });
 
 test("lockfile and scene artifacts are reproducible across output directories", async (context) => {
@@ -75,6 +117,125 @@ test("lockfile and scene artifacts are reproducible across output directories", 
   assert.equal(second.cache.misses, 0);
   assert.deepEqual(first.lockfile, second.lockfile);
   assert.equal(await readFile(first.artifactPath, "utf8"), await readFile(second.artifactPath, "utf8"));
+});
+
+test("an interruption after tree import leaves reportable orphans and no successful action record", async (context) => {
+  const root = await temporaryDirectory("interruption-recovery");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const storeDirectory = path.join(root, "store");
+  let failure;
+  await assert.rejects(() => buildProfile(greenProfile, path.join(root, "interrupted"), {
+    storeDirectory,
+    storeOptions: { interruptAfterImportAction: "action:profile/green-head/render-bundle" },
+  }), (error) => {
+    failure = error;
+    assert.equal(error.code, "FPM_SIMULATED_INTERRUPTION");
+    return true;
+  });
+  const record = path.join(storeDirectory, "actions", `${failure.details.buildKey.replace("sha256:", "")}.json`);
+  await assert.rejects(() => access(record));
+  const before = await storeFor(storeDirectory).reachabilityReport();
+  assert.ok(before.orphaned.length >= 3);
+  assert.ok(failure.details.importedRoots.every((hash) => before.orphaned.includes(hash)));
+
+  await buildProfile(greenProfile, path.join(root, "recovered"), { storeDirectory });
+  const after = await storeFor(storeDirectory).reachabilityReport();
+  assert.deepEqual(after.orphaned, []);
+});
+
+test("stale build-key leases are recovered without treating them as valid outputs", async (context) => {
+  const root = await temporaryDirectory("stale-lease");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const buildKey = "a".repeat(64);
+  const leaseDirectory = path.join(root, "leases", buildKey);
+  await mkdir(leaseDirectory, { recursive: true });
+  await writeFile(path.join(leaseDirectory, "lease.json"), JSON.stringify({
+    schema: "fpm.build-lease/1",
+    buildKey: `sha256:${buildKey}`,
+    action: "action:stale",
+    owner: "dead-owner",
+    expiresAt: new Date(Date.now() - 60_000).toISOString(),
+  }), "utf8");
+  const store = storeFor(root, { leaseDurationMs: 1000 });
+  assert.equal(await store.tryAcquireLease(buildKey, "action:replacement"), null);
+  const lease = await store.tryAcquireLease(buildKey, "action:replacement");
+  assert.ok(lease?.owner);
+  assert.equal((await store.readLease(buildKey)).owner, lease.owner);
+  await store.releaseLease(lease);
+});
+
+test("immutable action-record publication rejects divergent roots for one build key", async (context) => {
+  const root = await temporaryDirectory("nondeterministic-record");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const store = storeFor(root);
+  const buildKey = "b".repeat(64);
+  const action = { id: "action:test/nondeterminism" };
+  const rootA = [{ name: "primary", id: "artifact:test/root", kind: "blob", type: "test/1",
+    fileName: "test.bin", hash: `sha256:${"1".repeat(64)}`, size: 1 }];
+  const rootB = [{ ...rootA[0], hash: `sha256:${"2".repeat(64)}` }];
+  await store.publishActionRecord(buildKey, action, rootA);
+  await assert.rejects(() => store.publishActionRecord(buildKey, action, rootB), (error) => {
+    assert.equal(error.code, "FPM_ACTION_NONDETERMINISTIC");
+    return true;
+  });
+});
+
+test("two manager processes converge through one concurrent-safe store", async (context) => {
+  const root = await temporaryDirectory("concurrent-build");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const profile = path.join(repository, "fixtures", "failures", "profiles", "concurrent-build.json");
+  const [first, second] = await Promise.all([
+    runBuildProcess(profile, path.join(root, "first")),
+    runBuildProcess(profile, path.join(root, "second")),
+  ]);
+  assert.equal(first.code, 0, first.stderr);
+  assert.equal(second.code, 0, second.stderr);
+  assert.deepEqual(await json(path.join(root, "first", "fpm.lock.json")),
+    await json(path.join(root, "second", "fpm.lock.json")));
+  const actions = await readdir(path.join(root, ".fpm-store", "actions"));
+  const lockfile = await json(path.join(root, "first", "fpm.lock.json"));
+  assert.equal(actions.filter((entry) => entry.endsWith(".json")).length, lockfile.actions.length);
+  assert.deepEqual(await readdir(path.join(root, ".fpm-store", "leases")), []);
+});
+
+test("declared and manager-widened environment dimensions control action keys", async (context) => {
+  const root = await temporaryDirectory("environment-keys");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const storeDirectory = path.join(root, "store");
+  const profiles = Object.fromEntries(await Promise.all([
+    "environment-light", "environment-dark", "environment-observation", "environment-widened",
+  ].map(async (name) => [name, await buildProfile(path.join(repository, "profiles", `${name}.json`),
+    path.join(root, name), { storeDirectory })])));
+  const action = (result) => result.lockfile.actions.find((entry) => entry.id
+    === "action:pkg:demo.environment-head/texture/head/source");
+  assert.notEqual(action(profiles["environment-light"]).buildKey, action(profiles["environment-dark"]).buildKey);
+  assert.equal(action(profiles["environment-light"]).buildKey,
+    action(profiles["environment-observation"]).buildKey);
+  assert.notEqual(action(profiles["environment-light"]).buildKey,
+    action(profiles["environment-widened"]).buildKey);
+  assert.deepEqual((await json(profiles["environment-light"].artifactPath)).objects
+    .find((entry) => entry.part === "head").colour, [235, 220, 150]);
+  assert.deepEqual((await json(profiles["environment-dark"].artifactPath)).objects
+    .find((entry) => entry.part === "head").colour, [55, 45, 80]);
+  assert.deepEqual(action(profiles["environment-widened"]).environment.declaration.widened,
+    ["host.architecture", "host.platform", "target.observation"]);
+});
+
+test("conflicting validator findings coexist and policy explicitly waives or rejects them", async (context) => {
+  const root = await temporaryDirectory("validator-policy");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const conflict = path.join(repository, "fixtures", "failures", "profiles", "validator-conflict.json");
+  await assert.rejects(() => buildProfile(conflict, path.join(root, "rejected")), (error) => {
+    assert.equal(error.code, "FPM_VALIDATION_REJECTED");
+    assert.deepEqual(error.details.findings.map((entry) => entry.verdict).sort(), ["fail", "pass"]);
+    assert.equal(error.details.decision.accepted, false);
+    return true;
+  });
+  const waived = path.join(repository, "fixtures", "failures", "profiles", "validator-waived.json");
+  const result = await buildProfile(waived, path.join(root, "accepted"));
+  assert.deepEqual(result.lockfile.validation.findings.map((entry) => entry.verdict).sort(), ["fail", "pass"]);
+  assert.equal(result.lockfile.validation.decision.accepted, true);
+  assert.equal(result.lockfile.validation.decision.waived.length, 1);
 });
 
 test("package-root order does not change discovery order", async () => {
@@ -150,6 +311,7 @@ const failures = [
   ["cyclic dependencies", "cyclic-dependency.json", "FPM_DEPENDENCY_CYCLE"],
   ["malformed domain manifest", "malformed-domain.json", "FPM_DOMAIN_MANIFEST_MALFORMED"],
   ["handler analysis failure", "handler-failure.json", "FPM_HANDLER_ANALYSIS_FAILED"],
+  ["profile authority violation", "authority-violation.json", "FPM_PROFILE_AUTHORITY_UNRESOLVED"],
 ];
 
 for (const [label, profileName, expectedCode] of failures) {

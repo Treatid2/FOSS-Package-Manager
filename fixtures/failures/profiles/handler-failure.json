@@ -4,5 +4,5 @@
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.handler-failure", "demo.scene-toolchain"],
   "entryPoint": "pkg:bad.handler-failure/content/fail",
-  "artifact": { "type": "fpm.render-scene/1" }
+  "artifact": { "type": "fpm.render-bundle/1" }
 }

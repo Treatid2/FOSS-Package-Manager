@@ -7,12 +7,13 @@
   "distribution": {
     "roots": [
       "demo.simple-runtime",
+      "demo.scene-validator",
       "demo.solid-colour-adapter",
       "demo.worldspace"
     ],
     "entryPoint": "pkg:demo.worldspace/world/demo",
     "artifact": {
-      "type": "fpm.render-scene/1",
+      "type": "fpm.render-bundle/1",
       "builder": "handler:demo.scene-toolchain/1"
     },
     "activation": "runtime:demo.simple-runtime/browser-svg"
@@ -24,7 +25,15 @@
   "policy": {
     "providers": {},
     "handlerSelections": {},
-    "adapterSelections": {}
+    "adapterSelections": {},
+    "validation": {
+      "id": "policy:demo.require-scene-validator/1",
+      "requiredValidators": ["validator:demo.scene-proposal/1"],
+      "waivers": []
+    },
+    "environmentKey": {
+      "widen": ["host.platform", "host.architecture"]
+    }
   },
   "user": {
     "roots": [],

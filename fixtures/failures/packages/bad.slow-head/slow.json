@@ -1,0 +1,9 @@
+{
+  "schema": "fpm.demo.slow-colour/1",
+  "export": {
+    "id": "pkg:bad.slow-head/texture/head",
+    "semanticType": "texture.runtime.rgba8-srgb/1",
+    "colour": [100, 180, 220],
+    "delayMs": 400
+  }
+}

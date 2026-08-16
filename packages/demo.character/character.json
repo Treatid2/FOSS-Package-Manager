@@ -21,11 +21,13 @@
       {
         "id": "pkg:demo.character/appearance/body/base-colour",
         "semanticType": "texture.runtime.rgba8-srgb/1",
+        "semanticRelation": "relation:demo.texture/base-colour-solid-to-runtime/1",
         "default": "pkg:demo.primitives/texture/body"
       },
       {
         "id": "pkg:demo.character/appearance/head/base-colour",
         "semanticType": "texture.runtime.rgba8-srgb/1",
+        "semanticRelation": "relation:demo.texture/base-colour-solid-to-runtime/1",
         "default": "pkg:demo.primitives/texture/head"
       }
     ]
