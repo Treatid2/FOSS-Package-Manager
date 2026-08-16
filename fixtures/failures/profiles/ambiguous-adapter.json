@@ -1,0 +1,8 @@
+{
+  "schema": "fpm.profile/1",
+  "name": "failure-ambiguous-adapter",
+  "packageRoots": ["../../../packages", "../packages"],
+  "roots": ["bad.second-adapter", "demo.simple-runtime", "demo.solid-colour-adapter", "demo.worldspace"],
+  "entryPoint": "pkg:demo.worldspace/world/demo",
+  "artifact": { "type": "fpm.render-scene/1", "builder": "handler:demo.scene-toolchain/1" }
+}

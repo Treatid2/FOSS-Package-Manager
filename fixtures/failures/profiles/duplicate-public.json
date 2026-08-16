@@ -2,7 +2,7 @@
   "schema": "fpm.profile/1",
   "name": "failure-duplicate-public",
   "packageRoots": ["../../../packages", "../packages"],
-  "roots": ["bad.duplicate-public", "demo.prototype-toolchain"],
+  "roots": ["bad.duplicate-public", "demo.texture-toolchain"],
   "entryPoint": "pkg:bad.duplicate-public/texture/shared",
   "artifact": { "type": "fpm.render-scene/1" }
 }

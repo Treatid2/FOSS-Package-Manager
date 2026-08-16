@@ -1,10 +1,10 @@
 {
   "name": "foss-package-manager",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MPL-2.0",
   "private": true,
   "type": "module",
-  "description": "A language-laboratory prototype for deterministic, mod-native package composition.",
+  "description": "A language-laboratory prototype for deterministic, transactional mod-native package composition.",
   "scripts": {
     "build": "node src/cli.mjs build profiles/base.json",
     "build:green": "node src/cli.mjs build profiles/green-head.json",

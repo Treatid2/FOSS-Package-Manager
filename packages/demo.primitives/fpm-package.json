@@ -5,7 +5,11 @@
   "license": "Apache-2.0",
   "requires": [
     {
-      "capability": "fpm.handler.prototype",
+      "capability": "fpm.handler.scene",
+      "range": "^1.0.0"
+    },
+    {
+      "capability": "fpm.handler.texture",
       "range": "^1.0.0"
     }
   ],
@@ -27,17 +31,17 @@
     },
     {
       "id": "pkg:demo.primitives/texture/field",
-      "manifestType": "fpm.demo.texture/1",
+      "manifestType": "fpm.demo.texture-file/1",
       "manifest": "texture-field.json"
     },
     {
       "id": "pkg:demo.primitives/texture/body",
-      "manifestType": "fpm.demo.texture/1",
+      "manifestType": "fpm.demo.solid-colour/1",
       "manifest": "texture-body.json"
     },
     {
       "id": "pkg:demo.primitives/texture/head",
-      "manifestType": "fpm.demo.texture/1",
+      "manifestType": "fpm.demo.solid-colour/1",
       "manifest": "texture-head.json"
     }
   ]

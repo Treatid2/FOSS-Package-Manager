@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 
 function response(value) {
   process.stdout.write(`${JSON.stringify(value)}\n`);
 }
 
 function fail(code, message, details = {}) {
-  response({
-    protocol: "fpm.handler-response/1",
-    ok: false,
-    diagnostic: { code, message, details },
-  });
+  response({ protocol: "fpm.handler-response/1", ok: false, diagnostic: { code, message, details } });
 }
 
 function requireCondition(condition, message, details = {}) {
@@ -27,6 +25,17 @@ async function readRequest() {
   let input = "";
   for await (const chunk of process.stdin) input += chunk;
   return JSON.parse(input);
+}
+
+function stableJson(value) {
+  const normalize = (entry) => {
+    if (Array.isArray(entry)) return entry.map(normalize);
+    if (entry && typeof entry === "object") {
+      return Object.fromEntries(Object.keys(entry).sort().map((key) => [key, normalize(entry[key])]));
+    }
+    return entry;
+  };
+  return `${JSON.stringify(normalize(value), null, 2)}\n`;
 }
 
 function validateVector(value, length, field) {
@@ -46,20 +55,17 @@ async function analyze(request) {
     });
     return;
   }
-
   requireCondition(manifest.schema === request.contribution.manifestType,
     "The domain manifest schema does not match its declared manifest type.", {
       declared: request.contribution.manifestType,
       actual: manifest.schema,
     });
-
   if (manifest.schema === "fpm.demo.fail/1") {
     fail("FPM_HANDLER_ANALYSIS_FAILED", manifest.message ?? "The failure fixture requested a handler failure.", {
       contribution: request.contribution.id,
     });
     return;
   }
-
   if (manifest.schema === "fpm.demo.runtime/1") {
     requireCondition(typeof manifest.activation?.id === "string"
       && Array.isArray(manifest.activation.accepts)
@@ -67,17 +73,16 @@ async function analyze(request) {
     response({
       protocol: "fpm.handler-response/1",
       ok: true,
-      analysis: { exports: [], hooks: [], activations: [manifest.activation] },
+      analysis: { exports: [], hooks: [], activations: [manifest.activation], productions: [] },
     });
     return;
   }
 
   const exported = manifest.export;
   requireCondition(exported && typeof exported.id === "string" && typeof exported.semanticType === "string",
-    "A demo domain manifest must declare one typed export.");
+    "A scene-domain manifest must declare one typed export.");
   let payload;
   let hooks = [];
-
   switch (manifest.schema) {
     case "fpm.demo.mesh/1":
       requireCondition(exported.shape === "box", "The prototype mesh handler only accepts box primitives.", {
@@ -85,12 +90,6 @@ async function analyze(request) {
       });
       validateVector(exported.size, 3, "export.size");
       payload = { shape: exported.shape, size: exported.size };
-      break;
-    case "fpm.demo.texture/1":
-      validateVector(exported.colour, 3, "export.colour");
-      requireCondition(exported.colour.every((channel) => Number.isInteger(channel) && channel >= 0 && channel <= 255),
-        "Texture colour channels must be integers from 0 to 255.");
-      payload = { colour: exported.colour };
       break;
     case "fpm.demo.visual-assembly/1":
       requireCondition(Array.isArray(exported.parts) && exported.parts.length > 0,
@@ -129,12 +128,11 @@ async function analyze(request) {
       payload = { instances: exported.instances, camera: exported.camera };
       break;
     default:
-      throw Object.assign(new Error("The toolchain was asked to analyze an unsupported domain schema."), {
+      throw Object.assign(new Error("The scene toolchain was asked to analyze an unsupported domain schema."), {
         code: "FPM_DOMAIN_MANIFEST_UNSUPPORTED",
         details: { schema: manifest.schema },
       });
   }
-
   response({
     protocol: "fpm.handler-response/1",
     ok: true,
@@ -142,6 +140,7 @@ async function analyze(request) {
       exports: [{ id: exported.id, semanticType: exported.semanticType, payload }],
       hooks,
       activations: [],
+      productions: [],
     },
   });
 }
@@ -150,17 +149,15 @@ function addVectors(left, right) {
   return [left[0] + right[0], left[1] + right[1], left[2] + right[2]];
 }
 
-function build(request) {
+function plan(request) {
   const exportsById = new Map();
   for (const analysis of request.analyses) {
+    requireCondition(analysis.handler === process.env.FPM_HANDLER_ID,
+      "The scene planner received normalized analysis owned by another handler.", { handler: analysis.handler });
     for (const exported of analysis.exports) {
       exportsById.set(exported.id, {
         ...exported,
-        source: {
-          package: analysis.package,
-          contribution: analysis.contribution,
-          handler: analysis.handler,
-        },
+        source: { package: analysis.package, contribution: analysis.contribution, handler: analysis.handler },
       });
     }
   }
@@ -175,29 +172,36 @@ function build(request) {
     camera: world.payload.camera,
   });
 
+  const inputs = [];
   const objects = [];
   for (const instance of world.payload.instances) {
     const assembly = exportsById.get(instance.definition);
-    requireCondition(assembly?.semanticType === "visual.assembly/1", "A worldspace instance definition is missing or incompatible.", {
-      instance: instance.id,
-      definition: instance.definition,
-    });
+    requireCondition(assembly?.semanticType === "visual.assembly/1",
+      "A worldspace instance definition is missing or incompatible.", {
+        instance: instance.id,
+        definition: instance.definition,
+      });
     for (const part of assembly.payload.parts) {
       const mesh = exportsById.get(part.mesh);
       const binding = bindings.get(part.textureHook);
-      const texture = exportsById.get(binding?.selected);
       requireCondition(mesh?.semanticType === "mesh.box/1", "An assembly part mesh is missing or incompatible.", {
         instance: instance.id,
         part: part.id,
         mesh: part.mesh,
       });
-      requireCondition(texture?.semanticType === "texture.base-colour-srgb/1",
-        "An assembly part texture binding is missing or incompatible.", {
+      requireCondition(binding?.semanticType === "texture.runtime.rgba8-srgb/1",
+        "An assembly part texture binding does not request the runtime texture artifact type.", {
           instance: instance.id,
           part: part.id,
           hook: part.textureHook,
-          selected: binding?.selected,
         });
+      const inputName = `texture:${instance.id}/${part.id}`;
+      inputs.push({
+        name: inputName,
+        bindingTarget: binding.target,
+        sourceExport: binding.selected,
+        type: binding.semanticType,
+      });
       objects.push({
         id: `${instance.id}/${part.id}`,
         instance: instance.id,
@@ -206,28 +210,75 @@ function build(request) {
         primitive: mesh.payload.shape,
         size: mesh.payload.size,
         position: addVectors(instance.translation, part.translation),
-        colour: texture.payload.colour,
-        sources: {
-          assembly: assembly.source,
-          mesh: mesh.source,
-          texture: texture.source,
-          textureBinding: binding,
-        },
+        textureInput: inputName,
+        sources: { assembly: assembly.source, mesh: mesh.source, textureBinding: binding },
       });
     }
   }
   objects.sort((a, b) => a.id.localeCompare(b.id));
-  const content = {
-    schema: "fpm.render-scene/1",
-    profile: request.profile.name,
-    entryPoint: request.entryPoint,
-    camera: camera.payload,
-    objects,
-  };
+  inputs.sort((a, b) => a.name.localeCompare(b.name));
   response({
     protocol: "fpm.handler-response/1",
     ok: true,
-    artifact: { type: "fpm.render-scene/1", fileName: "scene.json", content },
+    plan: {
+      id: `action:profile/${request.profile.name}/render-scene`,
+      action: "build-render-scene",
+      inputs,
+      output: {
+        id: `artifact:profile/${request.profile.name}/render-scene`,
+        type: "fpm.render-scene/1",
+        fileName: "scene.json"
+      },
+      parameters: {
+        profile: request.profile.name,
+        entryPoint: request.entryPoint,
+        camera: camera.payload,
+        objects,
+      },
+    },
+  });
+}
+
+async function materialize(request) {
+  requireCondition(request.proposal.kind === "build-render-scene", "Unsupported scene materialization action.", {
+    kind: request.proposal.kind,
+  });
+  const inputs = new Map(request.inputs.map((input) => [input.name, input]));
+  const objects = [];
+  for (const planned of request.proposal.parameters.objects) {
+    const input = inputs.get(planned.textureInput);
+    requireCondition(input?.type === "texture.runtime.rgba8-srgb/1",
+      "The scene action did not receive one of its declared runtime texture inputs.", {
+        input: planned.textureInput,
+      });
+    const texture = JSON.parse(await readFile(input.path, "utf8"));
+    requireCondition(texture.schema === "fpm.texture.runtime.rgba8-srgb/1"
+      && texture.width === 1 && texture.height === 1
+      && Array.isArray(texture.pixels) && texture.pixels.length === 4,
+    "A runtime texture artifact is malformed.", { input: planned.textureInput });
+    const { textureInput, ...object } = planned;
+    objects.push({ ...object, colour: texture.pixels.slice(0, 3) });
+  }
+  const content = {
+    schema: "fpm.render-scene/1",
+    profile: request.proposal.parameters.profile,
+    entryPoint: request.proposal.parameters.entryPoint,
+    camera: request.proposal.parameters.camera,
+    objects,
+  };
+  const output = request.transaction.outputs[0];
+  const text = stableJson(content);
+  await writeFile(path.join(request.transaction.stagingDirectory, output.relativePath), text, "utf8");
+  response({
+    protocol: "fpm.handler-response/1",
+    ok: true,
+    output: {
+      type: output.type,
+      relativePath: output.relativePath,
+      size: Buffer.byteLength(text),
+      hash: `sha256:${createHash("sha256").update(text).digest("hex")}`,
+      inputs: request.inputs.map((input) => ({ name: input.name, hash: input.hash })),
+    },
   });
 }
 
@@ -235,7 +286,8 @@ try {
   const request = await readRequest();
   requireCondition(request.protocol === "fpm.handler-request/1", "Unsupported handler request protocol.");
   if (request.action === "analyze") await analyze(request);
-  else if (request.action === "build") build(request);
+  else if (request.action === "plan") plan(request);
+  else if (request.action === "materialize") await materialize(request);
   else fail("FPM_HANDLER_ACTION_UNSUPPORTED", "Unsupported handler action.", { action: request.action });
 } catch (error) {
   fail(error.code ?? "FPM_HANDLER_INTERNAL", error.message, error.details ?? {});

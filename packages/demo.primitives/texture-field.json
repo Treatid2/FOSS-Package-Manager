@@ -1,8 +1,8 @@
 {
-  "schema": "fpm.demo.texture/1",
+  "schema": "fpm.demo.texture-file/1",
   "export": {
     "id": "pkg:demo.primitives/texture/field",
-    "semanticType": "texture.base-colour-srgb/1",
-    "colour": [91, 132, 72]
+    "semanticType": "texture.file.ppm-p3-srgb/1",
+    "file": "field.ppm"
   }
 }

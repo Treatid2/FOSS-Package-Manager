@@ -66,4 +66,4 @@ Independent package authors may declare other licences through SPDX identifiers 
 
 ## Suggested next prototype
 
-The most informative next slice is not more rendering. It is a second independent handler family and an intermediate artifact boundary—for example, a texture analyzer/builder separate from the scene toolchain—plus one explicit adapter. That would test whether normalized reports and artifact provenance compose without quietly recreating a monolithic engine inside one handler.
+This slice has now been implemented as Phase 2: an independent Texture Handler, a manager-owned staging/content-addressed transaction, typed intermediate texture artifacts, a Scene Builder limited to declared inputs, and one explicit solid-colour adapter. See [phase-2-findings.md](phase-2-findings.md) for results, remaining limitations, and the proposed next experiment.

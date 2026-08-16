@@ -14,7 +14,7 @@
     "hooks": [
       {
         "id": "pkg:demo.field/appearance/base-colour",
-        "semanticType": "texture.base-colour-srgb/1",
+        "semanticType": "texture.runtime.rgba8-srgb/1",
         "default": "pkg:demo.primitives/texture/field"
       }
     ]

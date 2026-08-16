@@ -1,0 +1,8 @@
+{
+  "schema": "fpm.profile/1",
+  "name": "failure-missing-adapter",
+  "packageRoots": ["../../../packages", "../packages"],
+  "roots": ["demo.simple-runtime", "demo.worldspace"],
+  "entryPoint": "pkg:demo.worldspace/world/demo",
+  "artifact": { "type": "fpm.render-scene/1", "builder": "handler:demo.scene-toolchain/1" }
+}

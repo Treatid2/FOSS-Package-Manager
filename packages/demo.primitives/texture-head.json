@@ -1,8 +1,8 @@
 {
-  "schema": "fpm.demo.texture/1",
+  "schema": "fpm.demo.solid-colour/1",
   "export": {
     "id": "pkg:demo.primitives/texture/head",
-    "semanticType": "texture.base-colour-srgb/1",
+    "semanticType": "texture.solid-colour/1",
     "colour": [217, 146, 91]
   }
 }

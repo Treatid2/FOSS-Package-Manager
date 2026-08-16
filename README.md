@@ -2,11 +2,13 @@
 
 An executable language-laboratory prototype for a mod-native package system.
 
-This repository tests one focused proposition:
+This repository now tests two related propositions:
 
-> Can a small manager read declarative package manifests, resolve their relationships, dispatch specialised handlers, build a deterministic artifact, and explain exactly how that artifact was produced?
+> Can a small manager resolve declarative packages, dispatch specialised handlers, build deterministic artifacts, and explain exactly how each artifact was produced?
 
-The prototype answers that question for a deliberately tiny scene: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package.
+> Can independently implemented handler families compose through a manager-owned transactional artifact graph without one handler quietly becoming a monolithic engine?
+
+The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 2 changes how that identical scene is made: file-backed and declarative textures now travel through separate source, adapter, and scene-building actions.
 
 ## Quick start
 
@@ -22,7 +24,7 @@ npm run demo
 
 `npm run demo` builds the Green Head profile, starts the disposable local runtime, and opens it in the default browser. Press Ctrl+C in the terminal to stop the runtime.
 
-To ask why the head has its selected colour:
+To ask why the head has its selected colour and see its action path:
 
 ```powershell
 node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/appearance/head/base-colour
@@ -30,104 +32,115 @@ node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/app
 
 ## What is implemented
 
-- versioned JSON core manifests and profiles;
-- recursive package discovery from explicit package roots;
-- semantic-version dependency selection;
-- recorded package licence metadata using SPDX identifiers or expressions;
-- capability-provider selection;
-- dependency and capability cycle detection;
-- handler selection by declared manifest type;
-- out-of-process handler analysis over versioned JSON/stdin/stdout;
-- package-owned public identifiers;
-- typed public hooks, defaults, and reversible replacements;
-- explicit rejection of ambiguous replacements;
-- a separate materialisation phase producing a flat render-scene artifact;
-- deterministic lockfiles with package content hashes;
-- provenance for exports, bindings, handlers, and artifacts;
-- a runtime that consumes the built artifact without reading packages;
-- structured diagnostics for the planned failure cases.
+- versioned JSON core manifests and layered `fpm.profile/2` inputs;
+- recursive package discovery and semantic-version dependency/capability resolution;
+- handler declarations that separate execution form from trust policy;
+- out-of-process analysis over versioned JSON/stdin/stdout;
+- package-owned public identifiers, typed hooks, defaults, and reversible replacements;
+- exact nominal matching plus explicit, versioned, one-step adapters;
+- handler-proposed actions validated and scheduled as a generic artifact DAG;
+- dependency and artifact cycle detection;
+- manager-owned staging transactions with hash and size verification;
+- atomic import into a content-addressed artifact store;
+- deterministic action build keys and reuse of verified cached artifacts;
+- rollback of failed handler actions without committing their output or action record;
+- lockfiles and provenance linking contributions, handlers, source artifacts, adapters, final inputs, and output artifacts;
+- a scene builder that receives only its own normalized scene analyses during planning and its declared texture artifacts during materialisation;
+- a runtime that consumes the final flat artifact without reading packages;
+- structured diagnostics and conformance fixtures for planned failure cases.
 
-The manager deliberately has no knowledge of meshes, textures, assemblies, cameras, worldspaces, or rendering. Those concepts live in `demo.prototype-toolchain`.
+The manager has no texture, mesh, assembly, camera, worldspace, or rendering rules. Those concepts remain in independent example packages.
 
-## Resolution and build flow
+## Phase 2 resolution and build flow
 
 ```text
-profile + core package manifests
-            |
-            v
-dependency/capability resolution
-            |
-            v
-manifest-type -> selected handler
-            |
-            v
-normalised exports, hooks, activations
-            |
-            v
-typed replacement resolution
-            |
-            v
-selected artifact builder
-            |
-            v
+layered profile + core package manifests
+                  |
+                  v
+dependency/capability/handler resolution
+                  |
+                  v
+handler-owned contribution analysis
+                  |
+                  v
+typed hook and one-step adapter selection
+                  |
+                  v
+scene planner proposes declared artifact inputs
+                  |
+                  v
+manager validates and schedules the action/artifact DAG
+                  |
+       +----------+-----------+
+       |                      |
+       v                      v
+file texture action     solid-colour action
+       |                      |
+       |                      v
+       |                explicit adapter
+       +----------+-----------+
+                  |
+                  v
+runtime texture artifacts -> scene action
+                  |
+                  v
 scene.json + fpm.lock.json + provenance.json
-            |
-            v
-selected runtime activation
 ```
 
-Domain manifests are not parsed during discovery or package resolution. A selected handler receives their paths only after the core graph has resolved.
+Each action receives manager-supplied input paths and a private staging directory. The manager recomputes the output hash and size before importing it into the store and recording the graph mutation.
 
 ## Worked package graph
 
 | Package | Role |
 | --- | --- |
-| `demo.prototype-toolchain` | Analyzes all provisional demo dialects and builds `fpm.render-scene/1` |
-| `demo.primitives` | Box mesh and base-colour texture declarations |
-| `demo.field` | Field assembly and public colour hook |
-| `demo.character` | Body/head assembly and public colour hooks |
+| `demo.scene-toolchain` | Analyzes scene-domain manifests, proposes the final action, and builds `fpm.render-scene/1` from declared runtime textures |
+| `demo.texture-toolchain` | Independently analyzes file and solid-colour texture declarations and materializes source artifacts |
+| `demo.solid-colour-adapter` | Explicitly converts `texture.solid-colour/1` to `texture.runtime.rgba8-srgb/1` |
+| `demo.primitives` | Box meshes, a file-backed field texture, and declarative body/head colours |
+| `demo.field` | Field assembly and public runtime-texture hook |
+| `demo.character` | Body/head assembly and public runtime-texture hooks |
 | `demo.camera` | Fixed perspective camera |
 | `demo.worldspace` | Persistent-looking instance IDs and scene composition |
-| `demo.green-head` | Compatible head-colour export and replacement intent |
+| `demo.green-head` | Compatible solid-colour export and replacement intent |
 | `demo.simple-runtime` | Browser/SVG activation for the flat scene artifact |
 
-The toolchain is not a profile root. Packages that use its provisional dialect require its capability, so the resolver selects it transitively.
+The two toolchains are not profile roots. Packages require their distinct capabilities, so the resolver selects them transitively. The adapter is a distribution root because choosing permitted conversion policy is not an intrinsic property of either toolchain.
 
-## Outputs
+## Outputs and cache
 
 Building a profile creates:
 
 - `scene.json` — the disposable flat runtime artifact;
-- `fpm.lock.json` — selected packages, hashes, dependency edges, handlers, bindings, and artifact hash;
-- `provenance.json` — an explanation index for public exports, hook choices, and the final artifact;
-- optionally `scene.svg` — a deterministic visual snapshot produced by the runtime.
+- `fpm.lock.json` — all resolution, environment, action, artifact, handler, and binding decisions;
+- `provenance.json` — an explanation index for exports, hooks, action paths, adapters, and artifacts;
+- a sibling `.fpm-store/` — verified content objects and deterministic action-cache records.
 
-Generated outputs live under `build/` and are ignored by Git.
+Generated outputs live under `build/` and are ignored by Git. Cache hits are deliberately observational and are not written into the lockfile, so a cold and warm build produce identical records.
 
 ## Failure fixtures
 
 `fixtures/failures` contains executable examples for:
 
-- missing dependency;
-- no handler for a manifest type;
-- duplicate public identifier;
-- incompatible replacement semantic type;
-- two equally valid replacements without a profile selection;
-- cyclic dependencies;
-- malformed domain manifest;
-- deliberate handler analysis failure.
+- missing dependency or contribution handler;
+- duplicate public identity;
+- unresolved semantic artifact route;
+- missing or ambiguous adapter;
+- ambiguous compatible replacement;
+- cyclic package dependencies;
+- malformed domain manifest or deliberate analysis failure;
+- an action that writes to staging and then fails, exercising rollback.
 
-The test suite asserts the diagnostic code and relevant context for each case.
+The test suite asserts diagnostic codes and relevant context. It also verifies deterministic discovery, cache reuse, explicit adapter policy, handler separation, reproducible outputs, and runtime consumption.
 
 ## Explicit non-goals
 
-This is not yet a general game engine, production package format, security sandbox, repository client, binary artifact store, streaming world, persistence system, or runtime ABI. The renderer is intentionally disposable. The provisional formats are versioned because they are expected to change.
+This is not yet a production package format, security sandbox, repository client, distributed artifact store, general adapter search, concurrent build executor, cache garbage collector, binary runtime ABI, streaming world, or persistence system. The renderer is intentionally disposable and the formats remain provisional.
 
-See [docs/implementation-notes.md](docs/implementation-notes.md) for decisions and discussion issues exposed by this implementation.
+See [docs/prototype-formats.md](docs/prototype-formats.md) for the public protocol notes and [docs/phase-2-findings.md](docs/phase-2-findings.md) for the architectural findings and open issues.
 
 ## Security status
 
-Handlers run as subprocesses, but they are **not sandboxed**. A selected handler currently has the authority of the user running the manager. Only run packages you trust. Trust policy, signatures, permissions, and process isolation are future architectural work rather than properties this prototype pretends to provide.
+Handlers run as subprocesses, but they are **not sandboxed**. Staging is a transaction boundary, not a security boundary: handlers still inherit the authority of the user running the manager. Input paths and requested powers are explicit for auditability, but filesystem/network restrictions, signatures, resource limits, and permission enforcement remain future work. Only run packages you trust.
 
 ## Licensing
 

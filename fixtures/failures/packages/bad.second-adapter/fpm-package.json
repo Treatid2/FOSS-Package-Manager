@@ -1,0 +1,26 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.second-adapter",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "handlers": [
+    {
+      "id": "handler:bad.second-adapter/1",
+      "protocol": "fpm.handler-stdio/1",
+      "adapts": [
+        {
+          "id": "adapter:bad.second-solid-colour-to-rgba8-srgb/1",
+          "from": "texture.solid-colour/1",
+          "to": "texture.runtime.rgba8-srgb/1",
+          "conversion": "lossless"
+        }
+      ],
+      "execution": {
+        "form": "external-process",
+        "securityBoundary": "none",
+        "requestedPowers": ["read-declared-input-artifacts", "write-manager-staging"]
+      },
+      "command": ["node", "./handler.mjs"]
+    }
+  ]
+}

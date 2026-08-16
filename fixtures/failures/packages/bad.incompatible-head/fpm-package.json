@@ -12,7 +12,7 @@
   "contributions": [
     {
       "id": "pkg:bad.incompatible-head/texture/not-a-colour",
-      "manifestType": "fpm.demo.texture/1",
+      "manifestType": "fpm.demo.solid-colour/1",
       "manifest": "not-a-colour.json"
     }
   ],

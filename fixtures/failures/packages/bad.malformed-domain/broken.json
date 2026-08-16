@@ -1,7 +1,7 @@
 {
-  "schema": "fpm.demo.texture/1",
+  "schema": "fpm.demo.solid-colour/1",
   "export": {
     "id": "pkg:bad.malformed-domain/texture/broken",
-    "semanticType": "texture.base-colour-srgb/1",
+    "semanticType": "texture.solid-colour/1",
     "colour": [255, 0, 0]
   }

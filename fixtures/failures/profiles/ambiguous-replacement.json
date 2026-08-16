@@ -2,7 +2,7 @@
   "schema": "fpm.profile/1",
   "name": "failure-ambiguous-replacement",
   "packageRoots": ["../../../packages", "../packages"],
-  "roots": ["bad.head-blue", "bad.head-purple", "demo.prototype-toolchain", "demo.simple-runtime", "demo.worldspace"],
+  "roots": ["bad.head-blue", "bad.head-purple", "demo.simple-runtime", "demo.solid-colour-adapter", "demo.worldspace"],
   "entryPoint": "pkg:demo.worldspace/world/demo",
   "artifact": { "type": "fpm.render-scene/1" }
 }

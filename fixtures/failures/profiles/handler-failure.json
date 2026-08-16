@@ -2,7 +2,7 @@
   "schema": "fpm.profile/1",
   "name": "failure-handler-failure",
   "packageRoots": ["../../../packages", "../packages"],
-  "roots": ["bad.handler-failure", "demo.prototype-toolchain"],
+  "roots": ["bad.handler-failure", "demo.scene-toolchain"],
   "entryPoint": "pkg:bad.handler-failure/content/fail",
   "artifact": { "type": "fpm.render-scene/1" }
 }

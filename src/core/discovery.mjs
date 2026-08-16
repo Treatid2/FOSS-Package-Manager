@@ -86,11 +86,30 @@ function validateManifest(manifest, manifestPath) {
       });
   }
 
-  const handlers = array(manifest.handlers, "handlers", manifest.id);
+  const handlers = array(manifest.handlers, "handlers", manifest.id).map((handler) => ({
+    ...handler,
+    handles: handler?.handles ?? [],
+    builds: handler?.builds ?? [],
+    adapts: handler?.adapts ?? [],
+    execution: handler?.execution ?? {
+      form: "external-process",
+      securityBoundary: "none",
+      requestedPowers: ["host-user-authority"],
+    },
+  }));
   for (const handler of handlers) {
     invariant(typeof handler?.id === "string" && handler.protocol === "fpm.handler-stdio/1"
-      && Array.isArray(handler.handles) && Array.isArray(handler.command),
+      && Array.isArray(handler.handles) && Array.isArray(handler.builds) && Array.isArray(handler.adapts)
+      && Array.isArray(handler.command),
     "FPM_MANIFEST_INVALID", "A handler declaration is malformed.", { package: manifest.id, handler });
+    invariant(handler.execution?.form === "external-process" && handler.execution.securityBoundary === "none"
+      && Array.isArray(handler.execution.requestedPowers), "FPM_MANIFEST_INVALID",
+    "A handler execution declaration is malformed.", { package: manifest.id, handler: handler.id });
+    for (const adapter of handler.adapts) {
+      invariant(typeof adapter?.id === "string" && typeof adapter.from === "string" && typeof adapter.to === "string"
+        && ["lossless", "lossy", "interpretive"].includes(adapter.conversion), "FPM_MANIFEST_INVALID",
+      "A handler adapter declaration is malformed.", { package: manifest.id, handler: handler.id, adapter });
+    }
   }
 
   const replacements = array(manifest.replacements, "replacements", manifest.id);

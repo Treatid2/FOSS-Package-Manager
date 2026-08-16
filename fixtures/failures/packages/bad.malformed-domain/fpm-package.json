@@ -6,7 +6,7 @@
   "contributions": [
     {
       "id": "pkg:bad.malformed-domain/texture/broken",
-      "manifestType": "fpm.demo.texture/1",
+      "manifestType": "fpm.demo.solid-colour/1",
       "manifest": "broken.json"
     }
   ]

@@ -83,6 +83,8 @@ async function main() {
     console.log(`Scene: ${result.artifactPath}`);
     console.log(`Lockfile: ${path.join(result.outputDirectory, "fpm.lock.json")}`);
     console.log(`Provenance: ${path.join(result.outputDirectory, "provenance.json")}`);
+    console.log(`Artifact store: ${result.storeDirectory}`);
+    console.log(`Cache: ${result.cache.hits} reused, ${result.cache.misses} materialized`);
     if (command === "run") await runActivation(result, option(args, "--snapshot"));
     return;
   }

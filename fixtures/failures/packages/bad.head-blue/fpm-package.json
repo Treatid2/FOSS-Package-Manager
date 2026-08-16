@@ -12,7 +12,7 @@
   "contributions": [
     {
       "id": "pkg:bad.head-blue/texture/head-blue",
-      "manifestType": "fpm.demo.texture/1",
+      "manifestType": "fpm.demo.solid-colour/1",
       "manifest": "blue.json"
     }
   ],

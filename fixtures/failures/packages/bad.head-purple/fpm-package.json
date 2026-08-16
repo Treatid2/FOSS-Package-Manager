@@ -12,7 +12,7 @@
   "contributions": [
     {
       "id": "pkg:bad.head-purple/texture/head-purple",
-      "manifestType": "fpm.demo.texture/1",
+      "manifestType": "fpm.demo.solid-colour/1",
       "manifest": "purple.json"
     }
   ],

@@ -1,0 +1,35 @@
+{
+  "schema": "fpm.package/1",
+  "id": "demo.texture-toolchain",
+  "version": "0.2.0",
+  "license": "Apache-2.0",
+  "provides": [
+    {
+      "capability": "fpm.handler.texture",
+      "version": "1.0.0"
+    }
+  ],
+  "handlers": [
+    {
+      "id": "handler:demo.texture-toolchain/1",
+      "protocol": "fpm.handler-stdio/1",
+      "handles": [
+        "fpm.demo.texture-file/1",
+        "fpm.demo.solid-colour/1",
+        "fpm.demo.transaction-fail/1"
+      ],
+      "execution": {
+        "form": "external-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "read-own-package",
+          "write-manager-staging"
+        ]
+      },
+      "command": [
+        "node",
+        "./handler.mjs"
+      ]
+    }
+  ]
+}

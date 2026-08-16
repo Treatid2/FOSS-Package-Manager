@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "requires": [
     {
-      "capability": "fpm.handler.prototype",
+      "capability": "fpm.handler.scene",
       "range": "^1.0.0"
     }
   ],

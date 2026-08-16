@@ -11,14 +11,14 @@
   ],
   "requires": [
     {
-      "capability": "fpm.handler.prototype",
+      "capability": "fpm.handler.texture",
       "range": "^1.0.0"
     }
   ],
   "contributions": [
     {
       "id": "pkg:demo.green-head/texture/head-green",
-      "manifestType": "fpm.demo.texture/1",
+      "manifestType": "fpm.demo.solid-colour/1",
       "manifest": "green-head.json"
     }
   ],

@@ -1,21 +1,20 @@
 {
   "schema": "fpm.package/1",
-  "id": "demo.prototype-toolchain",
-  "version": "0.1.0",
+  "id": "demo.scene-toolchain",
+  "version": "0.2.0",
   "license": "Apache-2.0",
   "provides": [
     {
-      "capability": "fpm.handler.prototype",
+      "capability": "fpm.handler.scene",
       "version": "1.0.0"
     }
   ],
   "handlers": [
     {
-      "id": "handler:demo.prototype-toolchain/1",
+      "id": "handler:demo.scene-toolchain/1",
       "protocol": "fpm.handler-stdio/1",
       "handles": [
         "fpm.demo.mesh/1",
-        "fpm.demo.texture/1",
         "fpm.demo.visual-assembly/1",
         "fpm.demo.camera/1",
         "fpm.demo.worldspace/1",
@@ -25,6 +24,14 @@
       "builds": [
         "fpm.render-scene/1"
       ],
+      "execution": {
+        "form": "external-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "read-declared-input-artifacts",
+          "write-manager-staging"
+        ]
+      },
       "command": [
         "node",
         "./handler.mjs"
