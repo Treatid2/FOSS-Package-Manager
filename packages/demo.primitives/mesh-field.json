@@ -1,0 +1,9 @@
+{
+  "schema": "fpm.demo.mesh/1",
+  "export": {
+    "id": "pkg:demo.primitives/mesh/field",
+    "semanticType": "mesh.box/1",
+    "shape": "box",
+    "size": [10, 0.2, 10]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "fpm.package/1",
+  "id": "demo.worldspace",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.field",
+      "range": "^0.1.0"
+    },
+    {
+      "package": "demo.character",
+      "range": "^0.1.0"
+    },
+    {
+      "package": "demo.camera",
+      "range": "^0.1.0"
+    }
+  ],
+  "requires": [
+    {
+      "capability": "fpm.handler.prototype",
+      "range": "^1.0.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:demo.worldspace/world/demo",
+      "manifestType": "fpm.demo.worldspace/1",
+      "manifest": "world.json"
+    }
+  ]
+}

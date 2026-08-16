@@ -1,0 +1,25 @@
+{
+  "schema": "fpm.package/1",
+  "id": "demo.simple-runtime",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "provides": [
+    {
+      "capability": "fpm.runtime.render-scene",
+      "version": "1.0.0"
+    }
+  ],
+  "requires": [
+    {
+      "capability": "fpm.handler.prototype",
+      "range": "^1.0.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:demo.simple-runtime/runtime/browser-svg",
+      "manifestType": "fpm.demo.runtime/1",
+      "manifest": "runtime.json"
+    }
+  ]
+}

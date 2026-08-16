@@ -1,0 +1,12 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.missing-dependency",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "absent.package",
+      "range": "^1.0.0"
+    }
+  ]
+}

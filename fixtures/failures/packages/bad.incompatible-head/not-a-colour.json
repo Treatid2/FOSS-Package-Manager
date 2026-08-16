@@ -1,0 +1,8 @@
+{
+  "schema": "fpm.demo.texture/1",
+  "export": {
+    "id": "pkg:bad.incompatible-head/texture/not-a-colour",
+    "semanticType": "texture.normal-linear/1",
+    "colour": [128, 128, 255]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.duplicate-public",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "contributions": [
+    {
+      "id": "pkg:bad.duplicate-public/contribution/one",
+      "manifestType": "fpm.demo.texture/1",
+      "manifest": "one.json"
+    },
+    {
+      "id": "pkg:bad.duplicate-public/contribution/two",
+      "manifestType": "fpm.demo.texture/1",
+      "manifest": "two.json"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.malformed-domain",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "contributions": [
+    {
+      "id": "pkg:bad.malformed-domain/texture/broken",
+      "manifestType": "fpm.demo.texture/1",
+      "manifest": "broken.json"
+    }
+  ]
+}

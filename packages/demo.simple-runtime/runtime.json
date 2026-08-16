@@ -1,0 +1,13 @@
+{
+  "schema": "fpm.demo.runtime/1",
+  "activation": {
+    "id": "runtime:demo.simple-runtime/browser-svg",
+    "accepts": [
+      "fpm.render-scene/1"
+    ],
+    "command": [
+      "node",
+      "./runtime.mjs"
+    ]
+  }
+}

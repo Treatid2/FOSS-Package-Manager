@@ -1,0 +1,9 @@
+{
+  "schema": "fpm.demo.mesh/1",
+  "export": {
+    "id": "pkg:demo.primitives/mesh/head-cube",
+    "semanticType": "mesh.box/1",
+    "shape": "box",
+    "size": [1.4, 1.4, 1.4]
+  }
+}

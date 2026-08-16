@@ -1,0 +1,25 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.head-blue",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.character",
+      "range": "^0.1.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:bad.head-blue/texture/head-blue",
+      "manifestType": "fpm.demo.texture/1",
+      "manifest": "blue.json"
+    }
+  ],
+  "replacements": [
+    {
+      "target": "pkg:demo.character/appearance/head/base-colour",
+      "with": "pkg:bad.head-blue/texture/head-blue"
+    }
+  ]
+}

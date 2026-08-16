@@ -1,0 +1,8 @@
+{
+  "schema": "fpm.profile/1",
+  "name": "failure-incompatible-semantic",
+  "packageRoots": ["../../../packages", "../packages"],
+  "roots": ["bad.incompatible-head", "demo.prototype-toolchain", "demo.simple-runtime", "demo.worldspace"],
+  "entryPoint": "pkg:demo.worldspace/world/demo",
+  "artifact": { "type": "fpm.render-scene/1" }
+}

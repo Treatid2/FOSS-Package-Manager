@@ -1,0 +1,8 @@
+{
+  "schema": "fpm.demo.texture/1",
+  "export": {
+    "id": "pkg:bad.head-blue/texture/head-blue",
+    "semanticType": "texture.base-colour-srgb/1",
+    "colour": [70, 190, 220]
+  }
+}

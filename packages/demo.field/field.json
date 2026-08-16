@@ -1,0 +1,22 @@
+{
+  "schema": "fpm.demo.visual-assembly/1",
+  "export": {
+    "id": "pkg:demo.field/assembly/field",
+    "semanticType": "visual.assembly/1",
+    "parts": [
+      {
+        "id": "ground",
+        "mesh": "pkg:demo.primitives/mesh/field",
+        "textureHook": "pkg:demo.field/appearance/base-colour",
+        "translation": [0, -0.1, 0]
+      }
+    ],
+    "hooks": [
+      {
+        "id": "pkg:demo.field/appearance/base-colour",
+        "semanticType": "texture.base-colour-srgb/1",
+        "default": "pkg:demo.primitives/texture/field"
+      }
+    ]
+  }
+}

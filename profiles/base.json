@@ -1,0 +1,17 @@
+{
+  "schema": "fpm.profile/1",
+  "name": "base",
+  "packageRoots": [
+    "../packages"
+  ],
+  "roots": [
+    "demo.simple-runtime",
+    "demo.worldspace"
+  ],
+  "entryPoint": "pkg:demo.worldspace/world/demo",
+  "artifact": {
+    "type": "fpm.render-scene/1",
+    "builder": "handler:demo.prototype-toolchain/1"
+  },
+  "activation": "runtime:demo.simple-runtime/browser-svg"
+}

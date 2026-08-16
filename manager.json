@@ -1,0 +1,7 @@
+{
+  "schema": "fpm.manager/1",
+  "id": "org.foss-package-manager.reference",
+  "version": "0.1.0",
+  "license": "MPL-2.0",
+  "handlerProtocol": "fpm.handler-stdio/1"
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.cycle-b",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "bad.cycle-a",
+      "range": "^0.1.0"
+    }
+  ]
+}

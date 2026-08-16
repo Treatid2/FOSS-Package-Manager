@@ -1,0 +1,8 @@
+{
+  "schema": "fpm.profile/1",
+  "name": "failure-malformed-domain",
+  "packageRoots": ["../../../packages", "../packages"],
+  "roots": ["bad.malformed-domain", "demo.prototype-toolchain"],
+  "entryPoint": "pkg:bad.malformed-domain/texture/broken",
+  "artifact": { "type": "fpm.render-scene/1" }
+}

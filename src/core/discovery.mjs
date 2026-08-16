@@ -1,0 +1,138 @@
+// SPDX-License-Identifier: MPL-2.0
+
+import { readdir } from "node:fs/promises";
+import path from "node:path";
+import { invariant, FpmError } from "./errors.mjs";
+import { hashDirectory, readJson, resolveInside } from "./io.mjs";
+import { parseVersion } from "./semver.mjs";
+
+const PACKAGE_ID = /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
+const PUBLIC_ID = /^pkg:[a-z0-9][a-z0-9.-]*\/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+$/;
+
+async function findManifests(root) {
+  const found = [];
+  async function visit(directory) {
+    let entries;
+    try {
+      entries = await readdir(directory, { withFileTypes: true });
+    } catch (error) {
+      throw new FpmError("FPM_PACKAGE_ROOT_UNREADABLE", "A package root could not be read.", {
+        root,
+        cause: error.message,
+      });
+    }
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      if (entry.name.startsWith(".") || ["build", "node_modules"].includes(entry.name)) continue;
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) await visit(absolute);
+      else if (entry.isFile() && entry.name === "fpm-package.json") found.push(absolute);
+    }
+  }
+  await visit(root);
+  return found;
+}
+
+function array(value, field, packageId) {
+  invariant(value === undefined || Array.isArray(value), "FPM_MANIFEST_INVALID",
+    `Package field '${field}' must be an array.`, { package: packageId });
+  return value ?? [];
+}
+
+function validateManifest(manifest, manifestPath) {
+  invariant(manifest?.schema === "fpm.package/1", "FPM_MANIFEST_SCHEMA_UNSUPPORTED",
+    "Unsupported or missing core package schema.", { path: manifestPath, schema: manifest?.schema });
+  invariant(PACKAGE_ID.test(manifest.id ?? ""), "FPM_PACKAGE_ID_INVALID",
+    "Package identity is invalid.", { path: manifestPath, package: manifest.id });
+  parseVersion(manifest.version, "package version");
+  invariant(typeof manifest.license === "string" && manifest.license.trim().length > 0,
+    "FPM_PACKAGE_LICENSE_MISSING", "A package must declare an SPDX licence identifier or expression.", {
+      path: manifestPath,
+      package: manifest.id,
+    });
+
+  const dependencies = array(manifest.dependencies, "dependencies", manifest.id);
+  for (const dependency of dependencies) {
+    invariant(PACKAGE_ID.test(dependency?.package ?? "") && typeof dependency.range === "string",
+      "FPM_MANIFEST_INVALID", "A dependency must declare a package and version range.", {
+        package: manifest.id,
+        dependency,
+      });
+  }
+
+  const provides = array(manifest.provides, "provides", manifest.id);
+  for (const provided of provides) {
+    invariant(typeof provided?.capability === "string" && typeof provided.version === "string",
+      "FPM_MANIFEST_INVALID", "A provided capability is malformed.", { package: manifest.id, provided });
+    parseVersion(provided.version, "capability version");
+  }
+
+  const requires = array(manifest.requires, "requires", manifest.id);
+  for (const requirement of requires) {
+    invariant(typeof requirement?.capability === "string" && typeof requirement.range === "string",
+      "FPM_MANIFEST_INVALID", "A capability requirement is malformed.", { package: manifest.id, requirement });
+  }
+
+  const contributions = array(manifest.contributions, "contributions", manifest.id);
+  for (const contribution of contributions) {
+    invariant(PUBLIC_ID.test(contribution?.id ?? "") && contribution.id.startsWith(`pkg:${manifest.id}/`),
+      "FPM_PUBLIC_ID_INVALID", "Contribution identity must be public and owned by its package.", {
+        package: manifest.id,
+        contribution: contribution?.id,
+      });
+    invariant(typeof contribution.manifestType === "string" && typeof contribution.manifest === "string",
+      "FPM_MANIFEST_INVALID", "A contribution declaration is malformed.", {
+        package: manifest.id,
+        contribution,
+      });
+  }
+
+  const handlers = array(manifest.handlers, "handlers", manifest.id);
+  for (const handler of handlers) {
+    invariant(typeof handler?.id === "string" && handler.protocol === "fpm.handler-stdio/1"
+      && Array.isArray(handler.handles) && Array.isArray(handler.command),
+    "FPM_MANIFEST_INVALID", "A handler declaration is malformed.", { package: manifest.id, handler });
+  }
+
+  const replacements = array(manifest.replacements, "replacements", manifest.id);
+  for (const replacement of replacements) {
+    invariant(PUBLIC_ID.test(replacement?.target ?? "") && PUBLIC_ID.test(replacement?.with ?? ""),
+      "FPM_MANIFEST_INVALID", "A replacement declaration is malformed.", {
+        package: manifest.id,
+        replacement,
+      });
+  }
+
+  return { dependencies, provides, requires, contributions, handlers, replacements };
+}
+
+export async function discoverPackages(packageRoots) {
+  const manifests = [];
+  for (const root of [...new Set(packageRoots.map((entry) => path.resolve(entry)))].sort()) {
+    manifests.push(...await findManifests(root));
+  }
+
+  const packages = [];
+  const seen = new Map();
+  for (const manifestPath of manifests.sort()) {
+    const manifest = await readJson(manifestPath, "FPM_PACKAGE_MANIFEST_MALFORMED");
+    const normalized = validateManifest(manifest, manifestPath);
+    const key = `${manifest.id}@${manifest.version}`;
+    invariant(!seen.has(key), "FPM_PACKAGE_DUPLICATE", "The same package identity and version was discovered twice.", {
+      package: key,
+      paths: [seen.get(key), manifestPath],
+    });
+    seen.set(key, manifestPath);
+    const directory = path.dirname(manifestPath);
+    for (const contribution of normalized.contributions) {
+      resolveInside(directory, contribution.manifest, "contribution manifest");
+    }
+    packages.push({
+      ...manifest,
+      ...normalized,
+      directory,
+      manifestPath,
+      contentHash: await hashDirectory(directory),
+    });
+  }
+  return packages;
+}

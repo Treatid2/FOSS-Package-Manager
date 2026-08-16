@@ -1,0 +1,18 @@
+{
+  "schema": "fpm.profile/1",
+  "name": "green-head",
+  "packageRoots": [
+    "../packages"
+  ],
+  "roots": [
+    "demo.green-head",
+    "demo.simple-runtime",
+    "demo.worldspace"
+  ],
+  "entryPoint": "pkg:demo.worldspace/world/demo",
+  "artifact": {
+    "type": "fpm.render-scene/1",
+    "builder": "handler:demo.prototype-toolchain/1"
+  },
+  "activation": "runtime:demo.simple-runtime/browser-svg"
+}

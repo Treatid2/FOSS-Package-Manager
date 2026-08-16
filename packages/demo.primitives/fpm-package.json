@@ -1,0 +1,44 @@
+{
+  "schema": "fpm.package/1",
+  "id": "demo.primitives",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "requires": [
+    {
+      "capability": "fpm.handler.prototype",
+      "range": "^1.0.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:demo.primitives/mesh/field",
+      "manifestType": "fpm.demo.mesh/1",
+      "manifest": "mesh-field.json"
+    },
+    {
+      "id": "pkg:demo.primitives/mesh/body-cube",
+      "manifestType": "fpm.demo.mesh/1",
+      "manifest": "mesh-body.json"
+    },
+    {
+      "id": "pkg:demo.primitives/mesh/head-cube",
+      "manifestType": "fpm.demo.mesh/1",
+      "manifest": "mesh-head.json"
+    },
+    {
+      "id": "pkg:demo.primitives/texture/field",
+      "manifestType": "fpm.demo.texture/1",
+      "manifest": "texture-field.json"
+    },
+    {
+      "id": "pkg:demo.primitives/texture/body",
+      "manifestType": "fpm.demo.texture/1",
+      "manifest": "texture-body.json"
+    },
+    {
+      "id": "pkg:demo.primitives/texture/head",
+      "manifestType": "fpm.demo.texture/1",
+      "manifest": "texture-head.json"
+    }
+  ]
+}

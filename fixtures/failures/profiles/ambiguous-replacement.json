@@ -1,0 +1,8 @@
+{
+  "schema": "fpm.profile/1",
+  "name": "failure-ambiguous-replacement",
+  "packageRoots": ["../../../packages", "../packages"],
+  "roots": ["bad.head-blue", "bad.head-purple", "demo.prototype-toolchain", "demo.simple-runtime", "demo.worldspace"],
+  "entryPoint": "pkg:demo.worldspace/world/demo",
+  "artifact": { "type": "fpm.render-scene/1" }
+}

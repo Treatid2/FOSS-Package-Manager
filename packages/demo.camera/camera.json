@@ -1,0 +1,10 @@
+{
+  "schema": "fpm.demo.camera/1",
+  "export": {
+    "id": "pkg:demo.camera/camera/fixed",
+    "semanticType": "camera.perspective/1",
+    "position": [8, 6, 10],
+    "target": [0, 1.5, 0],
+    "fieldOfViewDegrees": 50
+  }
+}

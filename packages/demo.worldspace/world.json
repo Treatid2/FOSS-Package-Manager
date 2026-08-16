@@ -1,0 +1,20 @@
+{
+  "schema": "fpm.demo.worldspace/1",
+  "export": {
+    "id": "pkg:demo.worldspace/world/demo",
+    "semanticType": "worldspace.scene/1",
+    "instances": [
+      {
+        "id": "world:demo/field-1",
+        "definition": "pkg:demo.field/assembly/field",
+        "translation": [0, 0, 0]
+      },
+      {
+        "id": "world:demo/character-1",
+        "definition": "pkg:demo.character/assembly/block-character",
+        "translation": [0, 0, 0]
+      }
+    ],
+    "camera": "pkg:demo.camera/camera/fixed"
+  }
+}

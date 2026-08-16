@@ -1,0 +1,19 @@
+{
+  "schema": "fpm.package/1",
+  "id": "demo.camera",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "requires": [
+    {
+      "capability": "fpm.handler.prototype",
+      "range": "^1.0.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:demo.camera/camera/fixed",
+      "manifestType": "fpm.demo.camera/1",
+      "manifest": "camera.json"
+    }
+  ]
+}

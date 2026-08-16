@@ -1,0 +1,33 @@
+{
+  "schema": "fpm.demo.visual-assembly/1",
+  "export": {
+    "id": "pkg:demo.character/assembly/block-character",
+    "semanticType": "visual.assembly/1",
+    "parts": [
+      {
+        "id": "body",
+        "mesh": "pkg:demo.primitives/mesh/body-cube",
+        "textureHook": "pkg:demo.character/appearance/body/base-colour",
+        "translation": [0, 1.25, 0]
+      },
+      {
+        "id": "head",
+        "mesh": "pkg:demo.primitives/mesh/head-cube",
+        "textureHook": "pkg:demo.character/appearance/head/base-colour",
+        "translation": [0, 3.2, 0]
+      }
+    ],
+    "hooks": [
+      {
+        "id": "pkg:demo.character/appearance/body/base-colour",
+        "semanticType": "texture.base-colour-srgb/1",
+        "default": "pkg:demo.primitives/texture/body"
+      },
+      {
+        "id": "pkg:demo.character/appearance/head/base-colour",
+        "semanticType": "texture.base-colour-srgb/1",
+        "default": "pkg:demo.primitives/texture/head"
+      }
+    ]
+  }
+}

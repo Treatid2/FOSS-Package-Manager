@@ -1,0 +1,4 @@
+{
+  "schema": "fpm.demo.fail/1",
+  "message": "Deliberate handler analysis failure for diagnostic testing."
+}

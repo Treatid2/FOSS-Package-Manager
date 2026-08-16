@@ -1,0 +1,8 @@
+{
+  "schema": "fpm.demo.texture/1",
+  "export": {
+    "id": "pkg:bad.duplicate-public/texture/shared",
+    "semanticType": "texture.base-colour-srgb/1",
+    "colour": [200, 40, 40]
+  }
+}
