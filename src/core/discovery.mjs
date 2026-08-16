@@ -155,6 +155,42 @@ function validateManifest(manifest, manifestPath) {
     }
   }
 
+  const runtimeServices = array(manifest.runtimeServices, "runtimeServices", manifest.id).map((service) => ({
+    ...service,
+    provides: service?.provides ?? [],
+    requires: service?.requires ?? [],
+    artifactAccess: service?.artifactAccess ?? "none",
+    execution: service?.execution ?? {
+      form: "native-in-process",
+      securityBoundary: "none",
+      requestedPowers: ["host-user-authority"],
+    },
+  }));
+  for (const service of runtimeServices) {
+    invariant(typeof service?.id === "string" && service.id.startsWith("service:")
+      && service.protocol === "fpm.runtime-service/1" && typeof service.module === "string"
+      && ["none", "read"].includes(service.artifactAccess)
+      && Array.isArray(service.provides) && service.provides.length > 0 && Array.isArray(service.requires),
+    "FPM_MANIFEST_INVALID", "A runtime service declaration is malformed.", { package: manifest.id, service });
+    invariant(service.execution?.form === "native-in-process" && service.execution.securityBoundary === "none"
+      && Array.isArray(service.execution.requestedPowers), "FPM_MANIFEST_INVALID",
+    "A runtime service execution declaration is malformed.", { package: manifest.id, service: service.id });
+    for (const provided of service.provides) {
+      invariant(typeof provided?.capability === "string" && typeof provided.version === "string"
+        && provided.exclusive === true, "FPM_MANIFEST_INVALID",
+      "A runtime service capability declaration is malformed.", { package: manifest.id, service: service.id, provided });
+      parseVersion(provided.version, "runtime service capability version");
+    }
+    for (const requirement of service.requires) {
+      invariant(typeof requirement?.capability === "string" && typeof requirement.range === "string",
+        "FPM_MANIFEST_INVALID", "A runtime service requirement is malformed.", {
+          package: manifest.id,
+          service: service.id,
+          requirement,
+        });
+    }
+  }
+
   const replacements = array(manifest.replacements, "replacements", manifest.id);
   for (const replacement of replacements) {
     invariant(PUBLIC_ID.test(replacement?.target ?? "") && PUBLIC_ID.test(replacement?.with ?? ""),
@@ -164,7 +200,7 @@ function validateManifest(manifest, manifestPath) {
       });
   }
 
-  return { dependencies, provides, requires, semanticRelations, contributions, handlers, replacements };
+  return { dependencies, provides, requires, semanticRelations, contributions, handlers, runtimeServices, replacements };
 }
 
 export async function discoverPackages(packageRoots) {

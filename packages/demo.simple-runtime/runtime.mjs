@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const width = 960;
 const height = 640;
@@ -29,7 +30,7 @@ function shade(colour, factor) {
   return `rgb(${channels.join(",")})`;
 }
 
-function renderSvg(scene) {
+export function renderSvg(scene) {
   const camera = scene.camera;
   const forward = normalize(subtract(camera.target, camera.position));
   const right = normalize(cross(forward, [0, 1, 0]));
@@ -90,7 +91,7 @@ function renderSvg(scene) {
   ${polygons}
   <g font-family="Segoe UI, sans-serif" fill="#142027">
     <text x="28" y="42" font-size="25" font-weight="700">FOSS Package Manager</text>
-    <text x="28" y="68" font-size="15">${escapeXml(scene.profile)} · built artifact, not live package interpretation</text>
+    <text x="28" y="68" font-size="15">${escapeXml(scene.profile)} · immutable scene snapshot · transform revision ${escapeXml(scene.runtime?.transformRevision ?? "built")}</text>
     <text x="28" y="612" font-size="13">Head binding: ${escapeXml(selectedHead?.selected ?? "unknown")} (${escapeXml(selectedHead?.reason ?? "unknown")})</text>
   </g>
 </svg>`;
@@ -101,7 +102,7 @@ function html(scene, svg) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FPM · ${escapeXml(scene.profile)}</title><style>
   :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#11191e;color:#e8f0ed;font:15px/1.45 Segoe UI,sans-serif;display:grid;grid-template-columns:minmax(0,960px) 320px;min-height:100vh;align-items:start}main{padding:24px}svg{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 18px 70px #0008}aside{padding:30px 24px;border-left:1px solid #ffffff18;min-height:100vh;background:#172228}h1{font-size:19px;margin:0 0 8px}p{color:#a9bbb4;margin:0 0 26px}ul{list-style:none;padding:0;margin:0}li{padding:13px 0;border-top:1px solid #ffffff13}li strong,li span{display:block;overflow-wrap:anywhere}li span{color:#80c99a;font-size:12px;margin-top:5px}@media(max-width:900px){body{display:block}aside{min-height:auto;border-left:0}main{padding:12px}}
-  </style></head><body><main>${svg}</main><aside><h1>Resolved scene</h1><p>The runtime knows this flat artifact only. Package discovery, handler dispatch, and replacement resolution have already finished.</p><ul>${rows}</ul></aside></body></html>`;
+  </style></head><body><main>${svg}</main><aside><h1>Resolved scene</h1><p>The renderer knows this immutable flat snapshot only. Package discovery, handler dispatch, replacement resolution, and authoritative transform mutation happen elsewhere.</p><ul>${rows}</ul></aside></body></html>`;
 }
 
 function openBrowser(url) {
@@ -121,38 +122,102 @@ function openBrowser(url) {
   child.unref();
 }
 
-const [sceneArgument, ...argumentsList] = process.argv.slice(2);
-if (!sceneArgument) {
-  console.error("Usage: node runtime.mjs <scene.json> [--snapshot <output.svg>]");
-  process.exit(2);
-}
-const scene = JSON.parse(await readFile(path.resolve(sceneArgument), "utf8"));
-if (scene.schema !== "fpm.render-scene/1") {
-  console.error(`Unsupported scene schema: ${scene.schema}`);
-  process.exit(2);
-}
-const svg = renderSvg(scene);
-const snapshotIndex = argumentsList.indexOf("--snapshot");
-if (snapshotIndex !== -1) {
-  const snapshotPath = path.resolve(argumentsList[snapshotIndex + 1]);
-  await mkdir(path.dirname(snapshotPath), { recursive: true });
-  await writeFile(snapshotPath, `${svg}\n`, "utf8");
-  console.log(`Snapshot: ${snapshotPath}`);
-} else {
-  const document = html(scene, svg);
-  const server = http.createServer((request, responseValue) => {
-    if (request.url !== "/") {
-      responseValue.writeHead(404).end("Not found");
-      return;
-    }
-    responseValue.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
-    responseValue.end(document);
+export function createService() {
+  let snapshots;
+  let latestScene = null;
+  let latestSvg = null;
+  let document = "<!doctype html><title>FPM runtime starting</title>";
+  let server = null;
+  let snapshotPath = null;
+  const windowCapability = Object.freeze({
+    scene: () => latestScene,
+    svg: () => latestSvg,
   });
-  server.listen(0, "127.0.0.1", () => {
-    const address = server.address();
-    const url = `http://127.0.0.1:${address.port}/`;
-    console.log(`Runtime: ${url}`);
-    console.log("Press Ctrl+C to stop the disposable runtime.");
-    openBrowser(url);
-  });
+  return {
+    async activate(context) {
+      snapshots = context.require("runtime.scene-snapshot");
+      snapshotPath = context.options.snapshotPath;
+      if (context.options.interactive) {
+        server = http.createServer((request, responseValue) => {
+          if (request.url !== "/") {
+            responseValue.writeHead(404).end("Not found");
+            return;
+          }
+          responseValue.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+          responseValue.end(document);
+        });
+        await new Promise((resolve, reject) => {
+          server.once("error", reject);
+          server.listen(0, "127.0.0.1", resolve);
+        });
+        const address = server.address();
+        const url = `http://127.0.0.1:${address.port}/`;
+        console.log(`Runtime: ${url}`);
+        console.log("Press Ctrl+C to stop the live runtime.");
+        openBrowser(url);
+      }
+      return {
+        protocol: "fpm.runtime-service-response/1",
+        capabilities: { "runtime.renderer.window": windowCapability },
+      };
+    },
+    async tick() {
+      latestScene = snapshots.current();
+      latestSvg = renderSvg(latestScene);
+      document = html(latestScene, latestSvg);
+      if (snapshotPath) {
+        await mkdir(path.dirname(snapshotPath), { recursive: true });
+        await writeFile(snapshotPath, `${latestSvg}\n`, "utf8");
+      }
+    },
+    async deactivate() {
+      if (server) await new Promise((resolve) => server.close(resolve));
+      server = null;
+      snapshots = null;
+      snapshotPath = null;
+    },
+  };
 }
+
+async function directMain() {
+  const [sceneArgument, ...argumentsList] = process.argv.slice(2);
+  if (!sceneArgument) {
+    console.error("Usage: node runtime.mjs <scene.json> [--snapshot <output.svg>]");
+    process.exitCode = 2;
+    return;
+  }
+  const scene = JSON.parse(await readFile(path.resolve(sceneArgument), "utf8"));
+  if (scene.schema !== "fpm.render-scene/1") {
+    console.error(`Unsupported scene schema: ${scene.schema}`);
+    process.exitCode = 2;
+    return;
+  }
+  const svg = renderSvg(scene);
+  const snapshotIndex = argumentsList.indexOf("--snapshot");
+  if (snapshotIndex !== -1) {
+    const snapshotPath = path.resolve(argumentsList[snapshotIndex + 1]);
+    await mkdir(path.dirname(snapshotPath), { recursive: true });
+    await writeFile(snapshotPath, `${svg}\n`, "utf8");
+    console.log(`Snapshot: ${snapshotPath}`);
+  } else {
+    const document = html(scene, svg);
+    const server = http.createServer((request, responseValue) => {
+      if (request.url !== "/") {
+        responseValue.writeHead(404).end("Not found");
+        return;
+      }
+      responseValue.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+      responseValue.end(document);
+    });
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      const url = `http://127.0.0.1:${address.port}/`;
+      console.log(`Runtime: ${url}`);
+      console.log("Press Ctrl+C to stop the disposable runtime.");
+      openBrowser(url);
+    });
+  }
+}
+
+const direct = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (direct) await directMain();

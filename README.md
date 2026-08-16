@@ -2,13 +2,15 @@
 
 An executable language-laboratory prototype for a mod-native package system.
 
-This repository now tests two related propositions:
+This repository now tests three related propositions:
 
 > Can a small manager resolve declarative packages, dispatch specialised handlers, build deterministic artifacts, and explain exactly how each artifact was produced?
 
 > Can independently implemented handler families compose through a manager-owned transactional artifact graph without one handler quietly becoming a monolithic engine?
 
-The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 3 produces that unchanged scene through governed decisions, a concurrent-safe artifact store whose final root is a two-file canonical tree, and one adapter action running inside a real WebAssembly capability boundary.
+> Can independently selected runtime services create, mutate, observe, render, and retire live state through explicit capabilities and lifecycle rules rather than shared global objects?
+
+The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 4 now materialises the built world into distinct runtime services and moves the character sideways through an authoritative transform command before the unchanged renderer consumes an immutable scene snapshot.
 
 ## Quick start
 
@@ -50,13 +52,17 @@ node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/app
 - field-level profile authority and merge records;
 - a portable WebAssembly byte-transform ABI with no ambient filesystem, process, or network imports;
 - per-action requested/granted/denied powers and bounded portable execution limits;
+- exclusive runtime-service capability resolution and policy selection;
+- dependency-ordered activation, rollback, lifecycle recording, and reverse shutdown;
+- persistent instance identities, materialisation leases, and generational handles;
+- authoritative transform commands and immutable revisioned scene extraction;
 - rollback of failed handler actions without committing their output or action record;
 - lockfiles and provenance linking contributions, handlers, source artifacts, adapters, final inputs, and output artifacts;
 - a scene builder that receives only its own normalized scene analyses during planning and its declared texture artifacts during materialisation;
-- a runtime that consumes the final flat artifact without reading packages;
+- a renderer service that consumes only immutable flat scene snapshots;
 - structured diagnostics and conformance fixtures for planned failure cases.
 
-The manager has no texture, mesh, assembly, camera, worldspace, or rendering rules. Those concepts remain in independent example packages.
+The manager has no texture, mesh, assembly, camera, worldspace, transform, motion, or rendering rules. Those concepts remain in independent example packages.
 
 ## Phase 3 resolution and build flow
 
@@ -93,6 +99,16 @@ runtime texture artifacts -> scene action
                   |
                   v
 scene-bundle tree + fpm.lock.json + provenance.json
+                  |
+                  v
+runtime instance store -> transform authority <- deterministic motion
+                  |               |
+                  +-------+-------+
+                          v
+              immutable scene revision
+                          |
+                          v
+                   existing SVG renderer
 ```
 
 Each action receives manager-supplied input paths and a private staging directory. The manager recomputes the output hash and size before importing it into the store and recording the graph mutation.
@@ -113,6 +129,11 @@ Each action receives manager-supplied input paths and a private staging director
 | `demo.worldspace` | Persistent-looking instance IDs and scene composition |
 | `demo.green-head` | Compatible solid-colour export and replacement intent |
 | `demo.simple-runtime` | Browser/SVG activation for the flat scene artifact |
+| `demo.runtime-instance-store` | Owns persistent instance identities, generational handles, materialisation leases, and explicit destruction |
+| `demo.transform-authority` | Owns final world transforms and commits typed transform commands |
+| `demo.runtime-clock` | Supplies deterministic single-threaded ticks |
+| `demo.motion` | Moves the block character through the transform-write capability |
+| `demo.scene-extractor` | Publishes immutable flat scene revisions from instance definitions and transform snapshots |
 
 The two toolchains are not profile roots. Packages require their distinct capabilities, so the resolver selects them transitively. The adapter is a distribution root because choosing permitted conversion policy is not an intrinsic property of either toolchain.
 
@@ -123,6 +144,7 @@ Building a profile creates:
 - `scene-bundle/scene.json` and `asset-index.json` — one canonical multi-file tree root, with the existing scene as its selected runtime entry;
 - `fpm.lock.json` — all resolution, authority, validation, environment, action, root, handler, and binding decisions;
 - `provenance.json` — an explanation index for exports, hooks, action paths, adapters, and artifacts;
+- `runtime-lifecycle.json` after `run` — selected runtime services, reasons, activation order, ticks, rollback-safe state, and reverse shutdown;
 - a sibling `.fpm-store/` — verified content objects and deterministic action-cache records.
 
 Generated outputs live under `build/` and are ignored by Git. Cache hits are deliberately observational and are not written into the lockfile, so a cold and warm build produce identical records.
@@ -140,18 +162,19 @@ Generated outputs live under `build/` and are ignored by Git. Cache hits are del
 - malformed domain manifest or deliberate analysis failure;
 - an action that writes to staging and then fails, exercising rollback;
 - a portable action that successfully uses its declared byte capabilities, probes undeclared host read/write/network authority, and is denied without publication.
+- stale runtime handles, release-versus-destruction, transform authority denial, ambiguous exclusive providers, activation rollback, and dependency-safe shutdown.
 
 The test suite asserts diagnostic codes and relevant context. It also verifies deterministic discovery, cache reuse, explicit adapter policy, handler separation, reproducible outputs, and runtime consumption.
 
 ## Explicit non-goals
 
-This is not yet a production package format, general native-code sandbox, repository client, distributed artifact store, general adapter search, cache garbage collector, general binary runtime ABI, streaming world, or persistence system. The renderer is intentionally disposable and the formats remain provisional.
+This is not yet a production package format, general native-code sandbox, repository client, distributed artifact store, general adapter search, cache garbage collector, parallel runtime scheduler, streaming world, or persistent save system. The renderer is intentionally disposable and the formats remain provisional.
 
-See [docs/prototype-formats.md](docs/prototype-formats.md) for the public protocol notes, [docs/phase-2-findings.md](docs/phase-2-findings.md) for the prior gate, and [docs/phase-3-findings.md](docs/phase-3-findings.md) for both Phase 3 acceptance gates, evidence, and limitations.
+See [docs/architecture-snapshot-v0.md](docs/architecture-snapshot-v0.md) for the generated experimental contract checkpoint, [docs/prototype-formats.md](docs/prototype-formats.md) for public protocol notes, and [docs/phase-4-findings.md](docs/phase-4-findings.md) for the live-state evidence and limitations.
 
 ## Security status
 
-Native handlers still run as unsandboxed subprocesses with the authority of the user running the manager. Staging remains a transaction boundary for those handlers, not a security boundary.
+Native handlers still run as unsandboxed subprocesses with the authority of the user running the manager. Native runtime services run in-process with that authority. Staging and runtime capability injection are architectural authority boundaries, not containment against malicious native code.
 
 The solid-colour adapter is different: package logic is pure WebAssembly instantiated by a manager-owned runner with only declared-input byte reads and declared-output byte writes. It has no host-filesystem, package-store, child-process, or network imports. Timeout, module/input/output/response byte limits, and a child-process heap limit bound the prototype where practical. This is one narrow portable execution class, not containment for native handlers or a production-grade resource governor. Only run native packages you trust.
 

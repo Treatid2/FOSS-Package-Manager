@@ -4,7 +4,7 @@
 
 **Status:** experimental; no compatibility promise.
 
-Record the executable distinctions established through Phase 3 without freezing them as a public compatibility promise.
+Record the executable distinctions established through Phase 4 without freezing them as a public compatibility promise.
 
 This file is generated from `contracts/architecture-v0.json` by `tools/render-architecture-snapshot.mjs`.
 
@@ -85,7 +85,20 @@ Semantic role is distinct from execution form. Declarations record requested pow
 - `external-process with host-user authority`
 - `portable-wasm with byte-capability imports`
 - `data-only declarations`
-- `native-in-process runtime service (Phase 4 candidate)`
+- `native-in-process runtime service`
+
+## Runtime service identity and lifecycle
+
+**Classification:** manager-core.
+
+The manager selects exclusive service capabilities, activates providers dependency-first, injects only declared capabilities, commits a lifecycle record after complete activation, and shuts down in reverse dependency order. Definition, persistent instance, generational handle, materialisation lease, and mutation authority are distinct identities.
+
+- `fpm.runtime-service/1`
+- `fpm.runtime-activation/1`
+- `fpm.runtime-plan/1`
+- `fpm.runtime-lifecycle/1`
+- `fpm.runtime-handle/1`
+- `fpm.materialisation-lease/1`
 
 ## Manager core concepts and extension dialects
 

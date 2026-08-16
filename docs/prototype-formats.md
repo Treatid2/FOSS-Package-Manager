@@ -2,7 +2,7 @@
 
 # Prototype format notes
 
-All formats are provisional and use exact versioned identifiers. Phase 3 preserves the `fpm.package/1` envelope and `fpm.handler-stdio/1` transport while extending artifact roots, decisions, environment contracts, semantic relations, profile authority, and one portable capability-contained execution form. Lockfile and provenance documents use version 3.
+All formats are provisional and use exact versioned identifiers. Phase 4 preserves the Phase 3 build contracts and adds runtime-service declarations, capability selection, identity/lifetime distinctions, and lifecycle records. Lockfile and provenance documents remain version 3.
 
 ## Core package envelope
 
@@ -12,6 +12,7 @@ Every package contains `fpm-package.json` with `schema: "fpm.package/1"`. The ma
 - package dependencies and provided/required capabilities;
 - contribution identity, manifest type, and manifest location;
 - handler declarations and their accepted/buildable types;
+- runtime service declarations, capability versions and requirements, artifact access, and lifecycle module;
 - execution form, security-boundary claim, and requested powers;
 - explicit one-step adapter declarations;
 - public replacement intent.
@@ -205,6 +206,37 @@ The `demo.solid-colour-adapter` is a pure WebAssembly byte transform. The module
 After the module returns, the trusted manager runner writes those bytes only to the declared staging slot. No WASI, host-filesystem, package-store, child-process, clock, randomness, or network import is supplied. The child runner enforces a wall-clock timeout, module/input/output/response byte ceilings, and a Node heap limit. Execution identity and the complete requested/granted/denied power record participate in the action key and appear independently of the adapter's semantic role.
 
 The deliberate violation module first reads three declared bytes and writes four staged bytes. It then calls denial-only host-read, host-write, and network probes. Those stubs perform no host operation, record the denied attempts, and force a structured failure. The manager removes staging and publishes neither that action record nor an orphan artifact root.
+
+## Phase 4: runtime services and activation
+
+A package runtime service uses `fpm.runtime-service/1` and declares:
+
+- stable service identity;
+- one or more versioned exclusive capabilities;
+- required capability identities and semantic-version ranges;
+- whether it reads the selected activation artifact;
+- explicit `native-in-process` execution with no containment claim;
+- a package-relative lifecycle module.
+
+A domain activation report uses `fpm.runtime-activation/1` to name accepted artifact types, root runtime capability requirements, and a deterministic initial tick count. The manager resolves one provider for every requirement. Multiple compatible exclusive providers fail with `FPM_RUNTIME_PROVIDER_AMBIGUOUS` unless profile policy selects a provider package or exact service.
+
+`fpm.runtime-plan/1` records artifact identity, provider selections and reasons, service implementation hashes and execution declarations, dependencies, and activation order. Dependencies activate first. A service context exposes the immutable activation artifact only when declared and resolves only capabilities listed in that service's requirements. An undeclared request fails with `FPM_RUNTIME_AUTHORITY_DENIED`.
+
+`fpm.runtime-lifecycle/1` is committed only after complete activation. It records deterministic activate/tick/deactivate events. Activation failure deactivates the completed prefix in reverse order and leaves no lifecycle file. A provider cannot stop while an active dependent requires it; normal shutdown follows exact reverse activation order.
+
+## Phase 4: live identity and state
+
+The reference runtime fixtures distinguish these contracts:
+
+- definition identity — the built package/world definition;
+- persistent instance identity — the world object's semantic identity;
+- `fpm.runtime-handle/1` — a slot and generation naming one live materialisation;
+- `fpm.materialisation-lease/1` — strong access keeping that materialisation live;
+- mutation authority — a separately selected write capability.
+
+Releasing the final lease may reclaim the materialised slot but does not destroy persistent identity. Explicit destruction removes the persistent instance. Slot reuse increments its generation, so an old handle cannot resolve to a new occupant.
+
+Transform Authority exposes separate read-snapshot and write-command capabilities. Scene Extractor receives only read capabilities and publishes a deeply immutable flat scene revision. The renderer depends on that snapshot capability and has no transform-write authority.
 
 ## Lockfile and provenance
 

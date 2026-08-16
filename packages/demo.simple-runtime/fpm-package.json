@@ -1,7 +1,7 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.simple-runtime",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "license": "Apache-2.0",
   "provides": [
     {
@@ -13,6 +13,28 @@
     {
       "capability": "fpm.handler.scene",
       "range": "^1.0.0"
+    }
+  ],
+  "dependencies": [
+    { "package": "demo.motion", "range": "^0.4.0" },
+    { "package": "demo.scene-extractor", "range": "^0.4.0" }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:demo.simple-runtime/browser-svg/1",
+      "protocol": "fpm.runtime-service/1",
+      "provides": [
+        { "capability": "runtime.renderer.window", "version": "1.0.0", "exclusive": true }
+      ],
+      "requires": [
+        { "capability": "runtime.scene-snapshot", "range": "^1.0.0" }
+      ],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": ["host-user-authority", "network-loopback", "write-selected-snapshot"]
+      },
+      "module": "./runtime.mjs"
     }
   ],
   "contributions": [

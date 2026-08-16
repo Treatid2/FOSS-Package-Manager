@@ -67,8 +67,13 @@ async function analyze(request) {
   }
   if (manifest.schema === "fpm.demo.runtime/1") {
     requireCondition(typeof manifest.activation?.id === "string"
+      && manifest.activation.protocol === "fpm.runtime-activation/1"
       && Array.isArray(manifest.activation.accepts)
-      && Array.isArray(manifest.activation.command), "Runtime activation declaration is malformed.");
+      && Array.isArray(manifest.activation.requires)
+      && manifest.activation.requires.every((entry) => typeof entry?.capability === "string"
+        && typeof entry.range === "string")
+      && Number.isInteger(manifest.activation.ticks) && manifest.activation.ticks > 0,
+    "Runtime activation declaration is malformed.");
     response({
       protocol: "fpm.handler-response/1",
       ok: true,

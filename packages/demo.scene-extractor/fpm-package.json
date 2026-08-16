@@ -1,0 +1,30 @@
+{
+  "schema": "fpm.package/1",
+  "id": "demo.scene-extractor",
+  "version": "0.4.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    { "package": "demo.runtime-instance-store", "range": "^0.4.0" },
+    { "package": "demo.transform-authority", "range": "^0.4.0" }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:demo.scene-extractor/1",
+      "protocol": "fpm.runtime-service/1",
+      "artifactAccess": "read",
+      "provides": [
+        { "capability": "runtime.scene-snapshot", "version": "1.0.0", "exclusive": true }
+      ],
+      "requires": [
+        { "capability": "runtime.instances.read", "range": "^1.0.0" },
+        { "capability": "runtime.transforms.read", "range": "^1.0.0" }
+      ],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": ["host-user-authority"]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

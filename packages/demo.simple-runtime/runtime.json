@@ -2,12 +2,14 @@
   "schema": "fpm.demo.runtime/1",
   "activation": {
     "id": "runtime:demo.simple-runtime/browser-svg",
+    "protocol": "fpm.runtime-activation/1",
     "accepts": [
       "fpm.render-bundle/1"
     ],
-    "command": [
-      "node",
-      "./runtime.mjs"
-    ]
+    "requires": [
+      { "capability": "runtime.motion.demo", "range": "^1.0.0" },
+      { "capability": "runtime.renderer.window", "range": "^1.0.0" }
+    ],
+    "ticks": 2
   }
 }

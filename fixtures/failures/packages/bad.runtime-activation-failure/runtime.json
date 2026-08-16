@@ -1,0 +1,12 @@
+{
+  "schema": "fpm.demo.runtime/1",
+  "activation": {
+    "id": "runtime:bad.runtime-activation-failure/failure",
+    "protocol": "fpm.runtime-activation/1",
+    "accepts": ["fpm.render-bundle/1"],
+    "requires": [
+      { "capability": "runtime.fixture.activation-failure", "range": "^1.0.0" }
+    ],
+    "ticks": 1
+  }
+}

@@ -1,7 +1,7 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.scene-toolchain",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "license": "Apache-2.0",
   "provides": [
     {

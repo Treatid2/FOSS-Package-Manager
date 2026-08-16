@@ -389,7 +389,9 @@ export async function prepareProfile(profilePath) {
       }
       for (const activation of record.activations) {
         invariant(typeof activation?.id === "string" && Array.isArray(activation.accepts)
-          && Array.isArray(activation.command), "FPM_HANDLER_RESPONSE_INVALID",
+          && activation.protocol === "fpm.runtime-activation/1" && Array.isArray(activation.requires)
+          && Number.isInteger(activation.ticks) && activation.ticks > 0,
+        "FPM_HANDLER_RESPONSE_INVALID",
         "A handler-reported activation is malformed.", { handler: handler.id, activation });
         activations.push({ ...activation, package: pkg.id, owner: pkg });
       }
@@ -459,7 +461,7 @@ async function managerIdentity() {
   const manifestHash = await hashFile(path.join(projectRoot, "manager.json"));
   return {
     id: "org.foss-package-manager.reference",
-    version: "0.3.1",
+    version: "0.4.0",
     contentHash: `sha256:${sha256(`${sourceHash}\0${manifestHash}`)}`,
   };
 }

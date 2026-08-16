@@ -10,6 +10,8 @@ import { fileURLToPath } from "node:url";
 import { buildProfile, prepareProfile } from "../src/core/build.mjs";
 import { ArtifactStore } from "../src/core/artifacts.mjs";
 import { discoverPackages } from "../src/core/discovery.mjs";
+import { explainRuntime, resolveRuntimePlan, startRuntime } from "../src/core/runtime.mjs";
+import { createService as createInstanceStoreService } from "../packages/demo.runtime-instance-store/service.mjs";
 
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const baseProfile = path.join(repository, "profiles", "base.json");
@@ -327,22 +329,143 @@ test("portable capability violations preserve evidence and publish no root", asy
   assert.deepEqual((await storeFor(storeDirectory).reachabilityReport()).orphaned, []);
 });
 
-test("the selected runtime consumes the flat scene and emits a deterministic SVG snapshot", async (context) => {
+test("runtime services move an instance, extract an immutable scene, and shut down dependency-first", async (context) => {
   const root = await temporaryDirectory("runtime");
   context.after(() => rm(root, { recursive: true, force: true }));
   const result = await buildProfile(greenProfile, root);
   const snapshot = path.join(root, "scene.svg");
-  const runtime = path.join(repository, "packages", "demo.simple-runtime", "runtime.mjs");
-  const execution = spawnSync(process.execPath, [runtime, result.artifactPath, "--snapshot", snapshot], {
-    cwd: repository,
-    encoding: "utf8",
-    windowsHide: true,
+  const builtScene = await json(result.artifactPath);
+  const builtHead = builtScene.objects.find((entry) => entry.id.endsWith("/head"));
+  const host = await startRuntime(result, { snapshotPath: snapshot });
+  assert.equal(host.lifecycle.state, "active");
+  assert.equal((await json(path.join(root, "runtime-lifecycle.json"))).committed, true);
+  await host.tick();
+  await host.tick();
+  const liveScene = host.capability("runtime.renderer.window").scene();
+  const liveHead = liveScene.objects.find((entry) => entry.id.endsWith("/head"));
+  assert.notEqual(liveHead.position[0], builtHead.position[0]);
+  assert.equal(liveScene.runtime.transformRevision, 2);
+  assert.equal(Object.isFrozen(liveScene), true);
+  assert.equal(Object.isFrozen(liveScene.objects[0]), true);
+  await assert.rejects(() => host.deactivateService("service:demo.runtime-instance-store/1"), (error) => {
+    assert.equal(error.code, "FPM_RUNTIME_DEPENDENTS_ACTIVE");
+    assert.ok(error.details.dependents.includes("service:demo.transform-authority/1"));
+    return true;
   });
-  assert.equal(execution.status, 0, execution.stderr);
+  const activationOrder = host.plan.record.activationOrder;
+  const lifecycle = await host.shutdown();
+  const deactivationOrder = lifecycle.events.filter((entry) => entry.event === "deactivate")
+    .map((entry) => entry.service);
+  assert.deepEqual(deactivationOrder, [...activationOrder].reverse());
+  assert.equal(lifecycle.state, "stopped");
+  const explanation = explainRuntime(lifecycle, "runtime.transforms.write");
+  assert.equal(explanation.selections[0].provider, "service:demo.transform-authority/1");
   const svg = await readFile(snapshot, "utf8");
   assert.match(svg, /Resolved FOSS Package Manager demo scene/);
   assert.match(svg, /pkg:demo\.green-head\/texture\/head-green/);
   assert.match(svg, /world:demo\/character-1\/head/);
+});
+
+test("generational handles distinguish release from explicit destruction", async () => {
+  const controller = createInstanceStoreService();
+  const activation = await controller.activate({
+    artifact: {
+      schema: "fpm.render-scene/1",
+      objects: [
+        { id: "character/body", instance: "world:test/character", definition: "definition:character" },
+        { id: "field", instance: "world:test/field", definition: "definition:field" },
+      ],
+    },
+  });
+  const read = activation.capabilities["runtime.instances.read"];
+  const materialise = activation.capabilities["runtime.instances.materialize"];
+  const destroy = activation.capabilities["runtime.instances.destroy"];
+  const first = materialise.acquire("world:test/character", "test");
+  const retainedDefinition = read.definition("world:test/character");
+  materialise.release(first.id);
+  assert.equal(read.exists("world:test/character"), true);
+  assert.deepEqual(read.definition("world:test/character"), retainedDefinition);
+  const rematerialised = materialise.acquire("world:test/character", "test-rematerialised");
+  assert.equal(read.resolve(rematerialised.handle).instanceId, "world:test/character");
+  assert.notEqual(rematerialised.handle.generation, first.handle.generation);
+  destroy.destroy("world:test/character");
+  const replacement = materialise.acquire("world:test/field", "test-reuse");
+  assert.equal(replacement.handle.slot, rematerialised.handle.slot);
+  assert.notEqual(replacement.handle.generation, rematerialised.handle.generation);
+  assert.throws(() => read.resolve(rematerialised.handle), (error) => error.code === "FPM_RUNTIME_HANDLE_STALE");
+  await controller.deactivate();
+});
+
+test("releasing the final materialisation lease retains authoritative transform state", async (context) => {
+  const root = await temporaryDirectory("runtime-release-state");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const result = await buildProfile(baseProfile, root);
+  const host = await startRuntime(result, { snapshotPath: path.join(root, "scene.svg") });
+  const transforms = host.capability("runtime.transforms.write");
+  const instances = host.capability("runtime.instances.read");
+  transforms.submit({
+    schema: "fpm.transform-command/1",
+    instanceId: "world:demo/character-1",
+    translation: [1.25, 0, 0],
+  });
+  assert.equal(transforms.releaseMaterialisation("world:demo/character-1"), true);
+  assert.equal(instances.list().find((entry) => entry.instanceId === "world:demo/character-1").materialized, false);
+  const handle = transforms.materialise("world:demo/character-1");
+  assert.equal(instances.resolve(handle).instanceId, "world:demo/character-1");
+  const retained = host.capability("runtime.transforms.read").snapshot().transforms
+    .find((entry) => entry.instanceId === "world:demo/character-1");
+  assert.deepEqual(retained.translation, [1.25, 0, 0]);
+  await host.shutdown();
+});
+
+test("an observer cannot acquire undeclared transform-write authority", async (context) => {
+  const root = await temporaryDirectory("runtime-authority");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const profile = path.join(repository, "fixtures", "failures", "profiles", "runtime-authority-violation.json");
+  const result = await buildProfile(profile, path.join(root, "out"));
+  await assert.rejects(() => startRuntime(result), (error) => {
+    assert.equal(error.code, "FPM_RUNTIME_AUTHORITY_DENIED");
+    assert.equal(error.details.capability, "runtime.transforms.write");
+    assert.equal(error.details.lifecycle.committed, false);
+    assert.ok(error.details.lifecycle.activated.includes("service:demo.transform-authority/1"));
+    return true;
+  });
+  await assert.rejects(() => access(path.join(root, "out", "runtime-lifecycle.json")));
+});
+
+test("ambiguous exclusive runtime providers require explicit policy", async (context) => {
+  const root = await temporaryDirectory("runtime-provider-policy");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const ambiguousProfile = path.join(repository, "fixtures", "failures", "profiles", "ambiguous-runtime-provider.json");
+  const ambiguous = await buildProfile(ambiguousProfile, path.join(root, "ambiguous"));
+  assert.throws(() => resolveRuntimePlan(ambiguous), (error) => {
+    assert.equal(error.code, "FPM_RUNTIME_PROVIDER_AMBIGUOUS");
+    assert.equal(error.details.capability, "runtime.transforms.write");
+    assert.equal(error.details.candidates.length, 2);
+    return true;
+  });
+  const selectedProfile = path.join(repository, "fixtures", "failures", "profiles", "selected-runtime-provider.json");
+  const selected = await buildProfile(selectedProfile, path.join(root, "selected"));
+  const host = await startRuntime(selected, { snapshotPath: path.join(root, "selected.svg") });
+  const choices = host.plan.record.selections.filter((entry) => entry.capability.startsWith("runtime.transforms."));
+  assert.ok(choices.every((entry) => entry.package === "demo.transform-authority"
+    && entry.reason === "profile-policy"));
+  await host.shutdown();
+});
+
+test("activation failure rolls back active dependencies and commits no lifecycle", async (context) => {
+  const root = await temporaryDirectory("runtime-rollback");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const profile = path.join(repository, "fixtures", "failures", "profiles", "runtime-activation-failure.json");
+  const result = await buildProfile(profile, path.join(root, "out"));
+  await assert.rejects(() => startRuntime(result), (error) => {
+    assert.equal(error.code, "FPM_RUNTIME_ACTIVATION_FAILED");
+    assert.equal(error.details.lifecycle.committed, false);
+    assert.ok(error.details.lifecycle.activated.includes("service:demo.simple-runtime/browser-svg/1"));
+    assert.deepEqual(error.details.lifecycle.rolledBack, [...error.details.lifecycle.activated].reverse());
+    return true;
+  });
+  await assert.rejects(() => access(path.join(root, "out", "runtime-lifecycle.json")));
 });
 
 const failures = [

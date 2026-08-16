@@ -1,0 +1,12 @@
+{
+  "schema": "fpm.demo.runtime/1",
+  "activation": {
+    "id": "runtime:bad.runtime-authority/denied-observer",
+    "protocol": "fpm.runtime-activation/1",
+    "accepts": ["fpm.render-bundle/1"],
+    "requires": [
+      { "capability": "runtime.fixture.authority", "range": "^1.0.0" }
+    ],
+    "ticks": 1
+  }
+}

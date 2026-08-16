@@ -1,0 +1,29 @@
+{
+  "schema": "fpm.package/1",
+  "id": "demo.transform-authority",
+  "version": "0.4.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    { "package": "demo.runtime-instance-store", "range": "^0.4.0" }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:demo.transform-authority/1",
+      "protocol": "fpm.runtime-service/1",
+      "provides": [
+        { "capability": "runtime.transforms.read", "version": "1.0.0", "exclusive": true },
+        { "capability": "runtime.transforms.write", "version": "1.0.0", "exclusive": true }
+      ],
+      "requires": [
+        { "capability": "runtime.instances.read", "range": "^1.0.0" },
+        { "capability": "runtime.instances.materialize", "range": "^1.0.0" }
+      ],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": ["host-user-authority"]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

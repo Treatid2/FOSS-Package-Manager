@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: MPL-2.0
 
-import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ArtifactStore } from "./core/artifacts.mjs";
 import { buildProfile, explainProvenance, prepareProfile } from "./core/build.mjs";
-import { formatDiagnostic, FpmError, invariant } from "./core/errors.mjs";
-import { resolvePackageCommand } from "./core/handler.mjs";
+import { formatDiagnostic, invariant } from "./core/errors.mjs";
 import { loadProfile } from "./core/profile.mjs";
+import { explainRuntime, runRuntime } from "./core/runtime.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -21,6 +20,7 @@ Usage:
   node src/cli.mjs build <profile.json> [--out <directory>]
   node src/cli.mjs run <profile.json> [--out <directory>] [--snapshot <file.svg>]
   node src/cli.mjs explain <provenance.json> <public-id>
+  node src/cli.mjs explain-runtime <runtime-lifecycle.json> <service-or-capability>
   node src/cli.mjs store-report <artifact-store-directory>
 `;
 }
@@ -30,35 +30,6 @@ function option(args, name) {
   if (index === -1) return null;
   invariant(args[index + 1], "FPM_CLI_USAGE", `Option ${name} requires a value.`);
   return args[index + 1];
-}
-
-async function runActivation(result, snapshot) {
-  let candidates = result.activations.filter((activation) => activation.accepts.includes(result.artifact.type));
-  if (result.profile.activation) candidates = candidates.filter((activation) => activation.id === result.profile.activation);
-  invariant(candidates.length > 0, "FPM_ACTIVATION_MISSING", "No selected runtime accepts the built artifact.", {
-    artifactType: result.artifact.type,
-  });
-  invariant(candidates.length === 1, "FPM_ACTIVATION_AMBIGUOUS",
-    "Several selected runtimes accept the built artifact; the profile must select one.", {
-      candidates: candidates.map((entry) => entry.id),
-    });
-  const activation = candidates[0];
-  const command = resolvePackageCommand(activation.owner, activation.command);
-  const args = [...command.arguments, result.artifactPath];
-  if (snapshot) args.push("--snapshot", path.resolve(snapshot));
-  const exitCode = await new Promise((resolve, reject) => {
-    const child = spawn(command.executable, args, {
-      cwd: activation.owner.directory,
-      stdio: "inherit",
-      windowsHide: false,
-    });
-    child.on("error", reject);
-    child.on("exit", (code) => resolve(code ?? 1));
-  });
-  if (exitCode !== 0) throw new FpmError("FPM_ACTIVATION_FAILED", "The selected runtime exited with an error.", {
-    activation: activation.id,
-    exitCode,
-  });
 }
 
 async function main() {
@@ -87,13 +58,23 @@ async function main() {
     console.log(`Provenance: ${path.join(result.outputDirectory, "provenance.json")}`);
     console.log(`Artifact store: ${result.storeDirectory}`);
     console.log(`Cache: ${result.cache.hits} reused, ${result.cache.misses} materialized`);
-    if (command === "run") await runActivation(result, option(args, "--snapshot"));
+    if (command === "run") {
+      await runRuntime(result, { snapshotPath: option(args, "--snapshot") });
+      console.log(`Runtime lifecycle: ${path.join(result.outputDirectory, "runtime-lifecycle.json")}`);
+    }
     return;
   }
   if (command === "explain") {
     invariant(args[0] && args[1], "FPM_CLI_USAGE", "explain requires a provenance file and public identity.");
     const provenance = JSON.parse(await readFile(path.resolve(args[0]), "utf8"));
     console.log(JSON.stringify(explainProvenance(provenance, args[1]), null, 2));
+    return;
+  }
+  if (command === "explain-runtime") {
+    invariant(args[0] && args[1], "FPM_CLI_USAGE",
+      "explain-runtime requires a runtime lifecycle file and service or capability identity.");
+    const lifecycle = JSON.parse(await readFile(path.resolve(args[0]), "utf8"));
+    console.log(JSON.stringify(explainRuntime(lifecycle, args[1]), null, 2));
     return;
   }
   if (command === "store-report") {
