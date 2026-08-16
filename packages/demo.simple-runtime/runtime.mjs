@@ -97,12 +97,18 @@ export function renderSvg(scene) {
 </svg>`;
 }
 
-function html(scene, svg) {
+function html(scene, svg, live = true) {
   const rows = scene.objects.map((object) => `<li><strong>${escapeXml(object.id)}</strong><span>${escapeXml(object.sources.textureBinding.selected)}</span></li>`).join("");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FPM · ${escapeXml(scene.profile)}</title><style>
   :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#11191e;color:#e8f0ed;font:15px/1.45 Segoe UI,sans-serif;display:grid;grid-template-columns:minmax(0,960px) 320px;min-height:100vh;align-items:start}main{padding:24px}svg{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 18px 70px #0008}aside{padding:30px 24px;border-left:1px solid #ffffff18;min-height:100vh;background:#172228}h1{font-size:19px;margin:0 0 8px}p{color:#a9bbb4;margin:0 0 26px}ul{list-style:none;padding:0;margin:0}li{padding:13px 0;border-top:1px solid #ffffff13}li strong,li span{display:block;overflow-wrap:anywhere}li span{color:#80c99a;font-size:12px;margin-top:5px}@media(max-width:900px){body{display:block}aside{min-height:auto;border-left:0}main{padding:12px}}
-  </style></head><body><main>${svg}</main><aside><h1>Resolved scene</h1><p>The renderer knows this immutable flat snapshot only. Package discovery, handler dispatch, replacement resolution, and authoritative transform mutation happen elsewhere.</p><ul>${rows}</ul></aside></body></html>`;
+  </style></head><body><main><div id="scene-frame">${svg}</div></main><aside><h1>Resolved scene</h1><p>The renderer knows this immutable flat snapshot only. Package discovery, handler dispatch, replacement resolution, and authoritative transform mutation happen elsewhere.</p><ul>${rows}</ul></aside>${live ? `<script>
+  const stream = new EventSource('/events');
+  stream.onmessage = (event) => {
+    const frame = JSON.parse(event.data);
+    document.getElementById('scene-frame').innerHTML = frame.svg;
+  };
+  </script>` : ""}</body></html>`;
 }
 
 function openBrowser(url) {
@@ -128,17 +134,38 @@ export function createService() {
   let latestSvg = null;
   let document = "<!doctype html><title>FPM runtime starting</title>";
   let server = null;
+  let runtimeUrl = null;
   let snapshotPath = null;
+  const eventClients = new Set();
   const windowCapability = Object.freeze({
     scene: () => latestScene,
     svg: () => latestSvg,
+    url: () => runtimeUrl,
   });
   return {
     async activate(context) {
       snapshots = context.require("runtime.scene-snapshot");
       snapshotPath = context.options.snapshotPath;
+      latestScene = snapshots.current();
+      latestSvg = renderSvg(latestScene);
+      document = html(latestScene, latestSvg);
+      if (snapshotPath) {
+        await mkdir(path.dirname(snapshotPath), { recursive: true });
+        await writeFile(snapshotPath, `${latestSvg}\n`, "utf8");
+      }
       if (context.options.interactive) {
         server = http.createServer((request, responseValue) => {
+          if (request.url === "/events") {
+            responseValue.writeHead(200, {
+              "content-type": "text/event-stream; charset=utf-8",
+              "cache-control": "no-store",
+              connection: "keep-alive",
+            });
+            eventClients.add(responseValue);
+            responseValue.write(`data: ${JSON.stringify({ svg: latestSvg })}\n\n`);
+            request.once("close", () => eventClients.delete(responseValue));
+            return;
+          }
           if (request.url !== "/") {
             responseValue.writeHead(404).end("Not found");
             return;
@@ -151,10 +178,10 @@ export function createService() {
           server.listen(0, "127.0.0.1", resolve);
         });
         const address = server.address();
-        const url = `http://127.0.0.1:${address.port}/`;
-        console.log(`Runtime: ${url}`);
+        runtimeUrl = `http://127.0.0.1:${address.port}/`;
+        console.log(`Runtime: ${runtimeUrl}`);
         console.log("Press Ctrl+C to stop the live runtime.");
-        openBrowser(url);
+        if (context.options.openBrowser) openBrowser(runtimeUrl);
       }
       return {
         protocol: "fpm.runtime-service-response/1",
@@ -165,14 +192,19 @@ export function createService() {
       latestScene = snapshots.current();
       latestSvg = renderSvg(latestScene);
       document = html(latestScene, latestSvg);
+      const event = `data: ${JSON.stringify({ svg: latestSvg })}\n\n`;
+      for (const client of eventClients) client.write(event);
       if (snapshotPath) {
         await mkdir(path.dirname(snapshotPath), { recursive: true });
         await writeFile(snapshotPath, `${latestSvg}\n`, "utf8");
       }
     },
     async deactivate() {
+      for (const client of eventClients) client.end();
+      eventClients.clear();
       if (server) await new Promise((resolve) => server.close(resolve));
       server = null;
+      runtimeUrl = null;
       snapshots = null;
       snapshotPath = null;
     },
@@ -200,7 +232,7 @@ async function directMain() {
     await writeFile(snapshotPath, `${svg}\n`, "utf8");
     console.log(`Snapshot: ${snapshotPath}`);
   } else {
-    const document = html(scene, svg);
+    const document = html(scene, svg, false);
     const server = http.createServer((request, responseValue) => {
       if (request.url !== "/") {
         responseValue.writeHead(404).end("Not found");

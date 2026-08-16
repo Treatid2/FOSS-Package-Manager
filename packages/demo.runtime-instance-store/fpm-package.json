@@ -1,7 +1,7 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.runtime-instance-store",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "license": "Apache-2.0",
   "runtimeServices": [
     {
@@ -9,9 +9,10 @@
       "protocol": "fpm.runtime-service/1",
       "artifactAccess": "read",
       "provides": [
-        { "capability": "runtime.instances.read", "version": "1.0.0", "exclusive": true },
-        { "capability": "runtime.instances.materialize", "version": "1.0.0", "exclusive": true },
-        { "capability": "runtime.instances.destroy", "version": "1.0.0", "exclusive": true }
+        { "capability": "runtime.instances.read", "version": "1.0.0", "exclusive": true, "binding": "runtime.instances/1" },
+        { "capability": "runtime.instances.materialize", "version": "1.0.0", "exclusive": true, "binding": "runtime.instances/1" },
+        { "capability": "runtime.instances.destroy", "version": "1.0.0", "exclusive": true, "binding": "runtime.instances/1" },
+        { "capability": "runtime.instances.state", "version": "1.0.0", "exclusive": true, "binding": "runtime.instances/1" }
       ],
       "requires": [],
       "execution": {

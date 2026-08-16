@@ -18,7 +18,8 @@ function usage() {
 Usage:
   node src/cli.mjs validate <profile.json>
   node src/cli.mjs build <profile.json> [--out <directory>]
-  node src/cli.mjs run <profile.json> [--out <directory>] [--snapshot <file.svg>]
+  node src/cli.mjs run <profile.json> [--out <directory>] [--snapshot <file.svg>] [--ticks <count>]
+                               [--load <save-id>] [--save <save-id>]
   node src/cli.mjs explain <provenance.json> <public-id>
   node src/cli.mjs explain-runtime <runtime-lifecycle.json> <service-or-capability>
   node src/cli.mjs store-report <artifact-store-directory>
@@ -59,7 +60,17 @@ async function main() {
     console.log(`Artifact store: ${result.storeDirectory}`);
     console.log(`Cache: ${result.cache.hits} reused, ${result.cache.misses} materialized`);
     if (command === "run") {
-      await runRuntime(result, { snapshotPath: option(args, "--snapshot") });
+      const ticksOption = option(args, "--ticks");
+      const ticks = ticksOption === null ? undefined : Number(ticksOption);
+      invariant(ticks === undefined || (Number.isInteger(ticks) && ticks >= 0), "FPM_CLI_USAGE",
+        "--ticks requires a non-negative integer.");
+      const loadSaveId = option(args, "--load");
+      const saveId = option(args, "--save");
+      await runRuntime(result, {
+        snapshotPath: option(args, "--snapshot"), ticks, loadSaveId, saveId,
+      });
+      if (loadSaveId) console.log(`Loaded world save: ${loadSaveId}`);
+      if (saveId) console.log(`Published world save: ${saveId}`);
       console.log(`Runtime lifecycle: ${path.join(result.outputDirectory, "runtime-lifecycle.json")}`);
     }
     return;

@@ -1,0 +1,22 @@
+{
+  "schema": "fpm.package/1",
+  "id": "demo.transform-migration-v1-v2",
+  "version": "0.5.0",
+  "license": "Apache-2.0",
+  "runtimeServices": [
+    {
+      "id": "service:demo.transform-migration-v1-v2/1",
+      "protocol": "fpm.runtime-service/1",
+      "provides": [
+        { "capability": "runtime.transforms.migration", "version": "1.0.0", "exclusive": true }
+      ],
+      "requires": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": ["host-user-authority"]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

@@ -1,11 +1,12 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.scene-extractor",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "license": "Apache-2.0",
   "dependencies": [
-    { "package": "demo.runtime-instance-store", "range": "^0.4.0" },
-    { "package": "demo.transform-authority", "range": "^0.4.0" }
+    { "package": "demo.runtime-instance-store", "range": "^0.5.0" },
+    { "package": "demo.transform-authority", "range": "^0.5.0" },
+    { "package": "demo.save-coordinator", "range": "^0.5.0" }
   ],
   "runtimeServices": [
     {
@@ -16,8 +17,9 @@
         { "capability": "runtime.scene-snapshot", "version": "1.0.0", "exclusive": true }
       ],
       "requires": [
-        { "capability": "runtime.instances.read", "range": "^1.0.0" },
-        { "capability": "runtime.transforms.read", "range": "^1.0.0" }
+        { "capability": "runtime.instances.read", "range": "^1.0.0", "binding": "runtime.instances/1" },
+        { "capability": "runtime.transforms.read", "range": "^1.0.0", "binding": "runtime.transforms/1" },
+        { "capability": "runtime.restore.ready", "range": "^1.0.0", "binding": "runtime.persistence/1" }
       ],
       "execution": {
         "form": "native-in-process",

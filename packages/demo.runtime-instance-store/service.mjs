@@ -16,17 +16,29 @@ function frozen(value) {
   return value;
 }
 
+const serviceId = "service:demo.runtime-instance-store/1";
+const stateSchema = "fpm.demo.instance-state";
+
 export function createService() {
   const persistent = new Map();
+  const definitions = new Map();
+  const destroyed = new Set();
   const slots = [];
   const generations = [];
   const leases = new Map();
   let nextLease = 1;
+  let stateRevision = 0;
 
   function record(instanceId) {
     const selected = persistent.get(instanceId);
     if (!selected) fail("FPM_RUNTIME_INSTANCE_MISSING", "A persistent runtime instance does not exist.", { instanceId });
     return selected;
+  }
+
+  function clearMaterialisations() {
+    leases.clear();
+    slots.length = 0;
+    for (const selected of persistent.values()) selected.materialization = null;
   }
 
   function resolve(handle) {
@@ -87,7 +99,62 @@ export function createService() {
       slots[selected.materialization.handle.slot] = null;
     }
     persistent.delete(instanceId);
-    return frozen({ schema: "fpm.runtime-destruction/1", instanceId, destroyed: true });
+    destroyed.add(instanceId);
+    stateRevision += 1;
+    return frozen({ schema: "fpm.runtime-destruction/1", instanceId, destroyed: true, revision: stateRevision });
+  }
+
+  function capture(checkpoint) {
+    return frozen({
+      protocol: "fpm.state-fragment/1",
+      semanticSchema: stateSchema,
+      schemaVersion: 1,
+      checkpoint: clone(checkpoint),
+      stateRevision,
+      references: {
+        definitions: [...persistent.values()].map((entry) => entry.definitionId).sort(),
+      },
+      payload: {
+        instances: [...persistent.values()].map((entry) => ({
+          instanceId: entry.instanceId,
+          definitionId: entry.definitionId,
+        })).sort((left, right) => left.instanceId.localeCompare(right.instanceId)),
+        destroyed: [...destroyed].sort(),
+      },
+    });
+  }
+
+  function prepareRestore() {
+    clearMaterialisations();
+  }
+
+  function restore(fragment) {
+    if (fragment?.protocol !== "fpm.state-fragment/1" || fragment.semanticSchema !== stateSchema
+      || fragment.schemaVersion !== 1 || !Array.isArray(fragment.payload?.instances)
+      || !Array.isArray(fragment.payload?.destroyed)) {
+      fail("FPM_STATE_FRAGMENT_UNSUPPORTED", "Instance Store cannot restore the supplied state fragment.", {
+        expectedSchema: stateSchema,
+        expectedVersion: 1,
+        actualSchema: fragment?.semanticSchema ?? null,
+        actualVersion: fragment?.schemaVersion ?? null,
+      });
+    }
+    clearMaterialisations();
+    persistent.clear();
+    destroyed.clear();
+    for (const saved of fragment.payload.instances) {
+      const definition = definitions.get(saved.instanceId);
+      if (!definition || definition.definitionId !== saved.definitionId) {
+        fail("FPM_STATE_DEFINITION_MISSING", "A saved world instance references an unavailable definition.", {
+          instanceId: saved.instanceId,
+          definitionId: saved.definitionId,
+        });
+      }
+      persistent.set(saved.instanceId, { ...clone(definition), materialization: null });
+    }
+    for (const instanceId of fragment.payload.destroyed) destroyed.add(instanceId);
+    stateRevision = fragment.stateRevision;
+    return frozen({ semanticSchema: stateSchema, schemaVersion: 1, restoredRevision: stateRevision });
   }
 
   return {
@@ -96,15 +163,13 @@ export function createService() {
         fail("FPM_RUNTIME_WORLD_INVALID", "The instance store requires a built render-scene world definition.");
       }
       for (const object of context.artifact.objects) {
-        if (!persistent.has(object.instance)) {
-          persistent.set(object.instance, {
-            instanceId: object.instance,
-            definitionId: object.definition,
-            objects: [],
-            materialization: null,
-          });
+        if (!definitions.has(object.instance)) {
+          definitions.set(object.instance, { instanceId: object.instance, definitionId: object.definition, objects: [] });
         }
-        persistent.get(object.instance).objects.push(clone(object));
+        definitions.get(object.instance).objects.push(clone(object));
+      }
+      for (const definition of definitions.values()) {
+        persistent.set(definition.instanceId, { ...clone(definition), materialization: null });
       }
       const read = frozen({
         list: () => [...persistent.values()].map((entry) => frozen({
@@ -115,14 +180,23 @@ export function createService() {
         })).sort((left, right) => left.instanceId.localeCompare(right.instanceId)),
         definition: (instanceId) => {
           const selected = record(instanceId);
-          return frozen({
-            instanceId: selected.instanceId,
-            definitionId: selected.definitionId,
-            objects: clone(selected.objects),
-          });
+          return frozen({ instanceId: selected.instanceId, definitionId: selected.definitionId,
+            objects: clone(selected.objects) });
         },
         resolve,
         exists: (instanceId) => persistent.has(instanceId),
+      });
+      const stateOwner = frozen({
+        protocol: "fpm.state-owner/1",
+        semanticSchema: stateSchema,
+        schemaVersion: 1,
+        required: true,
+        governingCapability: "runtime.instances.read",
+        provider: serviceId,
+        dependsOn: [],
+        capture,
+        prepareRestore,
+        restore,
       });
       return {
         protocol: "fpm.runtime-service-response/1",
@@ -130,13 +204,17 @@ export function createService() {
           "runtime.instances.read": read,
           "runtime.instances.materialize": frozen({ acquire, release }),
           "runtime.instances.destroy": frozen({ destroy }),
+          "runtime.instances.state": stateOwner,
         },
       };
     },
     async deactivate() {
       persistent.clear();
+      definitions.clear();
+      destroyed.clear();
       leases.clear();
       slots.length = 0;
+      stateRevision = 0;
     },
   };
 }

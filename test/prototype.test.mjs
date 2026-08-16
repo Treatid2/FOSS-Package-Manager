@@ -440,14 +440,15 @@ test("ambiguous exclusive runtime providers require explicit policy", async (con
   const ambiguous = await buildProfile(ambiguousProfile, path.join(root, "ambiguous"));
   assert.throws(() => resolveRuntimePlan(ambiguous), (error) => {
     assert.equal(error.code, "FPM_RUNTIME_PROVIDER_AMBIGUOUS");
-    assert.equal(error.details.capability, "runtime.transforms.write");
+    assert.match(error.details.capability, /^runtime\.transforms\./);
     assert.equal(error.details.candidates.length, 2);
     return true;
   });
   const selectedProfile = path.join(repository, "fixtures", "failures", "profiles", "selected-runtime-provider.json");
   const selected = await buildProfile(selectedProfile, path.join(root, "selected"));
   const host = await startRuntime(selected, { snapshotPath: path.join(root, "selected.svg") });
-  const choices = host.plan.record.selections.filter((entry) => entry.capability.startsWith("runtime.transforms."));
+  const choices = host.plan.record.selections.filter((entry) => entry.capability.startsWith("runtime.transforms.")
+    && entry.provider);
   assert.ok(choices.every((entry) => entry.package === "demo.transform-authority"
     && entry.reason === "profile-policy"));
   await host.shutdown();

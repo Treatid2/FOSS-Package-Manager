@@ -1,20 +1,20 @@
 {
   "schema": "fpm.profile/2",
-  "name": "selected-runtime-provider",
+  "name": "required-state-owner",
   "packageRoots": ["../../../packages", "../packages"],
   "distribution": {
-    "roots": ["bad.alternative-transform", "demo.simple-runtime", "demo.solid-colour-adapter", "demo.worldspace"],
+    "roots": [
+      "bad.required-counter",
+      "demo.simple-runtime",
+      "demo.scene-validator",
+      "demo.solid-colour-adapter",
+      "demo.worldspace"
+    ],
     "entryPoint": "pkg:demo.worldspace/world/demo",
     "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
     "activation": "runtime:demo.simple-runtime/browser-svg"
   },
   "target": { "platform": "portable-demo" },
-  "policy": {
-    "providers": {
-      "runtime.transforms/1": "demo.transform-authority"
-    },
-    "handlerSelections": {},
-    "adapterSelections": {}
-  },
+  "policy": { "providers": {}, "handlerSelections": {}, "adapterSelections": {} },
   "user": { "roots": [], "replacements": {} }
 }

@@ -1,19 +1,19 @@
 {
   "schema": "fpm.package/1",
-  "id": "bad.alternative-transform",
-  "version": "0.1.0",
+  "id": "demo.character-marker",
+  "version": "0.5.0",
   "license": "Apache-2.0",
   "dependencies": [
     { "package": "demo.runtime-instance-store", "range": "^0.5.0" }
   ],
   "runtimeServices": [
     {
-      "id": "service:bad.alternative-transform/1",
+      "id": "service:demo.character-marker/1",
       "protocol": "fpm.runtime-service/1",
       "provides": [
-        { "capability": "runtime.transforms.read", "version": "1.0.0", "exclusive": true, "binding": "runtime.transforms/1" },
-        { "capability": "runtime.transforms.write", "version": "1.0.0", "exclusive": true, "binding": "runtime.transforms/1" },
-        { "capability": "runtime.transforms.state", "version": "1.0.0", "exclusive": true, "binding": "runtime.transforms/1" }
+        { "capability": "runtime.marker.read", "version": "1.0.0", "exclusive": true, "binding": "runtime.marker/1" },
+        { "capability": "runtime.marker.write", "version": "1.0.0", "exclusive": true, "binding": "runtime.marker/1" },
+        { "capability": "runtime.marker.state", "version": "1.0.0", "exclusive": true, "binding": "runtime.marker/1" }
       ],
       "requires": [
         { "capability": "runtime.instances.read", "range": "^1.0.0", "binding": "runtime.instances/1" }

@@ -3,8 +3,9 @@
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { ArtifactStore } from "./artifacts.mjs";
 import { FpmError, invariant } from "./errors.mjs";
-import { resolveInside, writeJson } from "./io.mjs";
+import { resolveInside, sha256, stableJson, writeJson } from "./io.mjs";
 import { satisfies } from "./semver.mjs";
 
 function immutable(value) {
@@ -23,6 +24,7 @@ function publicService(service) {
     packageContentHash: `sha256:${service.owner.contentHash}`,
     protocol: service.protocol,
     artifactAccess: service.artifactAccess,
+    artifactStoreAccess: service.artifactStoreAccess,
     provides: service.provides,
     requires: service.requires,
     execution: {
@@ -78,6 +80,7 @@ export function resolveRuntimePlan(result) {
     }
   }
   const selectedCapabilities = new Map();
+  const selectedBindings = new Map();
   const selectedServices = new Map();
   const edges = new Map();
   const selections = [];
@@ -92,13 +95,40 @@ export function resolveRuntimePlan(result) {
           required: requirement.range,
           requestedBy,
         });
+      invariant(!requirement.binding || (previous.provided.binding === requirement.binding
+        && selectedBindings.get(requirement.binding)?.service.id === previous.service.id),
+      "FPM_RUNTIME_PROVIDER_BINDING_CONFLICT",
+      "Capabilities bound to one provider instance resolved to different services.", {
+        binding: requirement.binding,
+        capability: requirement.capability,
+        selectedProvider: previous.service.id,
+        requestedBy,
+      });
       return previous.service;
     }
-    const explicit = result.profile.providers[requirement.capability];
+    const explicit = result.profile.providers[requirement.binding] ?? result.profile.providers[requirement.capability];
     let candidates = (providers.get(requirement.capability) ?? [])
       .filter((entry) => satisfies(entry.provided.version, requirement.range));
+    if (requirement.binding) {
+      candidates = candidates.filter((entry) => entry.provided.binding === requirement.binding);
+      const bound = selectedBindings.get(requirement.binding);
+      if (bound) candidates = candidates.filter((entry) => entry.service.id === bound.service.id);
+    }
     if (explicit) candidates = candidates.filter((entry) => entry.service.owner.id === explicit
       || entry.service.id === explicit);
+    if (candidates.length === 0 && requirement.optional === true) {
+      selections.push({
+        capability: requirement.capability,
+        binding: requirement.binding ?? null,
+        required: requirement.range,
+        requestedBy,
+        provider: null,
+        package: null,
+        providedVersion: null,
+        reason: "optional-unavailable",
+      });
+      return null;
+    }
     invariant(candidates.length > 0, "FPM_RUNTIME_CAPABILITY_MISSING",
       "No selected runtime service provides a required capability.", {
         capability: requirement.capability,
@@ -118,9 +148,22 @@ export function resolveRuntimePlan(result) {
         })).sort((left, right) => left.service.localeCompare(right.service)),
       });
     const selected = candidates[0];
+    if (requirement.binding) {
+      const bound = selectedBindings.get(requirement.binding);
+      invariant(!bound || bound.service.id === selected.service.id, "FPM_RUNTIME_PROVIDER_BINDING_CONFLICT",
+        "Capabilities bound to one provider instance resolved to different services.", {
+          binding: requirement.binding,
+          existingProvider: bound?.service.id ?? null,
+          proposedProvider: selected.service.id,
+          capability: requirement.capability,
+          requestedBy,
+        });
+      selectedBindings.set(requirement.binding, selected);
+    }
     selectedCapabilities.set(requirement.capability, selected);
     selections.push({
       capability: requirement.capability,
+      binding: requirement.binding ?? null,
       required: requirement.range,
       requestedBy,
       provider: selected.service.id,
@@ -134,7 +177,7 @@ export function resolveRuntimePlan(result) {
       for (const dependency of [...selected.service.requires]
         .sort((left, right) => left.capability.localeCompare(right.capability))) {
         const provider = select(dependency, selected.service.id);
-        edges.get(selected.service.id).add(provider.id);
+        if (provider) edges.get(selected.service.id).add(provider.id);
       }
     }
     return selected.service;
@@ -181,10 +224,16 @@ export function resolveRuntimePlan(result) {
     },
     selections: selections.sort((left, right) => left.capability.localeCompare(right.capability)
       || left.requestedBy.localeCompare(right.requestedBy)),
+    providerBindings: [...selectedBindings.entries()].map(([binding, selected]) => ({
+      binding,
+      providerInstance: selected.service.id,
+      package: selected.service.owner.id,
+      reason: result.profile.providers[binding] ? "profile-policy" : "capability-selection",
+    })).sort((left, right) => left.binding.localeCompare(right.binding)),
     activationOrder: ordered.map((service) => service.id),
     services: ordered.map(publicService),
   };
-  return { activation, ordered, edges, selectedCapabilities, record };
+  return { activation, ordered, edges, selectedCapabilities, selectedBindings, record };
 }
 
 export class RuntimeHost {
@@ -216,18 +265,27 @@ export class RuntimeHost {
   }
 
   contextFor(service) {
-    const declared = new Set(service.requires.map((entry) => entry.capability));
+    const declared = new Map(service.requires.map((entry) => [entry.capability, entry]));
+    const artifactStore = service.artifactStoreAccess === "none" ? null : {
+      readTreeReference: (namespace, identity) => this.options.artifactStore.readTreeReference(namespace, identity),
+      ...(service.artifactStoreAccess === "read-write" ? {
+        publishTreeReference: (namespace, identity, files, metadata, publishOptions) => this.options.artifactStore
+          .publishTreeReference(namespace, identity, files, metadata, publishOptions),
+      } : {}),
+    };
     return immutable({
       service: { id: service.id, package: service.owner.id },
       artifact: service.artifactAccess === "read" ? this.artifact : null,
+      artifactStore,
       options: this.options.serviceOptions ?? {},
       require: (capability) => {
         invariant(declared.has(capability), "FPM_RUNTIME_AUTHORITY_DENIED",
           "A runtime service requested a capability outside its declared authority.", {
             service: service.id,
             capability,
-            declared: [...declared].sort(),
+            declared: [...declared.keys()].sort(),
           });
+        if (declared.get(capability).optional === true && !this.capabilities.has(capability)) return null;
         return this.capability(capability);
       },
     });
@@ -263,6 +321,12 @@ export class RuntimeHost {
         }
         this.active.push({ service, controller, context });
         this.lifecycle.events.push({ event: "activate", service: service.id });
+      }
+      for (const entry of this.active) {
+        if (typeof entry.controller.commit === "function") {
+          await entry.controller.commit(entry.context);
+          this.lifecycle.events.push({ event: "commit", service: entry.service.id });
+        }
       }
       this.lifecycle.state = "active";
       this.lifecycle.committed = true;
@@ -353,11 +417,24 @@ export async function startRuntime(result, options = {}) {
   const plan = resolveRuntimePlan(result);
   const artifact = JSON.parse(await readFile(result.artifactPath, "utf8"));
   const recordPath = options.recordPath ?? path.join(result.outputDirectory, "runtime-lifecycle.json");
+  const artifactStore = new ArtifactStore(result.storeDirectory, {
+    protocol: "fpm.artifact-transaction/2",
+    facts: {},
+    widenedDimensions: [],
+  });
   const host = new RuntimeHost(plan, artifact, {
     recordPath,
+    artifactStore,
     serviceOptions: {
       snapshotPath: options.snapshotPath ? path.resolve(options.snapshotPath) : null,
       interactive: options.interactive === true,
+      openBrowser: options.openBrowser !== false,
+      loadSaveId: options.loadSaveId ?? null,
+      sessionRecordPath: path.join(result.outputDirectory, "runtime-session.json"),
+      interruptSaveBeforePublication: options.interruptSaveBeforePublication === true,
+      distributionIdentity: `sha256:${sha256(stableJson(result.lockfile))}`,
+      runtimePlanIdentity: `sha256:${sha256(stableJson(plan.record))}`,
+      runtimePlan: plan.record,
     },
   });
   await host.activate();
@@ -369,6 +446,7 @@ export async function runRuntime(result, options = {}) {
   const host = await startRuntime(result, { ...options, interactive });
   const ticks = options.ticks ?? host.plan.activation.ticks ?? 8;
   for (let tick = 0; tick < ticks; tick += 1) await host.tick();
+  if (options.saveId) await host.capability("runtime.persistence.world").save(options.saveId);
   if (!interactive) {
     await host.shutdown();
     return host.lifecycle;

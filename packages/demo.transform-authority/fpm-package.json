@@ -1,22 +1,23 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.transform-authority",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "license": "Apache-2.0",
   "dependencies": [
-    { "package": "demo.runtime-instance-store", "range": "^0.4.0" }
+    { "package": "demo.runtime-instance-store", "range": "^0.5.0" }
   ],
   "runtimeServices": [
     {
       "id": "service:demo.transform-authority/1",
       "protocol": "fpm.runtime-service/1",
       "provides": [
-        { "capability": "runtime.transforms.read", "version": "1.0.0", "exclusive": true },
-        { "capability": "runtime.transforms.write", "version": "1.0.0", "exclusive": true }
+        { "capability": "runtime.transforms.read", "version": "1.0.0", "exclusive": true, "binding": "runtime.transforms/1" },
+        { "capability": "runtime.transforms.write", "version": "1.0.0", "exclusive": true, "binding": "runtime.transforms/1" },
+        { "capability": "runtime.transforms.state", "version": "1.0.0", "exclusive": true, "binding": "runtime.transforms/1" }
       ],
       "requires": [
-        { "capability": "runtime.instances.read", "range": "^1.0.0" },
-        { "capability": "runtime.instances.materialize", "range": "^1.0.0" }
+        { "capability": "runtime.instances.read", "range": "^1.0.0", "binding": "runtime.instances/1" },
+        { "capability": "runtime.instances.materialize", "range": "^1.0.0", "binding": "runtime.instances/1" }
       ],
       "execution": {
         "form": "native-in-process",

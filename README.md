@@ -2,7 +2,7 @@
 
 An executable language-laboratory prototype for a mod-native package system.
 
-This repository now tests three related propositions:
+This repository now tests four related propositions:
 
 > Can a small manager resolve declarative packages, dispatch specialised handlers, build deterministic artifacts, and explain exactly how each artifact was produced?
 
@@ -10,7 +10,9 @@ This repository now tests three related propositions:
 
 > Can independently selected runtime services create, mutate, observe, render, and retire live state through explicit capabilities and lifecycle rules rather than shared global objects?
 
-The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 4 now materialises the built world into distinct runtime services and moves the character sideways through an authoritative transform command before the unchanged renderer consumes an immutable scene snapshot.
+> Can those runtime authorities publish typed durable state, die completely, and reconstruct the same world under either the same service graph or an explicitly migrated one?
+
+The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 5 moves the character through an authoritative transform command, streams immutable snapshots to the browser, saves typed instance/transform/package state as one atomic tree reference, and restores it in a fresh runtime activation.
 
 ## Quick start
 
@@ -25,6 +27,15 @@ npm run demo
 ```
 
 `npm run demo` builds the Green Head profile, starts the disposable local runtime, and opens it in the default browser. Press Ctrl+C in the terminal to stop the runtime.
+
+The browser now receives subsequent SVG snapshots through a loopback server-sent-event stream, so the character moves without a page refresh. A deterministic save/reload round trip can be exercised with:
+
+```powershell
+node src/cli.mjs run profiles/green-head.json --snapshot build/saved.svg --ticks 2 --save save:demo/green-head-2
+node src/cli.mjs run profiles/green-head.json --snapshot build/restored.svg --ticks 0 --load save:demo/green-head-2
+```
+
+Save identities are immutable in this prototype; publish a new identity for a later revision.
 
 To ask why the head has its selected colour and see its action path:
 
@@ -56,6 +67,12 @@ node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/app
 - dependency-ordered activation, rollback, lifecycle recording, and reverse shutdown;
 - persistent instance identities, materialisation leases, and generational handles;
 - authoritative transform commands and immutable revisioned scene extraction;
+- provider-instance bindings which co-select coherent read, write, save, and restore facets;
+- typed state-owner fragments captured at one deterministic checkpoint;
+- atomic immutable world-save tree references in the content-addressed artifact store;
+- fresh-activation restore, explicit one-step state migration, and committed session records;
+- opaque retention for absent optional package state and pre-activation failure for missing required state;
+- server-sent immutable SVG updates for the disposable browser runtime;
 - rollback of failed handler actions without committing their output or action record;
 - lockfiles and provenance linking contributions, handlers, source artifacts, adapters, final inputs, and output artifacts;
 - a scene builder that receives only its own normalized scene analyses during planning and its declared texture artifacts during materialisation;
@@ -106,9 +123,16 @@ runtime instance store -> transform authority <- deterministic motion
                   +-------+-------+
                           v
               immutable scene revision
-                          |
-                          v
-                   existing SVG renderer
+                   +------+------+
+                   |             |
+                   v             v
+          streamed SVG       save coordinator
+                                  |
+                                  v
+                   atomic typed world-save tree
+                                  |
+                                  v
+                   fresh restore or migration
 ```
 
 Each action receives manager-supplied input paths and a private staging directory. The manager recomputes the output hash and size before importing it into the store and recording the graph mutation.
@@ -134,6 +158,10 @@ Each action receives manager-supplied input paths and a private staging director
 | `demo.runtime-clock` | Supplies deterministic single-threaded ticks |
 | `demo.motion` | Moves the block character through the transform-write capability |
 | `demo.scene-extractor` | Publishes immutable flat scene revisions from instance definitions and transform snapshots |
+| `demo.save-coordinator` | Captures coherent typed fragments, publishes immutable save trees, preflights compatibility, and restores owners in dependency order |
+| `demo.character-marker` | Tiny optional state owner used to prove opaque retention while its package is absent |
+| `demo.transform-authority-v2` | Alternative coherent transform provider with state schema version 2 |
+| `demo.transform-migration-v1-v2` | Explicit one-step attributed migration from transform-state v1 to v2 |
 
 The two toolchains are not profile roots. Packages require their distinct capabilities, so the resolver selects them transitively. The adapter is a distribution root because choosing permitted conversion policy is not an intrinsic property of either toolchain.
 
@@ -145,7 +173,8 @@ Building a profile creates:
 - `fpm.lock.json` — all resolution, authority, validation, environment, action, root, handler, and binding decisions;
 - `provenance.json` — an explanation index for exports, hooks, action paths, adapters, and artifacts;
 - `runtime-lifecycle.json` after `run` — selected runtime services, reasons, activation order, ticks, rollback-safe state, and reverse shutdown;
-- a sibling `.fpm-store/` — verified content objects and deterministic action-cache records.
+- `runtime-session.json` after activation — the committed fresh/load result, compatibility report, opaque retained fragments, and migrations;
+- a sibling `.fpm-store/` — verified content objects, deterministic action-cache records, and immutable world-save/migration references.
 
 Generated outputs live under `build/` and are ignored by Git. Cache hits are deliberately observational and are not written into the lockfile, so a cold and warm build produce identical records.
 
@@ -163,14 +192,15 @@ Generated outputs live under `build/` and are ignored by Git. Cache hits are del
 - an action that writes to staging and then fails, exercising rollback;
 - a portable action that successfully uses its declared byte capabilities, probes undeclared host read/write/network authority, and is denied without publication.
 - stale runtime handles, release-versus-destruction, transform authority denial, ambiguous exclusive providers, activation rollback, and dependency-safe shutdown.
+- interrupted save publication, missing required state owners, opaque optional state, ambiguous migrations, and coherent provider bundles.
 
 The test suite asserts diagnostic codes and relevant context. It also verifies deterministic discovery, cache reuse, explicit adapter policy, handler separation, reproducible outputs, and runtime consumption.
 
 ## Explicit non-goals
 
-This is not yet a production package format, general native-code sandbox, repository client, distributed artifact store, general adapter search, cache garbage collector, parallel runtime scheduler, streaming world, or persistent save system. The renderer is intentionally disposable and the formats remain provisional.
+This is not yet a production package format, general native-code sandbox, repository client, distributed artifact store, general adapter or migration-path search, cache garbage collector, parallel runtime scheduler, streaming world, crash-durable save system, mutable save-slot manager, or networked game runtime. The renderer is intentionally disposable and the formats remain provisional.
 
-See [docs/architecture-snapshot-v0.md](docs/architecture-snapshot-v0.md) for the generated experimental contract checkpoint, [docs/prototype-formats.md](docs/prototype-formats.md) for public protocol notes, and [docs/phase-4-findings.md](docs/phase-4-findings.md) for the live-state evidence and limitations.
+See [docs/architecture-snapshot-v0.md](docs/architecture-snapshot-v0.md) for the generated experimental contract checkpoint, [docs/prototype-formats.md](docs/prototype-formats.md) for public protocol notes, and [docs/phase-5-findings.md](docs/phase-5-findings.md) for the durable-state evidence and limitations.
 
 ## Security status
 

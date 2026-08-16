@@ -37,7 +37,8 @@
   },
   "user": {
     "roots": [
-      "demo.green-head"
+      "demo.green-head",
+      "demo.character-marker"
     ],
     "replacements": {}
   }

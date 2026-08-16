@@ -1,10 +1,10 @@
 {
   "name": "foss-package-manager",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "license": "MPL-2.0",
   "private": true,
   "type": "module",
-  "description": "A language-laboratory prototype for governed package builds and capability-resolved live runtime services.",
+  "description": "A language-laboratory prototype for governed package builds, live runtime services, and durable typed world state.",
   "scripts": {
     "build": "node src/cli.mjs build profiles/base.json",
     "build:green": "node src/cli.mjs build profiles/green-head.json",

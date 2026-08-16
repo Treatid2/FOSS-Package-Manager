@@ -160,6 +160,7 @@ function validateManifest(manifest, manifestPath) {
     provides: service?.provides ?? [],
     requires: service?.requires ?? [],
     artifactAccess: service?.artifactAccess ?? "none",
+    artifactStoreAccess: service?.artifactStoreAccess ?? "none",
     execution: service?.execution ?? {
       form: "native-in-process",
       securityBoundary: "none",
@@ -170,6 +171,7 @@ function validateManifest(manifest, manifestPath) {
     invariant(typeof service?.id === "string" && service.id.startsWith("service:")
       && service.protocol === "fpm.runtime-service/1" && typeof service.module === "string"
       && ["none", "read"].includes(service.artifactAccess)
+      && ["none", "read", "read-write"].includes(service.artifactStoreAccess)
       && Array.isArray(service.provides) && service.provides.length > 0 && Array.isArray(service.requires),
     "FPM_MANIFEST_INVALID", "A runtime service declaration is malformed.", { package: manifest.id, service });
     invariant(service.execution?.form === "native-in-process" && service.execution.securityBoundary === "none"
@@ -177,12 +179,16 @@ function validateManifest(manifest, manifestPath) {
     "A runtime service execution declaration is malformed.", { package: manifest.id, service: service.id });
     for (const provided of service.provides) {
       invariant(typeof provided?.capability === "string" && typeof provided.version === "string"
-        && provided.exclusive === true, "FPM_MANIFEST_INVALID",
+        && provided.exclusive === true && (provided.binding === undefined
+          || (typeof provided.binding === "string" && provided.binding.length > 0)), "FPM_MANIFEST_INVALID",
       "A runtime service capability declaration is malformed.", { package: manifest.id, service: service.id, provided });
       parseVersion(provided.version, "runtime service capability version");
     }
     for (const requirement of service.requires) {
-      invariant(typeof requirement?.capability === "string" && typeof requirement.range === "string",
+      invariant(typeof requirement?.capability === "string" && typeof requirement.range === "string"
+        && (requirement.optional === undefined || typeof requirement.optional === "boolean")
+        && (requirement.binding === undefined
+          || (typeof requirement.binding === "string" && requirement.binding.length > 0)),
         "FPM_MANIFEST_INVALID", "A runtime service requirement is malformed.", {
           package: manifest.id,
           service: service.id,

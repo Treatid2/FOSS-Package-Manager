@@ -1,0 +1,22 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.required-counter",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "runtimeServices": [
+    {
+      "id": "service:bad.required-counter/1",
+      "protocol": "fpm.runtime-service/1",
+      "provides": [
+        { "capability": "runtime.required-counter.state", "version": "1.0.0", "exclusive": true, "binding": "runtime.required-counter/1" }
+      ],
+      "requires": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": ["host-user-authority"]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

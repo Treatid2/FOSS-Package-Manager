@@ -2,7 +2,7 @@
 
 # Prototype format notes
 
-All formats are provisional and use exact versioned identifiers. Phase 4 preserves the Phase 3 build contracts and adds runtime-service declarations, capability selection, identity/lifetime distinctions, and lifecycle records. Lockfile and provenance documents remain version 3.
+All formats are provisional and use exact versioned identifiers. Phase 5 preserves the Phase 3 build and Phase 4 runtime contracts while adding provider-instance bindings, optional runtime requirements, typed durable-state fragments, immutable save-tree references, explicit one-step migration, and committed session records. Lockfile and provenance documents remain version 3.
 
 ## Core package envelope
 
@@ -13,6 +13,7 @@ Every package contains `fpm-package.json` with `schema: "fpm.package/1"`. The ma
 - contribution identity, manifest type, and manifest location;
 - handler declarations and their accepted/buildable types;
 - runtime service declarations, capability versions and requirements, artifact access, and lifecycle module;
+- runtime provider bindings, optional requirements, and declared content-store access;
 - execution form, security-boundary claim, and requested powers;
 - explicit one-step adapter declarations;
 - public replacement intent.
@@ -237,6 +238,48 @@ The reference runtime fixtures distinguish these contracts:
 Releasing the final lease may reclaim the materialised slot but does not destroy persistent identity. Explicit destruction removes the persistent instance. Slot reuse increments its generation, so an old handle cannot resolve to a new occupant.
 
 Transform Authority exposes separate read-snapshot and write-command capabilities. Scene Extractor receives only read capabilities and publishes a deeply immutable flat scene revision. The renderer depends on that snapshot capability and has no transform-write authority.
+
+## Phase 5: coherent provider bindings
+
+A provided or required runtime capability may name a generic provider binding. Every selected facet carrying the same binding resolves to one service instance:
+
+```text
+runtime.transforms/1
+    runtime.transforms.read
+    runtime.transforms.write
+    runtime.transforms.state
+```
+
+Policy may select by binding identity. The plan records the provider instance once and records every capability selection separately. This prevents a reader, writer, saver, and restorer from accidentally addressing different state domains. Optional requirements are explicit and return no capability when no compatible provider is present; they never apply an arbitrary fallback.
+
+## Phase 5: durable state fragments and save trees
+
+A state-owning service exposes `fpm.state-owner/1` through a bound capability. Its contract declares a semantic schema identity and integer version, required/optional status, governing capability, provider, state-owner dependencies, capture, quiesce-before-restore, and restore operations.
+
+Capture produces a deeply immutable `fpm.state-fragment/1` at a coordinator-supplied `fpm.runtime-tick/1` checkpoint. Domain revision is recorded separately from the shared checkpoint. The coordinator validates that every fragment names the same checkpoint but does not interpret owner payloads.
+
+`fpm.world-save/1` is stored as an ordinary canonical `fpm.tree/1` containing `save-manifest.json` plus one JSON fragment blob per owner. The manifest records:
+
+- immutable save identity and format version;
+- shared checkpoint;
+- distribution and runtime-plan identities;
+- fragment schema/version, required status, governing capability, provider package and implementation hash;
+- exact fragment blob root, owner revision, declared dependencies, and definition references;
+- migration history.
+
+Objects and the tree root are imported before one create-only `fpm.artifact-reference/1` is published. That reference is the semantic commit point. An interruption before it leaves reportable orphan objects and cannot replace an earlier valid save. Save identities are immutable rather than mutable slots.
+
+## Phase 5: compatibility, restore, and migration
+
+Restore reads the manifest first and builds a compatibility report before invoking state owners. Missing optional owners leave their fragment roots recorded as `retained-uninterpreted`; their payload is not parsed. A missing required owner fails activation with its schema, capability, last provider, available migration evidence, and reason. No runtime lifecycle or session record is committed.
+
+Selected owners prepare for restore in reverse dependency order, then restore in dependency order. Ordinary motion, extraction, and rendering services require the coordinator's ready capability, so they activate only after restore succeeds. The coordinator publishes `fpm.runtime-session/1` only from the runtime host's post-activation commit hook.
+
+Migration is one step and explicit. `fpm.state-migration/1` declares one exact schema/version input and output. Two compatible implementations fail as ambiguous unless profile policy selects one. A successful migration publishes a separate immutable derived fragment tree and records the package, implementation hash, input/output roots, and selection policy; the original save remains untouched.
+
+## Phase 5: live browser updates
+
+The loopback renderer still consumes only immutable scene snapshots. Its initial page opens one server-sent-event stream, and each renderer tick replaces only the displayed SVG with the newest snapshot. This closes the Phase 4 presentation gap without introducing general gameplay networking or giving the renderer mutation authority.
 
 ## Lockfile and provenance
 

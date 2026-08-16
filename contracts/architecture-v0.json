@@ -3,7 +3,7 @@
   "status": "experimental",
   "compatibilityPromise": false,
   "title": "FOSS Package Manager prototype architecture snapshot v0",
-  "purpose": "Record the executable distinctions established through Phase 4 without freezing them as a public compatibility promise.",
+  "purpose": "Record the executable distinctions established through Phase 5 without freezing them as a public compatibility promise.",
   "sections": [
     {
       "id": "universal-envelope",
@@ -96,14 +96,29 @@
       "id": "runtime-lifecycle",
       "title": "Runtime service identity and lifecycle",
       "classification": "manager-core",
-      "summary": "The manager selects exclusive service capabilities, activates providers dependency-first, injects only declared capabilities, commits a lifecycle record after complete activation, and shuts down in reverse dependency order. Definition, persistent instance, generational handle, materialisation lease, and mutation authority are distinct identities.",
+      "summary": "The manager selects exclusive service capabilities, co-selects bound facets from one provider instance, activates providers dependency-first, injects only declared capabilities, commits after complete activation, and shuts down in reverse dependency order. Definition, persistent instance, generational handle, materialisation lease, mutation authority, state fragment, and saved tree are distinct identities.",
       "contracts": [
         "fpm.runtime-service/1",
         "fpm.runtime-activation/1",
         "fpm.runtime-plan/1",
         "fpm.runtime-lifecycle/1",
+        "provider-instance bindings and optional requirements",
         "fpm.runtime-handle/1",
         "fpm.materialisation-lease/1"
+      ]
+    },
+    {
+      "id": "durable-world-state",
+      "title": "Durable typed world state and evolution",
+      "classification": "boundary",
+      "summary": "Selected runtime authorities capture opaque typed fragments at one checkpoint. A coordinator publishes them as one immutable content-addressed save tree, preflights restore, retains absent optional state, rejects missing required owners, and records explicit one-step migration without manager-core interpretation of domain payloads.",
+      "contracts": [
+        "fpm.state-owner/1",
+        "fpm.state-fragment/1",
+        "fpm.world-save/1",
+        "fpm.artifact-reference/1",
+        "fpm.state-migration/1",
+        "fpm.runtime-session/1"
       ]
     },
     {

@@ -166,6 +166,13 @@ export class ArtifactStore {
     return path.join(this.directory, "leases", buildKey);
   }
 
+  referencePath(namespace, identity) {
+    invariant(/^[a-z0-9][a-z0-9.-]*$/.test(namespace ?? "") && typeof identity === "string"
+      && identity.length > 0, "FPM_ARTIFACT_REFERENCE_INVALID",
+    "An artifact reference namespace or identity is invalid.", { namespace, identity });
+    return path.join(this.directory, "references", namespace, `${sha256(identity)}.json`);
+  }
+
   async verifyRoot(root) {
     const match = HASH.exec(root.hash ?? "");
     if (!match) return false;
@@ -334,6 +341,101 @@ export class ArtifactStore {
     const filePath = path.join(stagingDirectory, `.root-${randomUUID()}`);
     await writeFile(filePath, content);
     return this.importFile(filePath);
+  }
+
+  async publishTreeReference(namespace, identity, files, metadata = {}, options = {}) {
+    invariant(files && typeof files === "object" && !Array.isArray(files)
+      && Object.keys(files).length > 0, "FPM_TREE_EMPTY",
+    "A referenced tree must contain at least one file.", { namespace, identity });
+    const stagingDirectory = path.join(this.directory, "staging", randomUUID());
+    await mkdir(stagingDirectory, { recursive: true });
+    const entries = [];
+    try {
+      for (const relative of Object.keys(files).sort()) {
+        invariant(relative.length > 0 && relative === relative.replaceAll("\\", "/")
+          && !relative.startsWith("../") && !path.posix.isAbsolute(relative), "FPM_TREE_PATH_INVALID",
+        "A referenced tree entry has an invalid relative path.", { namespace, identity, relative });
+        const stagedPath = resolveInside(stagingDirectory, relative, "referenced tree entry");
+        await mkdir(path.dirname(stagedPath), { recursive: true });
+        const content = typeof files[relative] === "string" || Buffer.isBuffer(files[relative])
+          ? files[relative] : stableJson(files[relative]);
+        await writeFile(stagedPath, content);
+        const size = (await stat(stagedPath)).size;
+        const imported = await this.importFile(stagedPath);
+        entries.push({ path: relative, kind: "blob", hash: imported.hash, size });
+      }
+      const manifestText = stableJson({ schema: "fpm.tree/1", entries });
+      const importedRoot = await this.importContent(manifestText, stagingDirectory);
+      const importedRoots = [...entries.map((entry) => entry.hash), importedRoot.hash];
+      if (options.interruptBeforeReference) {
+        throw new FpmError("FPM_SIMULATED_INTERRUPTION",
+          "The test fixture interrupted publication after object import and before reference commit.", {
+            namespace,
+            identity,
+            importedRoots,
+          });
+      }
+      const record = {
+        schema: "fpm.artifact-reference/1",
+        namespace,
+        identity,
+        root: {
+          kind: "tree",
+          hash: importedRoot.hash,
+          size: Buffer.byteLength(manifestText),
+          totalSize: entries.reduce((sum, entry) => sum + entry.size, 0),
+        },
+        metadata,
+      };
+      const recordPath = this.referencePath(namespace, identity);
+      if (await writeCreateOnly(recordPath, stableJson(record))) return record;
+      let existing;
+      try {
+        existing = JSON.parse(await readFile(recordPath, "utf8"));
+      } catch (error) {
+        throw new FpmError("FPM_ARTIFACT_REFERENCE_INVALID", "An existing artifact reference is unreadable.", {
+          namespace, identity, cause: error.message,
+        });
+      }
+      invariant(existing.schema === "fpm.artifact-reference/1" && existing.namespace === namespace
+        && existing.identity === identity && existing.root?.hash === record.root.hash,
+      "FPM_ARTIFACT_REFERENCE_CONFLICT",
+      "One immutable artifact reference identity cannot publish two different roots.", {
+        namespace,
+        identity,
+        existingRoot: existing.root?.hash ?? null,
+        proposedRoot: record.root.hash,
+      });
+      return existing;
+    } finally {
+      await rm(stagingDirectory, { recursive: true, force: true });
+    }
+  }
+
+  async readTreeReference(namespace, identity) {
+    const recordPath = this.referencePath(namespace, identity);
+    let record;
+    try {
+      record = JSON.parse(await readFile(recordPath, "utf8"));
+    } catch (error) {
+      throw new FpmError("FPM_ARTIFACT_REFERENCE_MISSING", "A requested artifact reference does not exist.", {
+        namespace, identity, cause: error.message,
+      });
+    }
+    invariant(record.schema === "fpm.artifact-reference/1" && record.namespace === namespace
+      && record.identity === identity && record.root?.kind === "tree" && await this.verifyRoot(record.root),
+    "FPM_ARTIFACT_REFERENCE_INVALID", "A requested artifact reference or its tree is invalid.", {
+      namespace, identity,
+    });
+    const rootHash = HASH.exec(record.root.hash)?.[1];
+    const manifest = JSON.parse(await readFile(this.objectPath(rootHash), "utf8"));
+    const files = {};
+    for (const entry of manifest.entries) {
+      const hash = HASH.exec(entry.hash)?.[1];
+      invariant(hash, "FPM_TREE_MANIFEST_INVALID", "A referenced tree entry has an invalid hash.", { entry });
+      files[entry.path] = await readFile(this.objectPath(hash), "utf8");
+    }
+    return { record, files };
   }
 
   async commitBlob(action, declaration, reported, stagingDirectory) {
@@ -609,6 +711,7 @@ export class ArtifactStore {
   async reachabilityReport(pinnedHashes = []) {
     const roots = new Set(pinnedHashes.map((hash) => hash.replace(/^sha256:/, "")));
     const invalidActionRecords = [];
+    const invalidReferences = [];
     const actionsDirectory = path.join(this.directory, "actions");
     if (await exists(actionsDirectory)) {
       for (const entry of await readdir(actionsDirectory, { withFileTypes: true })) {
@@ -622,6 +725,26 @@ export class ArtifactStore {
           }
         } catch {
           invalidActionRecords.push(entry.name);
+        }
+      }
+    }
+
+    const referencesDirectory = path.join(this.directory, "references");
+    if (await exists(referencesDirectory)) {
+      for (const namespace of await readdir(referencesDirectory, { withFileTypes: true })) {
+        if (!namespace.isDirectory()) continue;
+        for (const entry of await readdir(path.join(referencesDirectory, namespace.name), { withFileTypes: true })) {
+          if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+          try {
+            const record = JSON.parse(await readFile(path.join(referencesDirectory, namespace.name, entry.name), "utf8"));
+            const hash = HASH.exec(record.root?.hash ?? "")?.[1];
+            if (record.schema !== "fpm.artifact-reference/1" || record.namespace !== namespace.name || !hash) {
+              throw new Error("unsupported reference");
+            }
+            roots.add(hash);
+          } catch {
+            invalidReferences.push(`${namespace.name}/${entry.name}`);
+          }
         }
       }
     }
@@ -667,6 +790,7 @@ export class ArtifactStore {
       reachableCount: objects.length - orphaned.length,
       orphaned: orphaned.map((hash) => `sha256:${hash}`),
       invalidActionRecords: invalidActionRecords.sort(),
+      invalidReferences: invalidReferences.sort(),
       destructive: false,
     };
   }
