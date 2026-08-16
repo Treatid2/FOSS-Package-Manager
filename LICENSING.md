@@ -18,11 +18,13 @@ The canonical MPL-2.0 text is in [LICENSE](LICENSE).
 The following paths are licensed under the Apache License 2.0 (`Apache-2.0`):
 
 - `docs/prototype-formats.md` and future public package-language specifications or schemas that carry the same SPDX identifier;
+- `contracts/**` experimental public architecture/schema registries;
 - `packages/**` example packages, handlers, and runtime implementations;
 - `profiles/**` distribution and user-profile examples;
 - `fixtures/**` conformance and diagnostic fixtures;
 - `test/**` conformance-oriented tests.
 - `tools/generate-wasm-fixtures.mjs`, which generates the portable example and conformance modules.
+- `tools/render-architecture-snapshot.mjs`, which renders the experimental architecture snapshot.
 
 The canonical Apache-2.0 text is in [LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt).
 

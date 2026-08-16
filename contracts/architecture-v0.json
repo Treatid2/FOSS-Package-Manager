@@ -1,0 +1,106 @@
+{
+  "schema": "fpm.architecture-snapshot/0",
+  "status": "experimental",
+  "compatibilityPromise": false,
+  "title": "FOSS Package Manager prototype architecture snapshot v0",
+  "purpose": "Record the executable distinctions established through Phase 3 without freezing them as a public compatibility promise.",
+  "sections": [
+    {
+      "id": "universal-envelope",
+      "title": "Universal envelope and core vocabulary",
+      "classification": "manager-core",
+      "summary": "The manager owns package identity, versions, licences, dependency/capability edges, contributions, handlers, semantic relations, runtime services, replacements, and execution declarations; domain payloads remain opaque.",
+      "contracts": [
+        "fpm.package/1",
+        "fpm.profile/1 compatibility input",
+        "fpm.profile/2 governed input"
+      ]
+    },
+    {
+      "id": "normalized-report",
+      "title": "Normalized manager-facing report",
+      "classification": "manager-core",
+      "summary": "Handlers translate extension manifests into attributed exports, hooks, activations, productions, findings, and plans. The manager compares identities and types but does not interpret domain payloads.",
+      "contracts": [
+        "fpm.handler-request/1",
+        "fpm.handler-response/1",
+        "public export and hook identities",
+        "typed production proposals"
+      ]
+    },
+    {
+      "id": "actions",
+      "title": "Action proposals and committed action records",
+      "classification": "manager-core",
+      "summary": "A proposal describes work and declared roots. The manager validates and schedules the accepted DAG. An immutable action record is the semantic commit point and is published only after every named root verifies.",
+      "contracts": [
+        "fpm.action-key/2",
+        "fpm.action-cache/2",
+        "fpm.artifact-transaction/2"
+      ]
+    },
+    {
+      "id": "artifacts",
+      "title": "Blob and tree artifact identity",
+      "classification": "manager-core",
+      "summary": "A blob is identified by its exact bytes. A tree is identified by a canonical manifest over sorted normalized blob entries. Object presence alone never represents a successful action.",
+      "contracts": [
+        "sha256 blob identity",
+        "fpm.tree/1",
+        "named blob-or-tree roots"
+      ]
+    },
+    {
+      "id": "validation",
+      "title": "Findings and policy decisions",
+      "classification": "manager-core",
+      "summary": "Independent attributed findings coexist. Policy records required passes, unwaived failures, exact waivers, and the rule responsible for acceptance without voting or overwriting evidence.",
+      "contracts": [
+        "fpm.validation-finding/1",
+        "fpm.validation-decision/1"
+      ]
+    },
+    {
+      "id": "semantic-relations",
+      "title": "Governed semantic relation identity",
+      "classification": "manager-core",
+      "summary": "A vocabulary package stewards a versioned relation identity. Hooks reference it, adapters implement it, and policy may select by exact requirement or relation identity. Conversion remains one step.",
+      "contracts": [
+        "relation:<vocabulary>/<name>/<version>",
+        "exact nominal source and target types"
+      ]
+    },
+    {
+      "id": "profile-authority",
+      "title": "Profile statement authority",
+      "classification": "manager-core",
+      "summary": "Every implemented profile field has a statement kind, owning layer, and merge law. Unknown statements fail; lower-authority layers cannot silently redefine fixed distribution facts.",
+      "contracts": [
+        "fpm.profile/2",
+        "fpm.profile-authority-record/1"
+      ]
+    },
+    {
+      "id": "execution",
+      "title": "Execution forms and powers",
+      "classification": "manager-core",
+      "summary": "Semantic role is distinct from execution form. Declarations record requested powers; action records separately preserve actual grants, denied ambient powers, runner identity, environment dimensions, and limits.",
+      "contracts": [
+        "external-process with host-user authority",
+        "portable-wasm with byte-capability imports",
+        "data-only declarations",
+        "native-in-process runtime service (Phase 4 candidate)"
+      ]
+    },
+    {
+      "id": "dialects-and-core",
+      "title": "Manager core concepts and extension dialects",
+      "classification": "boundary",
+      "summary": "The manager selects and authorises active providers for store, scheduling, portable execution, policy, profile authority, and runtime lifecycle. Texture, scene, worldspace, motion, and rendering schemas are independently implemented extension dialects.",
+      "contracts": [
+        "core authority does not imply permanent monolithic implementation",
+        "extension payload meaning remains outside the manager"
+      ]
+    }
+  ]
+}

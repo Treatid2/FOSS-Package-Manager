@@ -11,6 +11,8 @@
     "demo": "node src/cli.mjs run profiles/green-head.json",
     "snapshot": "node src/cli.mjs run profiles/green-head.json --snapshot build/green-head/scene.svg",
     "generate:wasm": "node tools/generate-wasm-fixtures.mjs",
+    "contracts:generate": "node tools/render-architecture-snapshot.mjs",
+    "contracts:check": "node tools/render-architecture-snapshot.mjs --check",
     "test": "node --test"
   },
   "engines": {

@@ -48,6 +48,16 @@ function runBuildProcess(profile, output) {
   });
 }
 
+test("the experimental architecture snapshot matches its source registry", () => {
+  const execution = spawnSync(process.execPath,
+    [path.join(repository, "tools", "render-architecture-snapshot.mjs"), "--check"], {
+      cwd: repository,
+      encoding: "utf8",
+      windowsHide: true,
+    });
+  assert.equal(execution.status, 0, execution.stderr);
+});
+
 test("base and Green Head profiles build through the same package graph", async (context) => {
   const root = await temporaryDirectory("vertical-slice");
   context.after(() => rm(root, { recursive: true, force: true }));
