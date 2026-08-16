@@ -159,9 +159,14 @@ test("explicit policy exclusion and package absence retain optional state until 
     member: "state-owner:demo.character-journal/1",
     providerInstance: "service:demo.character-journal/1",
     package: "demo.character-journal",
+    packageContentHash: collection.exclusions[0].packageContentHash,
+    metadata: collection.exclusions[0].metadata,
+    metadataRoot: collection.exclusions[0].metadataRoot,
     policy: "policy:demo.exclude-journal-state/1",
     reason: "profile-policy-exclusion",
   }]);
+  assert.match(collection.exclusions[0].packageContentHash, /^sha256:[0-9a-f]{64}$/);
+  assert.match(collection.exclusions[0].metadataRoot, /^sha256:[0-9a-f]{64}$/);
   assert.deepEqual(excluded.capability("runtime.persistence.world").report().retainedOpaque
     .map((entry) => entry.member), ["state-owner:demo.character-journal/1"]);
   assert.equal(explainRuntime(excluded.lifecycle, "state-owner:demo.character-journal/1")

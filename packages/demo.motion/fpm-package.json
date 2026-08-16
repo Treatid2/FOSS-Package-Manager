@@ -1,33 +1,39 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.motion",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "license": "Apache-2.0",
-  "dependencies": [
-    { "package": "demo.runtime-clock", "range": "^0.4.0" },
-    { "package": "demo.runtime-instance-store", "range": "^0.6.0" },
-    { "package": "demo.transform-authority", "range": "^0.6.0" },
-    { "package": "demo.save-coordinator", "range": "^0.6.0" }
-  ],
-  "runtimeServices": [
-    {
-      "id": "service:demo.motion/1",
-      "protocol": "fpm.runtime-service/1",
-      "provides": [
-        { "capability": "runtime.motion.demo", "version": "1.0.0", "exclusive": true }
-      ],
-      "requires": [
-        { "capability": "runtime.clock.tick", "range": "^1.0.0" },
-        { "capability": "runtime.instances.read", "range": "^1.0.0", "binding": "runtime.instances/1" },
-        { "capability": "runtime.transforms.write", "range": "^1.0.0", "binding": "runtime.transforms/1" },
-        { "capability": "runtime.restore.ready", "range": "^1.0.0", "binding": "runtime.persistence/1" }
-      ],
-      "execution": {
-        "form": "native-in-process",
-        "securityBoundary": "none",
-        "requestedPowers": ["host-user-authority"]
-      },
-      "module": "./service.mjs"
-    }
-  ]
+  "runtimeServices": [{
+    "id": "service:demo.motion/1",
+    "protocol": "fpm.runtime-service/1",
+    "provides": [{
+      "capability": "runtime.task",
+      "version": "1.0.0",
+      "exclusive": false,
+      "cardinality": "collection",
+      "member": "task:demo.motion/set-x/1",
+      "binding": "runtime.task.demo-motion/1",
+      "memberDependencies": [],
+      "metadata": {
+        "phase": "simulation",
+        "snapshots": ["runtime.transforms.read"],
+        "outputs": [{
+          "channel": "runtime.transforms.commands",
+          "composition": "ordered",
+          "commitAfter": []
+        }],
+        "affinity": "any-worker",
+        "reentrancy": "non-reentrant",
+        "required": true,
+        "failure": "abort-tick"
+      }
+    }],
+    "requires": [],
+    "execution": {
+      "form": "native-in-process",
+      "securityBoundary": "none",
+      "requestedPowers": ["host-user-authority"]
+    },
+    "module": "./service.mjs"
+  }]
 }

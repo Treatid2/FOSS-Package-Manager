@@ -3,7 +3,7 @@
   "status": "experimental",
   "compatibilityPromise": false,
   "title": "FOSS Package Manager prototype architecture snapshot v0",
-  "purpose": "Record the executable distinctions established through Phase 6 without freezing them as a public compatibility promise.",
+  "purpose": "Record the executable distinctions established through Phase 7 without freezing them as a public compatibility promise.",
   "sections": [
     {
       "id": "universal-envelope",
@@ -117,6 +117,21 @@
         "fpm.capability-collection-plan/1",
         "fpm.capability-collection/1",
         "explicit keyed-member policy subtraction"
+      ]
+    },
+    {
+      "id": "deterministic-concurrency",
+      "title": "Deterministic runtime concurrency",
+      "classification": "boundary",
+      "summary": "A manager-selected scheduler consumes a fixed attributed task collection, grants immutable snapshots and staged output channels, runs eligible tasks on worker threads or their declared main-thread affinity, and submits buffers to one authoritative commit barrier. Worker timing remains observational; explicit channel composition determines committed state.",
+      "contracts": [
+        "fpm.runtime-task/1",
+        "fpm.runtime-command-buffer/1",
+        "fpm.transform-command-batch/1",
+        "fpm.transform-batch-commit/1",
+        "fpm.deterministic-tick/1",
+        "fpm.deterministic-tick-log/1",
+        "fpm.runtime-tick-trace/1"
       ]
     },
     {

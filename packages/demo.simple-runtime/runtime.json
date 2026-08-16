@@ -7,7 +7,7 @@
       "fpm.render-bundle/1"
     ],
     "requires": [
-      { "capability": "runtime.motion.demo", "range": "^1.0.0" },
+      { "capability": "runtime.scheduler.barrier", "range": "^1.0.0", "binding": "runtime.scheduler/1" },
       { "capability": "runtime.renderer.window", "range": "^1.0.0" },
       { "capability": "runtime.persistence.world", "range": "^1.0.0", "binding": "runtime.persistence/1" }
     ],

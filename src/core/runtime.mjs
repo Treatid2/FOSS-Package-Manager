@@ -346,6 +346,9 @@ export function resolveRuntimePlan(result) {
         member: entry.provided.member,
         providerInstance: entry.service.id,
         package: entry.service.owner.id,
+        packageContentHash: `sha256:${entry.service.owner.contentHash}`,
+        metadata: entry.provided.metadata,
+        metadataRoot: `sha256:${sha256(stableJson(entry.provided.metadata))}`,
         policy: policy.id,
         reason: "profile-policy-exclusion",
       })).sort((left, right) => left.member.localeCompare(right.member)),
@@ -438,6 +441,7 @@ export class RuntimeHost {
     this.collectionValues = new Map();
     this.active = [];
     this.ticks = 0;
+    this.tickInFlight = false;
     this.lifecycle = {
       schema: "fpm.runtime-lifecycle/1",
       plan: plan.record,
@@ -462,6 +466,7 @@ export class RuntimeHost {
         schema: "fpm.capability-collection/1",
         capability,
         memberOrder: [...collection.memberOrder],
+        exclusions: structuredClone(collection.exclusions),
         members: collection.publicMembers.map((member) => ({
           ...structuredClone(member),
           value: values.get(member.id),
@@ -633,13 +638,22 @@ export class RuntimeHost {
 
   async tick() {
     invariant(this.lifecycle.state === "active", "FPM_RUNTIME_NOT_ACTIVE", "The runtime is not active.");
+    invariant(!this.tickInFlight, "FPM_RUNTIME_TICK_OVERLAP",
+      "A runtime generation cannot begin another tick before its current barrier completes.", {
+        activeTick: this.ticks + 1,
+      });
+    this.tickInFlight = true;
     const next = this.ticks + 1;
-    for (const entry of this.active) {
-      if (typeof entry.controller.tick === "function") await entry.controller.tick(next, entry.context);
+    try {
+      for (const entry of this.active) {
+        if (typeof entry.controller.tick === "function") await entry.controller.tick(next, entry.context);
+      }
+      this.ticks = next;
+      this.lifecycle.ticks = next;
+      this.lifecycle.events.push({ event: "tick", tick: next });
+    } finally {
+      this.tickInFlight = false;
     }
-    this.ticks = next;
-    this.lifecycle.ticks = next;
-    this.lifecycle.events.push({ event: "tick", tick: next });
   }
 
   async shutdown() {
@@ -675,6 +689,11 @@ export async function startRuntime(result, options = {}) {
       distributionIdentity: `sha256:${sha256(stableJson(result.lockfile))}`,
       runtimePlanIdentity: `sha256:${sha256(stableJson(plan.record))}`,
       runtimePlan: plan.record,
+      tickRecordPath: path.join(result.outputDirectory, "runtime-ticks.json"),
+      tickTracePath: path.join(result.outputDirectory, "runtime-tick-trace.json"),
+      schedulerWorkerCount: options.schedulerWorkerCount ?? null,
+      schedulerDelays: options.schedulerDelays ?? {},
+      schedulerTimeoutMs: options.schedulerTimeoutMs ?? 2_000,
     },
   });
   await host.activate();

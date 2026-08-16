@@ -2,7 +2,7 @@
 
 # Prototype format notes
 
-All formats are provisional and use exact versioned identifiers. Phase 6 preserves the earlier build, runtime, and durable-state contracts while adding generic non-exclusive capability collections, stable member identities, declared member dependencies, and attributed policy exclusion. Lockfile and provenance documents remain version 3.
+All formats are provisional and use exact versioned identifiers. Phase 7 preserves the earlier build, runtime, durable-state, and collection contracts while adding declared runtime tasks, immutable snapshot grants, staged command buffers, authoritative batch commit, and deterministic tick records. Lockfile and provenance documents remain version 3.
 
 ## Core package envelope
 
@@ -292,6 +292,49 @@ Collection policy is subtractive and explicit. A `collectionPolicy` entry names 
 The Save Coordinator now declares only one collection requirement. Instance, transform, Marker, Required Counter, and the later Character Journal package participate through the same contract. Its source contains no list of known owner packages or capabilities. Restore ordering derives from manager-validated member dependencies, while payload interpretation remains with each owner.
 
 Membership means all compatible contributions from selected packages, not every package merely present on disk. Adding a package to the distribution/user graph is still an explicit package-resolution decision. Membership is fixed before activation; hot registration and removal are outside this prototype.
+
+## Phase 7: runtime-task declarations
+
+Runtime tasks are ordinary members of the generic `runtime.task` collection. Manager core records their member identity, provider binding, implementation hash, dependencies, and opaque metadata without interpreting task semantics. The selected Scheduler validates `fpm.runtime-task/1` values against metadata declaring:
+
+- simulation phase and required/optional participation;
+- immutable snapshot capabilities;
+- emitted command channels and composition form;
+- commit-order predecessors distinct from execution dependencies;
+- `main-thread` or `any-worker` affinity;
+- reentrant or non-reentrant execution;
+- abort-tick or drop-task failure behaviour.
+
+One service still publishes one member of a collection. `demo.motion` and `demo.motion-offset` are consequently separate task services and packages.
+
+## Phase 7: snapshot, worker, and barrier protocol
+
+At each tick the clock publishes `fpm.runtime-tick/1`, Transform Authority freezes `fpm.transform-snapshot/1`, and the Scheduler grants each task only the snapshots and output channels named by that member. `any-worker` tasks execute in actual Node.js worker threads. A `main-thread` task executes through a separately declared main-thread implementation.
+
+On a restored session, the Scheduler resumes the clock from the save's world checkpoint before accepting new work. Host tick count remains a generation-local lifecycle observation; task records continue the persisted world-checkpoint sequence.
+
+Workers cannot obtain runtime service capabilities through their task context. Undeclared snapshot access fails with `FPM_TASK_SNAPSHOT_AUTHORITY_DENIED`; direct mutable capability access fails with `FPM_TASK_DIRECT_AUTHORITY_DENIED`. These are architectural checks for trusted native code, not hostile-code containment.
+
+Each successful worker returns staged commands. The Scheduler constructs immutable `fpm.runtime-command-buffer/1` values tagged with task, channel, checkpoint, and content root. No task receives Transform Authority's write capability.
+
+The first channel is `runtime.transforms.commands` with an `ordered` composition law. All producers must have a complete declared commit order. Missing ordering fails scheduler planning before runtime commitment. Transform Authority validates the checkpoint, expected revision, buffer roots, order, and every opaque-to-the-scheduler transform operation against a cloned state map. Only after all validation succeeds does it publish one `fpm.transform-batch-commit/1` and increment the transform revision once.
+
+The current scheduler also validates `single-producer`; other named forms are reserved but deliberately fail as unimplemented. Cross-owner atomic commit is outside this phase.
+
+## Phase 7: deterministic and observational records
+
+`fpm.deterministic-tick/1` records only deterministic facts:
+
+- checkpoint and selected task member/provider/implementation/metadata roots;
+- attributed task-policy exclusions and deterministic task outcomes;
+- immutable snapshot roots and source revisions;
+- accepted command-buffer roots;
+- channel composition law and declared commit order;
+- authoritative resulting revision and state root.
+
+`fpm.deterministic-tick-log/1` contains successful records. A required task failure or timeout publishes no successful tick record and leaves Transform Authority unchanged. Stale expected revisions or checkpoints are rejected.
+
+`fpm.runtime-tick-trace/1` is separate observational evidence. It may contain worker count, actual completion order, thread affinity, and thread IDs. None enters deterministic tick identity, save state, or rendering. Tests reverse completion order and vary the worker count while asserting byte-identical tick logs, state snapshots, and SVG output.
 
 ## Lockfile and provenance
 

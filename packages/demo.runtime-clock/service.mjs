@@ -2,8 +2,25 @@
 
 export function createService() {
   let tick = 0;
+  let base = 0;
   const clock = Object.freeze({
     now: () => Object.freeze({ schema: "fpm.runtime-tick/1", tick, seconds: tick / 4 }),
+    resume: (checkpoint) => {
+      if (tick !== 0 || checkpoint?.schema !== "fpm.runtime-tick/1"
+        || !Number.isInteger(checkpoint.tick) || checkpoint.tick < 0) {
+        throw Object.assign(new Error("The runtime clock cannot resume from this checkpoint."), {
+          code: "FPM_RUNTIME_CLOCK_RESUME_INVALID",
+          details: { current: tick, checkpoint },
+        });
+      }
+      base = checkpoint.tick;
+      tick = base;
+      return clock.now();
+    },
+    abort: (checkpoint) => {
+      if (checkpoint?.schema === "fpm.runtime-tick/1" && checkpoint.tick === tick && tick > base) tick -= 1;
+      return Object.freeze({ schema: "fpm.runtime-tick/1", tick, seconds: tick / 4 });
+    },
   });
   return {
     async activate() {
@@ -13,10 +30,11 @@ export function createService() {
       };
     },
     async tick(next) {
-      tick = next;
+      tick = base + next;
     },
     async deactivate() {
       tick = 0;
+      base = 0;
     },
   };
 }

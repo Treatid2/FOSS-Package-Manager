@@ -21,6 +21,7 @@ export function createService() {
       artifact = context.artifact;
       instances = context.require("runtime.instances.read");
       transforms = context.require("runtime.transforms.read");
+      context.require("runtime.scheduler.barrier");
       const snapshots = freeze({
         current: () => {
           const transformSnapshot = transforms.snapshot();

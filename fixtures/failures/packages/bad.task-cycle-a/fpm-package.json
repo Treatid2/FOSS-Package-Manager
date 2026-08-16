@@ -1,0 +1,20 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.task-cycle-a",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "runtimeServices": [{
+    "id": "service:bad.task-cycle-a/1",
+    "protocol": "fpm.runtime-service/1",
+    "provides": [{
+      "capability": "runtime.task", "version": "1.0.0", "exclusive": false, "cardinality": "collection",
+      "member": "task:fixture.cycle-a/1", "binding": "runtime.task.fixture-cycle-a/1",
+      "memberDependencies": ["task:fixture.cycle-b/1"],
+      "metadata": { "phase": "simulation", "snapshots": [], "outputs": [], "affinity": "any-worker",
+        "reentrancy": "non-reentrant", "required": true, "failure": "abort-tick" }
+    }],
+    "requires": [],
+    "execution": { "form": "native-in-process", "securityBoundary": "none", "requestedPowers": ["host-user-authority"] },
+    "module": "./service.mjs"
+  }]
+}

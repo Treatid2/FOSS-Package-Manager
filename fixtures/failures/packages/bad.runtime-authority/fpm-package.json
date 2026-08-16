@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "license": "Apache-2.0",
   "dependencies": [
-    { "package": "demo.simple-runtime", "range": "^0.6.0" }
+    { "package": "demo.simple-runtime", "range": "^0.7.0" }
   ],
   "contributions": [
     {

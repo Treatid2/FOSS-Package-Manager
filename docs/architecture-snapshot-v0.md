@@ -4,7 +4,7 @@
 
 **Status:** experimental; no compatibility promise.
 
-Record the executable distinctions established through Phase 6 without freezing them as a public compatibility promise.
+Record the executable distinctions established through Phase 7 without freezing them as a public compatibility promise.
 
 This file is generated from `contracts/architecture-v0.json` by `tools/render-architecture-snapshot.mjs`.
 
@@ -111,6 +111,20 @@ A collection requirement selects every compatible contribution in the resolved p
 - `fpm.capability-collection-plan/1`
 - `fpm.capability-collection/1`
 - `explicit keyed-member policy subtraction`
+
+## Deterministic runtime concurrency
+
+**Classification:** boundary.
+
+A manager-selected scheduler consumes a fixed attributed task collection, grants immutable snapshots and staged output channels, runs eligible tasks on worker threads or their declared main-thread affinity, and submits buffers to one authoritative commit barrier. Worker timing remains observational; explicit channel composition determines committed state.
+
+- `fpm.runtime-task/1`
+- `fpm.runtime-command-buffer/1`
+- `fpm.transform-command-batch/1`
+- `fpm.transform-batch-commit/1`
+- `fpm.deterministic-tick/1`
+- `fpm.deterministic-tick-log/1`
+- `fpm.runtime-tick-trace/1`
 
 ## Durable typed world state and evolution
 

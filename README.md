@@ -2,7 +2,7 @@
 
 An executable language-laboratory prototype for a mod-native package system.
 
-This repository now tests five related propositions:
+This repository now tests six related propositions:
 
 > Can a small manager resolve declarative packages, dispatch specialised handlers, build deterministic artifacts, and explain exactly how each artifact was produced?
 
@@ -14,7 +14,9 @@ This repository now tests five related propositions:
 
 > Can a new stateful package join that durable world through a generic, deterministic capability collection without teaching the manager or coordinator its name?
 
-The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 5 moves, saves, and restores the world. Phase 6 adds a Character Journal after the coordinator was complete; its note and visit counter automatically join the same save/restore path through one attributed collection declaration.
+> Can independently authored tasks run on real worker threads with variable timing while immutable snapshots, staged commands, and an authoritative barrier produce the same committed world?
+
+The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 5 moves, saves, and restores the world. Phase 6 adds an open-ended Character Journal. Phase 7 replaces direct motion mutation with two independently packaged tasks: both read one immutable transform snapshot on worker threads, then Transform Authority commits their `set-x` and `add-x` buffers once in a declared order.
 
 ## Quick start
 
@@ -71,6 +73,10 @@ node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/app
 - authoritative transform commands and immutable revisioned scene extraction;
 - provider-instance bindings which co-select coherent read, write, save, and restore facets;
 - generic non-exclusive capability collections with stable member identities, attributed metadata, explicit policy exclusions, and dependency ordering;
+- a manager-selected scheduler consuming an immutable `runtime.task` collection;
+- real worker-thread execution with declared snapshot, command-channel, affinity, reentrancy, and failure contracts;
+- staged immutable command buffers and one authoritative deterministic transform commit barrier;
+- byte-stable tick records separated from worker-count, completion-order, and thread-ID observations;
 - typed state-owner fragments captured at one deterministic checkpoint;
 - atomic immutable world-save tree references in the content-addressed artifact store;
 - fresh-activation restore, explicit one-step state migration, and committed session records;
@@ -121,7 +127,9 @@ runtime texture artifacts -> scene action
 scene-bundle tree + fpm.lock.json + provenance.json
                   |
                   v
-runtime instance store -> transform authority <- deterministic motion
+runtime task collection -> worker scheduler -> staged command buffers
+                                  |                       |
+runtime instance store -> transform authority <-----------+
                   |               |
                   +-------+-------+
                           v
@@ -159,7 +167,10 @@ Each action receives manager-supplied input paths and a private staging director
 | `demo.runtime-instance-store` | Owns persistent instance identities, generational handles, materialisation leases, and explicit destruction |
 | `demo.transform-authority` | Owns final world transforms and commits typed transform commands |
 | `demo.runtime-clock` | Supplies deterministic single-threaded ticks |
-| `demo.motion` | Moves the block character through the transform-write capability |
+| `demo.motion` | Worker task which reads an immutable transform snapshot and stages the primary set-x command |
+| `demo.motion-offset` | Independent task which adds an ordered offset after the primary motion task |
+| `demo.deterministic-scheduler` | Runs immutable-snapshot tasks on workers and submits staged buffers at one authoritative barrier |
+| `demo.main-thread-audit` | Affinity fixture proving a declared main-thread task stays off the worker pool |
 | `demo.scene-extractor` | Publishes immutable flat scene revisions from instance definitions and transform snapshots |
 | `demo.save-coordinator` | Captures coherent typed fragments, publishes immutable save trees, preflights compatibility, and restores owners in dependency order |
 | `demo.character-marker` | Tiny optional state owner used to prove opaque retention while its package is absent |
@@ -178,6 +189,8 @@ Building a profile creates:
 - `provenance.json` — an explanation index for exports, hooks, action paths, adapters, and artifacts;
 - `runtime-lifecycle.json` after `run` — selected runtime services, reasons, activation order, ticks, rollback-safe state, and reverse shutdown;
 - `runtime-session.json` after activation — the committed fresh/load result, compatibility report, opaque retained fragments, and migrations;
+- `runtime-ticks.json` after a successful tick — deterministic task, snapshot, buffer, composition, policy, and state-root records;
+- `runtime-tick-trace.json` — explicitly observational worker counts, completion order, affinities, and thread IDs;
 - a sibling `.fpm-store/` — verified content objects, deterministic action-cache records, and immutable world-save/migration references.
 
 Generated outputs live under `build/` and are ignored by Git. Cache hits are deliberately observational and are not written into the lockfile, so a cold and warm build produce identical records.
@@ -198,14 +211,15 @@ Generated outputs live under `build/` and are ignored by Git. Cache hits are del
 - stale runtime handles, release-versus-destruction, transform authority denial, ambiguous exclusive providers, activation rollback, and dependency-safe shutdown.
 - interrupted save publication, missing required state owners, opaque optional state, ambiguous migrations, and coherent provider bundles;
 - duplicate collection members, collection dependency cycles, deterministic membership, and attributed policy exclusion.
+- ambiguous task composition, required task failure/timeout, undeclared snapshot or mutation authority, task cycles, affinity, tick overlap, optional exclusion, and stale checkpoint output.
 
 The test suite asserts diagnostic codes and relevant context. It also verifies deterministic discovery, cache reuse, explicit adapter policy, handler separation, reproducible outputs, and runtime consumption.
 
 ## Explicit non-goals
 
-This is not yet a production package format, dynamic registration system, general native-code sandbox, repository client, distributed artifact store, general adapter or migration-path search, cache garbage collector, parallel runtime scheduler, streaming world, crash-durable save system, mutable save-slot manager, or networked game runtime. Collection membership is fixed from the selected package graph before activation. The renderer is intentionally disposable and the formats remain provisional.
+This is not yet a production package format, dynamic registration system, general native-code sandbox, repository client, distributed artifact store, general adapter or migration-path search, cache garbage collector, optimized persistent worker pool, cross-owner transaction coordinator, streaming world, crash-durable save system, mutable save-slot manager, or networked game runtime. Collection membership is fixed from the selected package graph before activation. The renderer is intentionally disposable and the formats remain provisional.
 
-See [docs/architecture-snapshot-v0.md](docs/architecture-snapshot-v0.md) for the generated experimental contract checkpoint, [docs/prototype-formats.md](docs/prototype-formats.md) for public protocol notes, and [docs/phase-6-findings.md](docs/phase-6-findings.md) for the collection evidence and limitations.
+See [docs/architecture-snapshot-v0.md](docs/architecture-snapshot-v0.md) for the generated experimental contract checkpoint, [docs/prototype-formats.md](docs/prototype-formats.md) for public protocol notes, and [docs/phase-7-findings.md](docs/phase-7-findings.md) for the deterministic-concurrency evidence and limitations.
 
 ## Security status
 
