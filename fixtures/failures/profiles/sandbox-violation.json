@@ -1,0 +1,11 @@
+{
+  "schema": "fpm.profile/1",
+  "name": "sandbox-violation",
+  "packageRoots": ["../../../packages", "../packages"],
+  "roots": ["bad.sandbox-violation-adapter", "demo.simple-runtime", "demo.worldspace"],
+  "entryPoint": "pkg:demo.worldspace/world/demo",
+  "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
+  "adapterSelections": {
+    "relation:demo.texture/base-colour-solid-to-runtime/1": "adapter:bad.sandbox-violation/1"
+  }
+}

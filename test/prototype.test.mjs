@@ -103,6 +103,16 @@ test("base and Green Head profiles build through the same package graph", async 
   assert.ok(finalAction.inputs.every((entry) => !entry.artifact.includes("solid-colour/source")));
   assert.equal(finalAction.outputs.length, 1);
   assert.equal(finalAction.outputs[0].kind, "tree");
+
+  const portableAction = green.lockfile.actions.find((entry) => entry.kind === "adapt");
+  assert.equal(portableAction.execution.form, "portable-wasm");
+  assert.equal(portableAction.execution.boundary, "wasm-capability-imports");
+  assert.deepEqual(portableAction.execution.grantedPowers,
+    ["read-declared-input-bytes", "write-declared-output-bytes"]);
+  assert.ok(portableAction.execution.deniedAmbientPowers.includes("network"));
+  const portableRecord = await json(path.join(green.storeDirectory, "actions",
+    `${portableAction.buildKey.replace("sha256:", "")}.json`));
+  assert.deepEqual(portableRecord.execution, portableAction.execution);
 });
 
 test("lockfile and scene artifacts are reproducible across output directories", async (context) => {
@@ -280,6 +290,31 @@ test("a failed materialization rolls back its staging output and action record",
   await assert.rejects(() => access(actionRecord));
   const staging = path.join(storeDirectory, "staging");
   assert.deepEqual(await readdir(staging), []);
+});
+
+test("portable capability violations preserve evidence and publish no root", async (context) => {
+  const root = await temporaryDirectory("sandbox-violation");
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const storeDirectory = path.join(root, "store");
+  const profile = path.join(repository, "fixtures", "failures", "profiles", "sandbox-violation.json");
+  let failure;
+  await assert.rejects(() => buildProfile(profile, path.join(root, "out"), { storeDirectory }), (error) => {
+    failure = error;
+    assert.equal(error.code, "FPM_SANDBOX_VIOLATION_CONFIRMED");
+    assert.equal(error.details.execution.boundary, "wasm-capability-imports");
+    assert.equal(error.details.evidence.allowedInputReads, 3);
+    assert.equal(error.details.evidence.allowedOutputWrites, 4);
+    assert.equal(error.details.evidence.deniedHostReads, 1);
+    assert.equal(error.details.evidence.deniedHostWrites, 1);
+    assert.equal(error.details.evidence.deniedNetworkAttempts, 1);
+    assert.equal(error.details.committed, false);
+    return true;
+  });
+  const actionRecord = path.join(storeDirectory, "actions", `${failure.details.buildKey.replace("sha256:", "")}.json`);
+  await assert.rejects(() => access(actionRecord));
+  await assert.rejects(() => access(path.join(root, "out", "fpm.lock.json")));
+  assert.deepEqual(await readdir(path.join(storeDirectory, "staging")), []);
+  assert.deepEqual((await storeFor(storeDirectory).reachabilityReport()).orphaned, []);
 });
 
 test("the selected runtime consumes the flat scene and emits a deterministic SVG snapshot", async (context) => {

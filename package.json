@@ -1,6 +1,6 @@
 {
   "name": "foss-package-manager",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "MPL-2.0",
   "private": true,
   "type": "module",
@@ -10,6 +10,7 @@
     "build:green": "node src/cli.mjs build profiles/green-head.json",
     "demo": "node src/cli.mjs run profiles/green-head.json",
     "snapshot": "node src/cli.mjs run profiles/green-head.json --snapshot build/green-head/scene.svg",
+    "generate:wasm": "node tools/generate-wasm-fixtures.mjs",
     "test": "node --test"
   },
   "engines": {

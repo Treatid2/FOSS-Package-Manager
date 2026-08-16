@@ -459,7 +459,7 @@ async function managerIdentity() {
   const manifestHash = await hashFile(path.join(projectRoot, "manager.json"));
   return {
     id: "org.foss-package-manager.reference",
-    version: "0.3.0",
+    version: "0.3.1",
     contentHash: `sha256:${sha256(`${sourceHash}\0${manifestHash}`)}`,
   };
 }

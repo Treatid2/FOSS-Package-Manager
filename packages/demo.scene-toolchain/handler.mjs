@@ -254,13 +254,11 @@ async function materialize(request) {
       "The scene action did not receive one of its declared runtime texture inputs.", {
         input: planned.textureInput,
       });
-    const texture = JSON.parse(await readFile(input.path, "utf8"));
-    requireCondition(texture.schema === "fpm.texture.runtime.rgba8-srgb/1"
-      && texture.width === 1 && texture.height === 1
-      && Array.isArray(texture.pixels) && texture.pixels.length === 4,
+    const texture = await readFile(input.path);
+    requireCondition(texture.length === 4,
     "A runtime texture artifact is malformed.", { input: planned.textureInput });
     const { textureInput, ...object } = planned;
-    objects.push({ ...object, colour: texture.pixels.slice(0, 3) });
+    objects.push({ ...object, colour: [...texture.subarray(0, 3)] });
   }
   const content = {
     schema: "fpm.render-scene/1",

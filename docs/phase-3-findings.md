@@ -55,4 +55,34 @@ The effective profile records the source layer, statement kind, merge rule, and 
 
 ## Phase 3B — enforced portable containment
 
-Phase 3B is a separate implementation unit. Its acceptance result will be recorded here without revising the Phase 3A conclusions.
+Phase 3B is implemented and passes its normal and deliberate-violation fixtures.
+
+### Boundary and action contract
+
+The selected solid-colour adapter is a pure WebAssembly byte transform. A manager-owned runner translates the existing materialization request/response contract into three successful module imports: declared-input length/read and bounded output-byte write. The package module receives no paths, Node objects, WASI, or ambient host functions.
+
+The runner reads exactly the immutable artifact named by the action and writes the completed byte buffer only to its declared staging slot. Package-store mutation, arbitrary host reads/writes, child processes, and network access are absent from the import surface. The generic runner understands bytes and transaction slots, not colours or texture semantics.
+
+Execution is independent from semantic role in both the build key and action record. The record contains execution form, boundary and runner identity, requested powers, actual grants, denied ambient powers, and applied limits; the existing adapter identity and governed semantic relation remain unchanged.
+
+### Successful portable action
+
+Normal base and Green Head builds execute the Wasm adapter, read the declared three-byte solid-colour artifact, write a four-byte runtime texture into staging, and produce the same scene and renderer snapshot as before. Cold and warm builds preserve identical lockfiles, including the execution record.
+
+### Deliberate violation
+
+The violation module performs the same allowed input reads and staged output writes, then calls explicit denial-only probes for an undeclared host read, an out-of-staging host write, and network access. The runner supplies no authority for those operations; it records one denial in each category and returns `FPM_SANDBOX_VIOLATION_CONFIRMED`.
+
+The test verifies three successful declared reads, four successful staged writes, all three denied ambient attempts, removal of the transaction directory, absence of the failed action record and final lockfile, and a reachability report with no orphan root from the failed action.
+
+### Practical resource bounds
+
+Portable declarations set wall-clock, module/input/output/response byte, and child-process heap limits. The runner executes in a separate process, validates the module import set before instantiation, and terminates on timeout. These bounds are included in action identity and provenance.
+
+### Phase 3B limitations
+
+- This is one deliberately narrow byte-transform ABI, not a general portable plugin SDK.
+- The manager-owned runner is part of the trusted computing base; the security claim concerns package Wasm, not a compromised manager.
+- Timeout and Node heap/byte ceilings are practical prototype controls, not OS-enforced CPU and resident-memory quotas.
+- Native handlers remain explicitly unsandboxed and retain host-user authority.
+- Denial probes demonstrate that the portable import boundary withholds each requested category; they are not a claim of native-code containment.

@@ -8,7 +8,7 @@ This repository now tests two related propositions:
 
 > Can independently implemented handler families compose through a manager-owned transactional artifact graph without one handler quietly becoming a monolithic engine?
 
-The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 3A now produces that unchanged scene through governed decisions and a concurrent-safe artifact store whose final root is a two-file canonical tree.
+The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 3 produces that unchanged scene through governed decisions, a concurrent-safe artifact store whose final root is a two-file canonical tree, and one adapter action running inside a real WebAssembly capability boundary.
 
 ## Quick start
 
@@ -48,6 +48,8 @@ node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/app
 - handler-declared environment dependencies with monotonic policy widening;
 - independently attributed validator findings and explicit acceptance/waiver decisions;
 - field-level profile authority and merge records;
+- a portable WebAssembly byte-transform ABI with no ambient filesystem, process, or network imports;
+- per-action requested/granted/denied powers and bounded portable execution limits;
 - rollback of failed handler actions without committing their output or action record;
 - lockfiles and provenance linking contributions, handlers, source artifacts, adapters, final inputs, and output artifacts;
 - a scene builder that receives only its own normalized scene analyses during planning and its declared texture artifacts during materialisation;
@@ -56,7 +58,7 @@ node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/app
 
 The manager has no texture, mesh, assembly, camera, worldspace, or rendering rules. Those concepts remain in independent example packages.
 
-## Phase 3A resolution and build flow
+## Phase 3 resolution and build flow
 
 ```text
 layered profile + core package manifests
@@ -82,7 +84,8 @@ manager validates and schedules the action/artifact DAG
 file texture action     solid-colour action
        |                      |
        |                      v
-       |                explicit adapter
+       |            capability-contained
+       |                Wasm adapter
        +----------+-----------+
                   |
                   v
@@ -100,7 +103,7 @@ Each action receives manager-supplied input paths and a private staging director
 | --- | --- |
 | `demo.scene-toolchain` | Analyzes scene-domain manifests, proposes the final action, and builds a two-file `fpm.render-bundle/1` tree from declared runtime textures |
 | `demo.texture-toolchain` | Independently analyzes file and solid-colour texture declarations and materializes source artifacts |
-| `demo.solid-colour-adapter` | Explicitly converts `texture.solid-colour/1` to `texture.runtime.rgba8-srgb/1` |
+| `demo.solid-colour-adapter` | Converts `texture.solid-colour/1` to `texture.runtime.rgba8-srgb/1` as a capability-contained Wasm action |
 | `demo.texture-vocabulary` | Governs the reusable base-colour solid-to-runtime semantic relation |
 | `demo.scene-validator` | Produces an attributed proposal finding before policy accepts the render action |
 | `demo.primitives` | Box meshes, a file-backed field texture, and declarative body/head colours |
@@ -135,19 +138,22 @@ Generated outputs live under `build/` and are ignored by Git. Cache hits are del
 - ambiguous compatible replacement;
 - cyclic package dependencies;
 - malformed domain manifest or deliberate analysis failure;
-- an action that writes to staging and then fails, exercising rollback.
+- an action that writes to staging and then fails, exercising rollback;
+- a portable action that successfully uses its declared byte capabilities, probes undeclared host read/write/network authority, and is denied without publication.
 
 The test suite asserts diagnostic codes and relevant context. It also verifies deterministic discovery, cache reuse, explicit adapter policy, handler separation, reproducible outputs, and runtime consumption.
 
 ## Explicit non-goals
 
-This is not yet a production package format, security sandbox, repository client, distributed artifact store, general adapter search, cache garbage collector, binary runtime ABI, streaming world, or persistence system. The renderer is intentionally disposable and the formats remain provisional.
+This is not yet a production package format, general native-code sandbox, repository client, distributed artifact store, general adapter search, cache garbage collector, general binary runtime ABI, streaming world, or persistence system. The renderer is intentionally disposable and the formats remain provisional.
 
-See [docs/prototype-formats.md](docs/prototype-formats.md) for the public protocol notes, [docs/phase-2-findings.md](docs/phase-2-findings.md) for the prior gate, and [docs/phase-3-findings.md](docs/phase-3-findings.md) for Phase 3A's evidence and limitations.
+See [docs/prototype-formats.md](docs/prototype-formats.md) for the public protocol notes, [docs/phase-2-findings.md](docs/phase-2-findings.md) for the prior gate, and [docs/phase-3-findings.md](docs/phase-3-findings.md) for both Phase 3 acceptance gates, evidence, and limitations.
 
 ## Security status
 
-Handlers run as subprocesses, but they are **not sandboxed**. Staging is a transaction boundary, not a security boundary: handlers still inherit the authority of the user running the manager. Input paths and requested powers are explicit for auditability, but filesystem/network restrictions, signatures, resource limits, and permission enforcement remain future work. Only run packages you trust.
+Native handlers still run as unsandboxed subprocesses with the authority of the user running the manager. Staging remains a transaction boundary for those handlers, not a security boundary.
+
+The solid-colour adapter is different: package logic is pure WebAssembly instantiated by a manager-owned runner with only declared-input byte reads and declared-output byte writes. It has no host-filesystem, package-store, child-process, or network imports. Timeout, module/input/output/response byte limits, and a child-process heap limit bound the prototype where practical. This is one narrow portable execution class, not containment for native handlers or a production-grade resource governor. Only run native packages you trust.
 
 ## Licensing
 

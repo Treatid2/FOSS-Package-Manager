@@ -27,17 +27,6 @@ async function readRequest() {
   return JSON.parse(input);
 }
 
-function stableJson(value) {
-  const normalize = (entry) => {
-    if (Array.isArray(entry)) return entry.map(normalize);
-    if (entry && typeof entry === "object") {
-      return Object.fromEntries(Object.keys(entry).sort().map((key) => [key, normalize(entry[key])]));
-    }
-    return entry;
-  };
-  return `${JSON.stringify(normalize(value), null, 2)}\n`;
-}
-
 function validateColour(colour) {
   requireCondition(Array.isArray(colour) && colour.length === 3
     && colour.every((channel) => Number.isInteger(channel) && channel >= 0 && channel <= 255),
@@ -136,7 +125,7 @@ async function analyze(request) {
         output: {
           id: `artifact:${exported.id}/source`,
           type: outputType,
-          fileName: "texture.json"
+          fileName: "texture.bin"
         },
         parameters,
       }],
@@ -152,24 +141,19 @@ async function materialize(request) {
   if (kind === "materialize-texture-file") {
     const source = path.resolve(request.proposal.context.packageDirectory, parameters.file);
     const colour = parsePpm(await readFile(source, "utf8"));
-    content = { schema: "fpm.texture.runtime.rgba8-srgb/1", width: 1, height: 1, pixels: [...colour, 255] };
+    content = Buffer.from([...colour, 255]);
   } else if (kind === "materialize-solid-colour") {
     validateColour(parameters.colour);
-    content = { schema: "fpm.texture.solid-colour/1", colour: parameters.colour };
+    content = Buffer.from(parameters.colour);
   } else if (kind === "materialize-environment-colour") {
     const variant = request.environment?.values?.["target.colourVariant"];
     const colour = parameters.variants[variant];
     validateColour(colour);
-    content = { schema: "fpm.texture.runtime.rgba8-srgb/1", width: 1, height: 1, pixels: [...colour, 255] };
+    content = Buffer.from([...colour, 255]);
   } else if (kind === "materialize-slow-colour") {
     await new Promise((resolve) => setTimeout(resolve, parameters.delayMs));
     validateColour(parameters.colour);
-    content = {
-      schema: "fpm.texture.runtime.rgba8-srgb/1",
-      width: 1,
-      height: 1,
-      pixels: [...parameters.colour, 255],
-    };
+    content = Buffer.from([...parameters.colour, 255]);
   } else if (kind === "fail-after-write") {
     await writeFile(path.join(request.transaction.stagingDirectory, output.relativePath), "partial", "utf8");
     fail("FPM_HANDLER_MATERIALIZATION_FAILED", "The failure fixture stopped after writing an uncommitted output.", {
@@ -180,16 +164,15 @@ async function materialize(request) {
     fail("FPM_HANDLER_ACTION_UNSUPPORTED", "Unsupported texture materialization action.", { kind });
     return;
   }
-  const text = stableJson(content);
-  await writeFile(path.join(request.transaction.stagingDirectory, output.relativePath), text, "utf8");
+  await writeFile(path.join(request.transaction.stagingDirectory, output.relativePath), content);
   response({
     protocol: "fpm.handler-response/1",
     ok: true,
     output: {
       type: output.type,
       relativePath: output.relativePath,
-      size: Buffer.byteLength(text),
-      hash: `sha256:${createHash("sha256").update(text).digest("hex")}`,
+      size: content.length,
+      hash: `sha256:${createHash("sha256").update(content).digest("hex")}`,
       inputs: [],
     },
   });

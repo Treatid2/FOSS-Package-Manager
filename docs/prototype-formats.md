@@ -2,7 +2,7 @@
 
 # Prototype format notes
 
-All formats are provisional and use exact versioned identifiers. Phase 3A preserves the `fpm.package/1` envelope and `fpm.handler-stdio/1` transport while extending artifact roots, decisions, environment contracts, semantic relations, and profile authority. Lockfile and provenance documents advance to version 3.
+All formats are provisional and use exact versioned identifiers. Phase 3 preserves the `fpm.package/1` envelope and `fpm.handler-stdio/1` transport while extending artifact roots, decisions, environment contracts, semantic relations, profile authority, and one portable capability-contained execution form. Lockfile and provenance documents use version 3.
 
 ## Core package envelope
 
@@ -18,7 +18,7 @@ Every package contains `fpm-package.json` with `schema: "fpm.package/1"`. The ma
 
 The manager validates core paths before passing a domain manifest to a handler. Contributions and commands remain inside the owning package directory.
 
-The implemented execution declaration is intentionally truthful rather than protective:
+Native execution declarations are intentionally truthful rather than protective:
 
 ```json
 {
@@ -31,7 +31,7 @@ The implemented execution declaration is intentionally truthful rather than prot
 }
 ```
 
-Trust is a future policy conclusion; it is not inferred from execution form.
+The portable alternative declares `form: "portable-wasm"`, `securityBoundary: "wasm-capability-imports"`, byte capabilities, and explicit time/module/input/output/response/process limits. Requested powers remain declaration facts; action records separately preserve the powers actually granted and denied.
 
 ## Layered profiles
 
@@ -48,9 +48,9 @@ The reference manager still reads `fpm.profile/1` as a compatibility input and m
 
 ## Handler protocol
 
-The manager starts a handler command without a shell and writes one `fpm.handler-request/1` JSON document to stdin. The handler writes one `fpm.handler-response/1` JSON document to stdout.
+For native handlers, the manager starts a command without a shell and writes one `fpm.handler-request/1` JSON document to stdin. The handler writes one `fpm.handler-response/1` JSON document to stdout. For `portable-wasm`, a manager-owned runner preserves that action contract while exposing only a small byte-capability import ABI to the package module.
 
-Phase 2 implements four actions:
+The protocol currently implements four actions:
 
 - `analyze` — read one opaque domain manifest and report normalized exports, hooks, activations, and artifact productions;
 - `plan` — allow the selected final builder to propose one output action and its typed input requirements;
@@ -105,7 +105,7 @@ texture.solid-colour/1
 texture.runtime.rgba8-srgb/1
 ```
 
-Arbitrary multi-hop search, structural subtyping, and negotiated compatibility are not implemented. Two equal adapter routes fail with `FPM_ADAPTER_AMBIGUOUS` unless the policy layer selects one by target identity or exact `source=>target` pair. The selected route is recorded on the hook binding and as its own action.
+Arbitrary multi-hop search, structural subtyping, and negotiated compatibility are not implemented. Two equal adapter routes fail with `FPM_ADAPTER_AMBIGUOUS` unless the policy layer selects one by exact hook/requirement identity or governed semantic-relation identity. The selected route is recorded on the hook binding and as its own action.
 
 ## Generic action and artifact DAG
 
@@ -124,15 +124,15 @@ The current planner proposes one final scene action, while the manager construct
 
 For each cache miss:
 
-1. The manager creates an unpredictable private staging directory and one relative output slot.
+1. The manager creates an unpredictable private staging directory and one or more named relative output slots.
 2. Exact input artifacts are supplied by immutable content-addressed path.
 3. The handler writes into staging and returns type, path, byte size, claimed hash, and input observations.
 4. The manager validates the path, recomputes byte size and SHA-256, and rejects mismatches.
-5. The verified file is atomically renamed into the content-addressed object store.
+5. Each verified blob is published by create-if-absent hard link into the content-addressed object store; a tree root is a canonical manifest over already imported blobs.
 6. The deterministic action-cache record is written atomically only after the object commit.
 7. Whether the action succeeds or fails, its staging directory is removed.
 
-The prototype permits one file output per action. Staging constrains the transaction convention but does not sandbox a hostile handler.
+All named roots publish through one immutable action record. Staging constrains the transaction convention but does not sandbox a native handler.
 
 ## Cache keys
 
@@ -143,7 +143,8 @@ The action build key covers:
 - source package content hashes where applicable;
 - exact input artifact identities, types, and hashes;
 - declared output identity/type/file name;
-- Node version, host platform/architecture, and declared target layer.
+- declared and policy-widened build-environment dimensions and their values;
+- the selected execution form, capability boundary/runner identity, granted powers, and limits.
 
 Absolute package and staging paths are transport context, not key inputs. A cache record is reused only when its object still exists and its hash verifies. Cache-hit status is observational and is not included in deterministic lockfiles.
 
@@ -194,6 +195,17 @@ The reference `fpm.profile/2` schema assigns field-level authority and merge rul
 
 An unknown statement in a governed layer is unresolved and rejected. Lockfiles record every effective field's source layer, statement kind, merge law, and rule owner.
 
+## Phase 3B: portable WebAssembly capability boundary
+
+The `demo.solid-colour-adapter` is a pure WebAssembly byte transform. The module cannot receive paths or invoke Node APIs. Its only successful imports are:
+
+- `input_length` and `read_input_byte`, backed by the one declared immutable input artifact;
+- `write_output_byte`, backed by an in-memory output bounded by the action's declared limit.
+
+After the module returns, the trusted manager runner writes those bytes only to the declared staging slot. No WASI, host-filesystem, package-store, child-process, clock, randomness, or network import is supplied. The child runner enforces a wall-clock timeout, module/input/output/response byte ceilings, and a Node heap limit. Execution identity and the complete requested/granted/denied power record participate in the action key and appear independently of the adapter's semantic role.
+
+The deliberate violation module first reads three declared bytes and writes four staged bytes. It then calls denial-only host-read, host-write, and network probes. Those stubs perform no host operation, record the denied attempts, and force a structured failure. The manager removes staging and publishes neither that action record nor an orphan artifact root.
+
 ## Lockfile and provenance
 
 `fpm.lock/3` records:
@@ -208,5 +220,7 @@ An unknown statement in a governed layer is unresolved and rejected. Lockfiles r
 - the final artifact identity, type, file, size, and hash.
 
 It additionally records root kinds, named action outputs, per-action environment dependencies, governed semantic relations, validator findings/decisions, and resolved profile authority.
+
+Each action also records execution separately from semantic action/adapter identity: form, boundary and runner, requested powers, actual grants, ambient powers denied by construction, and applied resource limits.
 
 `fpm.provenance/3` is optimized for explanation. It links the original contribution and handler finding to the source production, governed relation and selected adapter when present, validation decision, final scene input, and render-bundle tree root. `explain` returns this action path for a public export or hook.

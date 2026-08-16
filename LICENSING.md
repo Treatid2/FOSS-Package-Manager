@@ -22,6 +22,7 @@ The following paths are licensed under the Apache License 2.0 (`Apache-2.0`):
 - `profiles/**` distribution and user-profile examples;
 - `fixtures/**` conformance and diagnostic fixtures;
 - `test/**` conformance-oriented tests.
+- `tools/generate-wasm-fixtures.mjs`, which generates the portable example and conformance modules.
 
 The canonical Apache-2.0 text is in [LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt).
 

@@ -114,10 +114,30 @@ function validateManifest(manifest, manifestPath) {
       && Array.isArray(handler.validates)
       && Array.isArray(handler.command),
     "FPM_MANIFEST_INVALID", "A handler declaration is malformed.", { package: manifest.id, handler });
-    invariant(["external-process", "portable-node-permission"].includes(handler.execution?.form)
-      && ["none", "node-permission-model"].includes(handler.execution.securityBoundary)
-      && Array.isArray(handler.execution.requestedPowers), "FPM_MANIFEST_INVALID",
+    invariant(["external-process", "portable-wasm"].includes(handler.execution?.form)
+      && ["none", "wasm-capability-imports"].includes(handler.execution.securityBoundary)
+      && Array.isArray(handler.execution.requestedPowers)
+      && handler.execution.requestedPowers.every((entry) => typeof entry === "string"), "FPM_MANIFEST_INVALID",
     "A handler execution declaration is malformed.", { package: manifest.id, handler: handler.id });
+    invariant((handler.execution.form === "external-process" && handler.execution.securityBoundary === "none")
+      || (handler.execution.form === "portable-wasm"
+        && handler.execution.securityBoundary === "wasm-capability-imports"), "FPM_MANIFEST_INVALID",
+    "A handler execution form and security boundary are inconsistent.", { package: manifest.id, handler: handler.id });
+    if (handler.execution.form === "portable-wasm") {
+      const limits = handler.execution.limits;
+      invariant(limits && Number.isInteger(limits.timeoutMs) && limits.timeoutMs >= 100 && limits.timeoutMs <= 60_000
+        && Number.isInteger(limits.maxModuleBytes) && limits.maxModuleBytes >= 64 && limits.maxModuleBytes <= 16 * 1024 * 1024
+        && Number.isInteger(limits.maxInputBytes) && limits.maxInputBytes >= 1 && limits.maxInputBytes <= 64 * 1024 * 1024
+        && Number.isInteger(limits.maxOutputBytes) && limits.maxOutputBytes >= 1 && limits.maxOutputBytes <= 64 * 1024 * 1024
+        && Number.isInteger(limits.maxResponseBytes) && limits.maxResponseBytes >= 1024 && limits.maxResponseBytes <= 16 * 1024 * 1024
+        && Number.isInteger(limits.maxProcessMemoryMiB) && limits.maxProcessMemoryMiB >= 16
+        && limits.maxProcessMemoryMiB <= 512, "FPM_MANIFEST_INVALID",
+      "A portable WebAssembly handler must declare bounded execution limits.", {
+        package: manifest.id,
+        handler: handler.id,
+        limits,
+      });
+    }
     invariant(handler.buildEnvironment?.schema === "fpm.build-environment/1"
       && Array.isArray(handler.buildEnvironment.dimensions)
       && handler.buildEnvironment.dimensions.every((entry) => typeof entry === "string"), "FPM_MANIFEST_INVALID",

@@ -6,7 +6,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { FpmError, invariant } from "./errors.mjs";
-import { invokeHandler } from "./handler.mjs";
+import { handlerExecutionRecord, invokeHandler } from "./handler.mjs";
 import { hashFile, resolveInside, sha256, stableJson } from "./io.mjs";
 
 const HASH = /^sha256:([0-9a-f]{64})$/;
@@ -97,7 +97,7 @@ function actionEnvironment(handler, environmentContext) {
   };
 }
 
-function portableAction(action, handler, inputs, outputs, environment) {
+function portableAction(action, handler, inputs, outputs, environment, execution) {
   return {
     schema: "fpm.action-key/2",
     id: action.id,
@@ -107,6 +107,7 @@ function portableAction(action, handler, inputs, outputs, environment) {
       package: handler.owner.id,
       packageVersion: handler.owner.version,
       packageContentHash: `sha256:${handler.owner.contentHash}`,
+      execution,
     },
     sourcePackageHashes: [...(action.sourcePackageHashes ?? [])].sort(),
     parameters: action.parameters ?? {},
@@ -238,16 +239,20 @@ export class ArtifactStore {
         transaction: null,
       };
       await writeReplace(path.join(directory, "lease.json"), stableJson(lease));
-      return { buildKey, owner, directory, heartbeat: null };
+      return { buildKey, owner, directory, heartbeat: null, renewal: Promise.resolve(true) };
     } catch (error) {
       if (error.code !== "EEXIST") throw error;
       const existing = await this.readLease(buildKey);
       let expired = existing && Date.parse(existing.expiresAt) <= now;
       if (!existing) {
         try {
-          expired = (await stat(directory)).mtimeMs + this.leaseDurationMs <= now;
+          expired = (await stat(path.join(directory, "lease.json"))).mtimeMs + this.leaseDurationMs <= now;
         } catch {
-          expired = false;
+          try {
+            expired = (await stat(directory)).mtimeMs + this.leaseDurationMs <= now;
+          } catch {
+            expired = false;
+          }
         }
       }
       if (expired) {
@@ -264,17 +269,23 @@ export class ArtifactStore {
   }
 
   async renewLease(lease, transaction = undefined) {
-    const current = await this.readLease(lease.buildKey);
-    if (!current || current.owner !== lease.owner) return false;
-    const now = Date.now();
-    const renewed = {
-      ...current,
-      heartbeatAt: new Date(now).toISOString(),
-      expiresAt: new Date(now + this.leaseDurationMs).toISOString(),
-      transaction: transaction === undefined ? current.transaction : transaction,
+    const update = async () => {
+      const current = await this.readLease(lease.buildKey);
+      if (!current || current.owner !== lease.owner) return false;
+      const now = Date.now();
+      const renewed = {
+        ...current,
+        heartbeatAt: new Date(now).toISOString(),
+        expiresAt: new Date(now + this.leaseDurationMs).toISOString(),
+        transaction: transaction === undefined ? current.transaction : transaction,
+      };
+      // This directory has one owner. In-place renewal avoids Windows rename-over-existing
+      // failures; readers treat a transient partial document as a fresh, unexpired lease.
+      await writeFile(path.join(lease.directory, "lease.json"), stableJson(renewed), "utf8");
+      return true;
     };
-    await writeReplace(path.join(lease.directory, "lease.json"), stableJson(renewed));
-    return true;
+    lease.renewal = (lease.renewal ?? Promise.resolve()).then(update, update);
+    return lease.renewal;
   }
 
   startHeartbeat(lease) {
@@ -287,6 +298,7 @@ export class ArtifactStore {
   async releaseLease(lease) {
     if (!lease) return;
     if (lease.heartbeat) clearInterval(lease.heartbeat);
+    await lease.renewal?.catch(() => {});
     const current = await this.readLease(lease.buildKey);
     if (current?.owner === lease.owner) await rm(lease.directory, { recursive: true, force: true });
   }
@@ -299,11 +311,22 @@ export class ArtifactStore {
         actualHash: `sha256:${hash}`,
       });
     const objectPath = this.objectPath(hash);
-    if (await exists(objectPath) && await hashFile(objectPath) !== hash) await rm(objectPath, { force: true });
-    if (!await exists(objectPath)) {
-      await mkdir(path.dirname(objectPath), { recursive: true });
-      await rename(filePath, objectPath);
+    await mkdir(path.dirname(objectPath), { recursive: true });
+    let created = false;
+    try {
+      await link(filePath, objectPath);
+      created = true;
+    } catch (error) {
+      if (error.code !== "EEXIST") throw error;
     }
+    if (!created) {
+      invariant(await hashFile(objectPath) === hash, "FPM_STORE_OBJECT_CORRUPT",
+        "An immutable store object exists at its hash path with different content.", {
+          object: `sha256:${hash}`,
+          path: objectPath,
+        });
+    }
+    await rm(filePath, { force: true });
     return { hash: `sha256:${hash}`, storePath: objectPath };
   }
 
@@ -408,11 +431,12 @@ export class ArtifactStore {
     };
   }
 
-  async publishActionRecord(buildKey, action, roots) {
+  async publishActionRecord(buildKey, action, roots, execution = null) {
     const record = {
       schema: "fpm.action-cache/2",
       buildKey: `sha256:${buildKey}`,
       action: action.id,
+      execution,
       outputs: roots.map((root) => Object.fromEntries(
         Object.entries(root).filter(([key]) => !["storePath", "producedBy", "entries"].includes(key)),
       )),
@@ -451,14 +475,17 @@ export class ArtifactStore {
   async execute(action, handler, inputs) {
     const outputs = normalizedOutputs(action);
     const environment = actionEnvironment(handler, this.environmentContext);
-    const keyDocument = portableAction(action, handler, inputs, outputs, environment);
+    const executionRecord = handlerExecutionRecord(handler);
+    const keyDocument = portableAction(action, handler, inputs, outputs, environment, executionRecord);
     const buildKey = sha256(stableJson(keyDocument));
     const started = Date.now();
     let lease;
     while (!lease) {
       const cached = await this.cached(buildKey, action);
       if (cached) {
-        return { artifacts: cached, buildKey: `sha256:${buildKey}`, cacheHit: true, environment };
+        return {
+          artifacts: cached, buildKey: `sha256:${buildKey}`, cacheHit: true, environment, execution: executionRecord,
+        };
       }
       lease = await this.tryAcquireLease(buildKey, action.id);
       if (!lease) {
@@ -475,7 +502,13 @@ export class ArtifactStore {
     const afterLeaseCache = await this.cached(buildKey, action);
     if (afterLeaseCache) {
       await this.releaseLease(lease);
-      return { artifacts: afterLeaseCache, buildKey: `sha256:${buildKey}`, cacheHit: true, environment };
+      return {
+        artifacts: afterLeaseCache,
+        buildKey: `sha256:${buildKey}`,
+        cacheHit: true,
+        environment,
+        execution: executionRecord,
+      };
     }
 
     const transactionId = randomUUID();
@@ -534,8 +567,14 @@ export class ArtifactStore {
             importedRoots: roots.map((root) => root.hash),
           });
       }
-      await this.publishActionRecord(buildKey, action, roots);
-      return { artifacts: roots, buildKey: `sha256:${buildKey}`, cacheHit: false, environment };
+      await this.publishActionRecord(buildKey, action, roots, response.managerExecution);
+      return {
+        artifacts: roots,
+        buildKey: `sha256:${buildKey}`,
+        cacheHit: false,
+        environment,
+        execution: response.managerExecution,
+      };
     } catch (error) {
       if (error instanceof FpmError) {
         error.details = { ...error.details, action: action.id, buildKey: `sha256:${buildKey}` };
@@ -714,6 +753,7 @@ export async function executeArtifactGraph(actions, handlers, store) {
         totalSize: artifact.totalSize,
       })),
       environment: execution.environment,
+      execution: execution.execution,
       buildKey: execution.buildKey,
     });
   }
