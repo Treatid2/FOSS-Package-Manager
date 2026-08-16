@@ -157,8 +157,16 @@ function validateManifest(manifest, manifestPath) {
 
   const runtimeServices = array(manifest.runtimeServices, "runtimeServices", manifest.id).map((service) => ({
     ...service,
-    provides: service?.provides ?? [],
-    requires: service?.requires ?? [],
+    provides: (service?.provides ?? []).map((provided) => ({
+      ...provided,
+      cardinality: provided?.cardinality ?? "exclusive",
+      memberDependencies: provided?.memberDependencies ?? [],
+      metadata: provided?.metadata ?? {},
+    })),
+    requires: (service?.requires ?? []).map((requirement) => ({
+      ...requirement,
+      cardinality: requirement?.cardinality ?? "exclusive",
+    })),
     artifactAccess: service?.artifactAccess ?? "none",
     artifactStoreAccess: service?.artifactStoreAccess ?? "none",
     execution: service?.execution ?? {
@@ -177,18 +185,37 @@ function validateManifest(manifest, manifestPath) {
     invariant(service.execution?.form === "native-in-process" && service.execution.securityBoundary === "none"
       && Array.isArray(service.execution.requestedPowers), "FPM_MANIFEST_INVALID",
     "A runtime service execution declaration is malformed.", { package: manifest.id, service: service.id });
+    const collectionCapabilities = new Set();
     for (const provided of service.provides) {
       invariant(typeof provided?.capability === "string" && typeof provided.version === "string"
-        && provided.exclusive === true && (provided.binding === undefined
-          || (typeof provided.binding === "string" && provided.binding.length > 0)), "FPM_MANIFEST_INVALID",
+        && ["exclusive", "collection"].includes(provided.cardinality)
+        && (provided.binding === undefined || (typeof provided.binding === "string" && provided.binding.length > 0))
+        && ((provided.cardinality === "exclusive" && provided.exclusive === true)
+          || (provided.cardinality === "collection" && provided.exclusive === false
+            && typeof provided.member === "string" && provided.member.length > 0
+            && typeof provided.binding === "string" && provided.binding.length > 0
+            && Array.isArray(provided.memberDependencies)
+            && provided.memberDependencies.every((entry) => typeof entry === "string" && entry.length > 0)
+            && provided.metadata && typeof provided.metadata === "object" && !Array.isArray(provided.metadata))),
+      "FPM_MANIFEST_INVALID",
       "A runtime service capability declaration is malformed.", { package: manifest.id, service: service.id, provided });
       parseVersion(provided.version, "runtime service capability version");
+      if (provided.cardinality === "collection") {
+        invariant(!collectionCapabilities.has(provided.capability), "FPM_MANIFEST_INVALID",
+          "One runtime service cannot publish several values for the same collection capability.", {
+            package: manifest.id, service: service.id, capability: provided.capability,
+          });
+        collectionCapabilities.add(provided.capability);
+      }
     }
     for (const requirement of service.requires) {
       invariant(typeof requirement?.capability === "string" && typeof requirement.range === "string"
+        && ["exclusive", "collection"].includes(requirement.cardinality)
         && (requirement.optional === undefined || typeof requirement.optional === "boolean")
         && (requirement.binding === undefined
-          || (typeof requirement.binding === "string" && requirement.binding.length > 0)),
+          || (typeof requirement.binding === "string" && requirement.binding.length > 0))
+        && (requirement.cardinality !== "collection"
+          || (requirement.optional !== true && requirement.binding === undefined)),
         "FPM_MANIFEST_INVALID", "A runtime service requirement is malformed.", {
           package: manifest.id,
           service: service.id,

@@ -156,7 +156,7 @@ export function createService() {
         capabilities: {
           "runtime.transforms.read": read,
           "runtime.transforms.write": write,
-          "runtime.transforms.state": stateOwner,
+          "runtime.state.owner": stateOwner,
         },
       };
     },

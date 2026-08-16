@@ -3,7 +3,7 @@
   "status": "experimental",
   "compatibilityPromise": false,
   "title": "FOSS Package Manager prototype architecture snapshot v0",
-  "purpose": "Record the executable distinctions established through Phase 5 without freezing them as a public compatibility promise.",
+  "purpose": "Record the executable distinctions established through Phase 6 without freezing them as a public compatibility promise.",
   "sections": [
     {
       "id": "universal-envelope",
@@ -96,11 +96,11 @@
       "id": "runtime-lifecycle",
       "title": "Runtime service identity and lifecycle",
       "classification": "manager-core",
-      "summary": "The manager selects exclusive service capabilities, co-selects bound facets from one provider instance, activates providers dependency-first, injects only declared capabilities, commits after complete activation, and shuts down in reverse dependency order. Definition, persistent instance, generational handle, materialisation lease, mutation authority, state fragment, and saved tree are distinct identities.",
+      "summary": "The manager selects exclusive service capabilities, resolves fixed non-exclusive collections, co-selects bound facets from one provider instance, activates providers dependency-first, injects only declared capabilities, commits after complete activation, and shuts down in reverse dependency order. Definition, persistent instance, generational handle, materialisation lease, mutation authority, state fragment, and saved tree are distinct identities.",
       "contracts": [
         "fpm.runtime-service/1",
         "fpm.runtime-activation/1",
-        "fpm.runtime-plan/1",
+        "fpm.runtime-plan/2",
         "fpm.runtime-lifecycle/1",
         "provider-instance bindings and optional requirements",
         "fpm.runtime-handle/1",
@@ -108,10 +108,22 @@
       ]
     },
     {
+      "id": "capability-collections",
+      "title": "Open-ended capability collections",
+      "classification": "manager-core",
+      "summary": "A collection requirement selects every compatible contribution in the resolved package graph. Stable member identities, provider bindings, dependency edges, metadata roots, and explicit exclusions form one deterministic immutable plan; duplicates and cycles fail before activation. Member metadata remains opaque to manager core.",
+      "contracts": [
+        "collection capability cardinality",
+        "fpm.capability-collection-plan/1",
+        "fpm.capability-collection/1",
+        "explicit keyed-member policy subtraction"
+      ]
+    },
+    {
       "id": "durable-world-state",
       "title": "Durable typed world state and evolution",
       "classification": "boundary",
-      "summary": "Selected runtime authorities capture opaque typed fragments at one checkpoint. A coordinator publishes them as one immutable content-addressed save tree, preflights restore, retains absent optional state, rejects missing required owners, and records explicit one-step migration without manager-core interpretation of domain payloads.",
+      "summary": "Selected runtime authorities join one generic state-owner collection and capture opaque typed fragments at one checkpoint. A coordinator consumes the fixed attributed collection, publishes one immutable content-addressed save tree, preflights restore, retains absent optional state, rejects missing required owners, and records explicit one-step migration without manager-core interpretation of domain payloads.",
       "contracts": [
         "fpm.state-owner/1",
         "fpm.state-fragment/1",

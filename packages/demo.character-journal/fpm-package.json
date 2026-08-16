@@ -1,6 +1,6 @@
 {
   "schema": "fpm.package/1",
-  "id": "demo.character-marker",
+  "id": "demo.character-journal",
   "version": "0.6.0",
   "license": "Apache-2.0",
   "dependencies": [
@@ -8,24 +8,24 @@
   ],
   "runtimeServices": [
     {
-      "id": "service:demo.character-marker/1",
+      "id": "service:demo.character-journal/1",
       "protocol": "fpm.runtime-service/1",
       "provides": [
-        { "capability": "runtime.marker.read", "version": "1.0.0", "exclusive": true, "binding": "runtime.marker/1" },
-        { "capability": "runtime.marker.write", "version": "1.0.0", "exclusive": true, "binding": "runtime.marker/1" },
+        { "capability": "runtime.journal.read", "version": "1.0.0", "exclusive": true, "binding": "runtime.journal/1" },
+        { "capability": "runtime.journal.write", "version": "1.0.0", "exclusive": true, "binding": "runtime.journal/1" },
         {
           "capability": "runtime.state.owner",
           "version": "1.0.0",
           "exclusive": false,
           "cardinality": "collection",
-          "member": "state-owner:demo.character-marker/1",
-          "binding": "runtime.marker/1",
+          "member": "state-owner:demo.character-journal/1",
+          "binding": "runtime.journal/1",
           "memberDependencies": ["state-owner:demo.instances/1"],
           "metadata": {
-            "semanticSchema": "fpm.demo.character-marker-state",
+            "semanticSchema": "fpm.demo.character-journal-state",
             "schemaVersion": 1,
             "required": false,
-            "governingCapability": "runtime.marker.read"
+            "governingCapability": "runtime.journal.read"
           }
         }
       ],

@@ -440,7 +440,8 @@ test("ambiguous exclusive runtime providers require explicit policy", async (con
   const ambiguous = await buildProfile(ambiguousProfile, path.join(root, "ambiguous"));
   assert.throws(() => resolveRuntimePlan(ambiguous), (error) => {
     assert.equal(error.code, "FPM_RUNTIME_PROVIDER_AMBIGUOUS");
-    assert.match(error.details.capability, /^runtime\.transforms\./);
+    assert.equal(error.details.capability, "runtime.state.owner");
+    assert.equal(error.details.binding, "runtime.transforms/1");
     assert.equal(error.details.candidates.length, 2);
     return true;
   });

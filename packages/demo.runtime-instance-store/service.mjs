@@ -204,7 +204,7 @@ export function createService() {
           "runtime.instances.read": read,
           "runtime.instances.materialize": frozen({ acquire, release }),
           "runtime.instances.destroy": frozen({ destroy }),
-          "runtime.instances.state": stateOwner,
+          "runtime.state.owner": stateOwner,
         },
       };
     },

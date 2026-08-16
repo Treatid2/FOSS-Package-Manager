@@ -1,7 +1,7 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.runtime-instance-store",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "license": "Apache-2.0",
   "runtimeServices": [
     {
@@ -12,7 +12,21 @@
         { "capability": "runtime.instances.read", "version": "1.0.0", "exclusive": true, "binding": "runtime.instances/1" },
         { "capability": "runtime.instances.materialize", "version": "1.0.0", "exclusive": true, "binding": "runtime.instances/1" },
         { "capability": "runtime.instances.destroy", "version": "1.0.0", "exclusive": true, "binding": "runtime.instances/1" },
-        { "capability": "runtime.instances.state", "version": "1.0.0", "exclusive": true, "binding": "runtime.instances/1" }
+        {
+          "capability": "runtime.state.owner",
+          "version": "1.0.0",
+          "exclusive": false,
+          "cardinality": "collection",
+          "member": "state-owner:demo.instances/1",
+          "binding": "runtime.instances/1",
+          "memberDependencies": [],
+          "metadata": {
+            "semanticSchema": "fpm.demo.instance-state",
+            "schemaVersion": 1,
+            "required": true,
+            "governingCapability": "runtime.instances.read"
+          }
+        }
       ],
       "requires": [],
       "execution": {

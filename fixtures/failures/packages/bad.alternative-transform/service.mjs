@@ -42,7 +42,7 @@ export function createService() {
                 instanceId: command.instanceId, revision, translation: [...selected.translation] });
             },
           }),
-          "runtime.transforms.state": freeze({
+          "runtime.state.owner": freeze({
             protocol: "fpm.state-owner/1",
             semanticSchema: "fpm.demo.transform-state",
             schemaVersion: 1,

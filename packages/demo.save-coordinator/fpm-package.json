@@ -1,12 +1,12 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.save-coordinator",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "license": "Apache-2.0",
   "dependencies": [
     { "package": "demo.runtime-clock", "range": "^0.4.0" },
-    { "package": "demo.runtime-instance-store", "range": "^0.5.0" },
-    { "package": "demo.transform-authority", "range": "^0.5.0" }
+    { "package": "demo.runtime-instance-store", "range": "^0.6.0" },
+    { "package": "demo.transform-authority", "range": "^0.6.0" }
   ],
   "runtimeServices": [
     {
@@ -19,10 +19,7 @@
       ],
       "requires": [
         { "capability": "runtime.clock.tick", "range": "^1.0.0" },
-        { "capability": "runtime.instances.state", "range": "^1.0.0", "binding": "runtime.instances/1" },
-        { "capability": "runtime.transforms.state", "range": "^1.0.0", "binding": "runtime.transforms/1" },
-        { "capability": "runtime.marker.state", "range": "^1.0.0", "binding": "runtime.marker/1", "optional": true },
-        { "capability": "runtime.required-counter.state", "range": "^1.0.0", "binding": "runtime.required-counter/1", "optional": true },
+        { "capability": "runtime.state.owner", "range": "^1.0.0", "cardinality": "collection" },
         { "capability": "runtime.transforms.migration", "range": "^1.0.0", "optional": true }
       ],
       "execution": {

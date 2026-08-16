@@ -8,7 +8,21 @@
       "id": "service:bad.required-counter/1",
       "protocol": "fpm.runtime-service/1",
       "provides": [
-        { "capability": "runtime.required-counter.state", "version": "1.0.0", "exclusive": true, "binding": "runtime.required-counter/1" }
+        {
+          "capability": "runtime.state.owner",
+          "version": "1.0.0",
+          "exclusive": false,
+          "cardinality": "collection",
+          "member": "state-owner:fixture.required-counter/1",
+          "binding": "runtime.required-counter/1",
+          "memberDependencies": [],
+          "metadata": {
+            "semanticSchema": "fpm.demo.required-counter-state",
+            "schemaVersion": 1,
+            "required": true,
+            "governingCapability": "runtime.required-counter.state"
+          }
+        }
       ],
       "requires": [],
       "execution": {

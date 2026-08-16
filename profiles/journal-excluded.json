@@ -1,0 +1,35 @@
+{
+  "schema": "fpm.profile/2",
+  "name": "journal-excluded",
+  "packageRoots": ["../packages"],
+  "distribution": {
+    "roots": [
+      "demo.simple-runtime",
+      "demo.scene-validator",
+      "demo.solid-colour-adapter",
+      "demo.worldspace"
+    ],
+    "entryPoint": "pkg:demo.worldspace/world/demo",
+    "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
+    "activation": "runtime:demo.simple-runtime/browser-svg"
+  },
+  "target": { "platform": "portable-demo", "textureFormat": "rgba8-srgb" },
+  "policy": {
+    "providers": {},
+    "handlerSelections": {},
+    "adapterSelections": {},
+    "collectionPolicy": {
+      "runtime.state.owner": {
+        "id": "policy:demo.exclude-journal-state/1",
+        "exclude": ["state-owner:demo.character-journal/1"]
+      }
+    },
+    "validation": {
+      "id": "policy:demo.require-scene-validator/1",
+      "requiredValidators": ["validator:demo.scene-proposal/1"],
+      "waivers": []
+    },
+    "environmentKey": { "widen": ["host.platform", "host.architecture"] }
+  },
+  "user": { "roots": ["demo.green-head", "demo.character-journal"], "replacements": {} }
+}

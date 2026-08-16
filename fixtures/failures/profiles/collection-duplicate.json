@@ -1,0 +1,21 @@
+{
+  "schema": "fpm.profile/2",
+  "name": "collection-duplicate",
+  "packageRoots": ["../../../packages", "../packages"],
+  "distribution": {
+    "roots": [
+      "bad.collection-duplicate-a",
+      "bad.collection-duplicate-b",
+      "demo.simple-runtime",
+      "demo.scene-validator",
+      "demo.solid-colour-adapter",
+      "demo.worldspace"
+    ],
+    "entryPoint": "pkg:demo.worldspace/world/demo",
+    "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
+    "activation": "runtime:demo.simple-runtime/browser-svg"
+  },
+  "target": { "platform": "portable-demo" },
+  "policy": { "providers": {}, "handlerSelections": {}, "adapterSelections": {} },
+  "user": { "roots": [], "replacements": {} }
+}

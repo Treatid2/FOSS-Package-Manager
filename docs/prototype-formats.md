@@ -2,7 +2,7 @@
 
 # Prototype format notes
 
-All formats are provisional and use exact versioned identifiers. Phase 5 preserves the Phase 3 build and Phase 4 runtime contracts while adding provider-instance bindings, optional runtime requirements, typed durable-state fragments, immutable save-tree references, explicit one-step migration, and committed session records. Lockfile and provenance documents remain version 3.
+All formats are provisional and use exact versioned identifiers. Phase 6 preserves the earlier build, runtime, and durable-state contracts while adding generic non-exclusive capability collections, stable member identities, declared member dependencies, and attributed policy exclusion. Lockfile and provenance documents remain version 3.
 
 ## Core package envelope
 
@@ -13,7 +13,7 @@ Every package contains `fpm-package.json` with `schema: "fpm.package/1"`. The ma
 - contribution identity, manifest type, and manifest location;
 - handler declarations and their accepted/buildable types;
 - runtime service declarations, capability versions and requirements, artifact access, and lifecycle module;
-- runtime provider bindings, optional requirements, and declared content-store access;
+- runtime provider bindings, optional requirements, collection cardinality/member metadata, and declared content-store access;
 - execution form, security-boundary claim, and requested powers;
 - explicit one-step adapter declarations;
 - public replacement intent.
@@ -41,7 +41,7 @@ The portable alternative declares `form: "portable-wasm"`, `securityBoundary: "w
 
 - `distribution` — roots, entry point, requested artifact/builder, and activation default;
 - `target` — declared build target facts;
-- `policy` — provider, handler, and adapter selections;
+- `policy` — provider, handler, adapter, and collection-exclusion selections;
 - `user` — optional roots, replacement choices, and activation override.
 
 The effective package roots are the union of distribution and user roots. User replacement selections override a hook default only when a selected package actually proposes that replacement. Policy never silently ranks ambiguous handlers or adapters.
@@ -221,7 +221,7 @@ A package runtime service uses `fpm.runtime-service/1` and declares:
 
 A domain activation report uses `fpm.runtime-activation/1` to name accepted artifact types, root runtime capability requirements, and a deterministic initial tick count. The manager resolves one provider for every requirement. Multiple compatible exclusive providers fail with `FPM_RUNTIME_PROVIDER_AMBIGUOUS` unless profile policy selects a provider package or exact service.
 
-`fpm.runtime-plan/1` records artifact identity, provider selections and reasons, service implementation hashes and execution declarations, dependencies, and activation order. Dependencies activate first. A service context exposes the immutable activation artifact only when declared and resolves only capabilities listed in that service's requirements. An undeclared request fails with `FPM_RUNTIME_AUTHORITY_DENIED`.
+`fpm.runtime-plan/2` records artifact identity, provider selections and reasons, service implementation hashes and execution declarations, dependencies, capability collections, and activation order. Dependencies activate first. A service context exposes the immutable activation artifact only when declared and resolves only capabilities listed in that service's requirements. An undeclared request fails with `FPM_RUNTIME_AUTHORITY_DENIED`.
 
 `fpm.runtime-lifecycle/1` is committed only after complete activation. It records deterministic activate/tick/deactivate events. Activation failure deactivates the completed prefix in reverse order and leaves no lifecycle file. A provider cannot stop while an active dependent requires it; normal shutdown follows exact reverse activation order.
 
@@ -247,14 +247,14 @@ A provided or required runtime capability may name a generic provider binding. E
 runtime.transforms/1
     runtime.transforms.read
     runtime.transforms.write
-    runtime.transforms.state
+    state-owner:demo.transforms/1 collection member
 ```
 
 Policy may select by binding identity. The plan records the provider instance once and records every capability selection separately. This prevents a reader, writer, saver, and restorer from accidentally addressing different state domains. Optional requirements are explicit and return no capability when no compatible provider is present; they never apply an arbitrary fallback.
 
 ## Phase 5: durable state fragments and save trees
 
-A state-owning service exposes `fpm.state-owner/1` through a bound capability. Its contract declares a semantic schema identity and integer version, required/optional status, governing capability, provider, state-owner dependencies, capture, quiesce-before-restore, and restore operations.
+A state-owning service exposes `fpm.state-owner/1` as an attributed member of `runtime.state.owner`. Its contract declares a semantic schema identity and integer version, required/optional status, governing capability, provider, state-owner dependencies, capture, quiesce-before-restore, and restore operations.
 
 Capture produces a deeply immutable `fpm.state-fragment/1` at a coordinator-supplied `fpm.runtime-tick/1` checkpoint. Domain revision is recorded separately from the shared checkpoint. The coordinator validates that every fragment names the same checkpoint but does not interpret owner payloads.
 
@@ -263,7 +263,7 @@ Capture produces a deeply immutable `fpm.state-fragment/1` at a coordinator-supp
 - immutable save identity and format version;
 - shared checkpoint;
 - distribution and runtime-plan identities;
-- fragment schema/version, required status, governing capability, provider package and implementation hash;
+- collection member and provider-binding identities, attributed metadata root, fragment schema/version, required status, governing capability, provider package and implementation hash;
 - exact fragment blob root, owner revision, declared dependencies, and definition references;
 - migration history.
 
@@ -280,6 +280,18 @@ Migration is one step and explicit. `fpm.state-migration/1` declares one exact s
 ## Phase 5: live browser updates
 
 The loopback renderer still consumes only immutable scene snapshots. Its initial page opens one server-sent-event stream, and each renderer tick replaces only the displayed SVG with the newest snapshot. This closes the Phase 4 presentation gap without introducing general gameplay networking or giving the renderer mutation authority.
+
+## Phase 6: generic capability collections
+
+A runtime requirement with `cardinality: "collection"` selects every compatible contribution in the already-resolved package graph. Every provided member declares a stable identity, provider-instance binding, dependency identities, and opaque attributed metadata. The manager validates these generic relations; it does not interpret the metadata.
+
+`fpm.capability-collection-plan/1` records the deterministic member order, package and implementation hashes, provider bindings, metadata roots, requesters, and explicit exclusions. `fpm.capability-collection/1` presents that fixed plan plus each activated member value as a deeply immutable capability view. Duplicate member identities fail with contributor attribution. Missing dependencies and dependency cycles fail before activation.
+
+Collection policy is subtractive and explicit. A `collectionPolicy` entry names its policy identity and exact excluded members. The plan records the responsible policy and excluded provider. There is no ambient self-registration, implicit priority, or discovery-order tie-break.
+
+The Save Coordinator now declares only one collection requirement. Instance, transform, Marker, Required Counter, and the later Character Journal package participate through the same contract. Its source contains no list of known owner packages or capabilities. Restore ordering derives from manager-validated member dependencies, while payload interpretation remains with each owner.
+
+Membership means all compatible contributions from selected packages, not every package merely present on disk. Adding a package to the distribution/user graph is still an explicit package-resolution decision. Membership is fixed before activation; hot registration and removal are outside this prototype.
 
 ## Lockfile and provenance
 

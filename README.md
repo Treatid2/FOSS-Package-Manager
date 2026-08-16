@@ -2,7 +2,7 @@
 
 An executable language-laboratory prototype for a mod-native package system.
 
-This repository now tests four related propositions:
+This repository now tests five related propositions:
 
 > Can a small manager resolve declarative packages, dispatch specialised handlers, build deterministic artifacts, and explain exactly how each artifact was produced?
 
@@ -12,7 +12,9 @@ This repository now tests four related propositions:
 
 > Can those runtime authorities publish typed durable state, die completely, and reconstruct the same world under either the same service graph or an explicitly migrated one?
 
-The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 5 moves the character through an authoritative transform command, streams immutable snapshots to the browser, saves typed instance/transform/package state as one atomic tree reference, and restores it in a fresh runtime activation.
+> Can a new stateful package join that durable world through a generic, deterministic capability collection without teaching the manager or coordinator its name?
+
+The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 5 moves, saves, and restores the world. Phase 6 adds a Character Journal after the coordinator was complete; its note and visit counter automatically join the same save/restore path through one attributed collection declaration.
 
 ## Quick start
 
@@ -68,6 +70,7 @@ node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/app
 - persistent instance identities, materialisation leases, and generational handles;
 - authoritative transform commands and immutable revisioned scene extraction;
 - provider-instance bindings which co-select coherent read, write, save, and restore facets;
+- generic non-exclusive capability collections with stable member identities, attributed metadata, explicit policy exclusions, and dependency ordering;
 - typed state-owner fragments captured at one deterministic checkpoint;
 - atomic immutable world-save tree references in the content-addressed artifact store;
 - fresh-activation restore, explicit one-step state migration, and committed session records;
@@ -160,6 +163,7 @@ Each action receives manager-supplied input paths and a private staging director
 | `demo.scene-extractor` | Publishes immutable flat scene revisions from instance definitions and transform snapshots |
 | `demo.save-coordinator` | Captures coherent typed fragments, publishes immutable save trees, preflights compatibility, and restores owners in dependency order |
 | `demo.character-marker` | Tiny optional state owner used to prove opaque retention while its package is absent |
+| `demo.character-journal` | Post-coordinator package whose note and visit counter automatically join the generic state-owner collection |
 | `demo.transform-authority-v2` | Alternative coherent transform provider with state schema version 2 |
 | `demo.transform-migration-v1-v2` | Explicit one-step attributed migration from transform-state v1 to v2 |
 
@@ -192,15 +196,16 @@ Generated outputs live under `build/` and are ignored by Git. Cache hits are del
 - an action that writes to staging and then fails, exercising rollback;
 - a portable action that successfully uses its declared byte capabilities, probes undeclared host read/write/network authority, and is denied without publication.
 - stale runtime handles, release-versus-destruction, transform authority denial, ambiguous exclusive providers, activation rollback, and dependency-safe shutdown.
-- interrupted save publication, missing required state owners, opaque optional state, ambiguous migrations, and coherent provider bundles.
+- interrupted save publication, missing required state owners, opaque optional state, ambiguous migrations, and coherent provider bundles;
+- duplicate collection members, collection dependency cycles, deterministic membership, and attributed policy exclusion.
 
 The test suite asserts diagnostic codes and relevant context. It also verifies deterministic discovery, cache reuse, explicit adapter policy, handler separation, reproducible outputs, and runtime consumption.
 
 ## Explicit non-goals
 
-This is not yet a production package format, general native-code sandbox, repository client, distributed artifact store, general adapter or migration-path search, cache garbage collector, parallel runtime scheduler, streaming world, crash-durable save system, mutable save-slot manager, or networked game runtime. The renderer is intentionally disposable and the formats remain provisional.
+This is not yet a production package format, dynamic registration system, general native-code sandbox, repository client, distributed artifact store, general adapter or migration-path search, cache garbage collector, parallel runtime scheduler, streaming world, crash-durable save system, mutable save-slot manager, or networked game runtime. Collection membership is fixed from the selected package graph before activation. The renderer is intentionally disposable and the formats remain provisional.
 
-See [docs/architecture-snapshot-v0.md](docs/architecture-snapshot-v0.md) for the generated experimental contract checkpoint, [docs/prototype-formats.md](docs/prototype-formats.md) for public protocol notes, and [docs/phase-5-findings.md](docs/phase-5-findings.md) for the durable-state evidence and limitations.
+See [docs/architecture-snapshot-v0.md](docs/architecture-snapshot-v0.md) for the generated experimental contract checkpoint, [docs/prototype-formats.md](docs/prototype-formats.md) for public protocol notes, and [docs/phase-6-findings.md](docs/phase-6-findings.md) for the collection evidence and limitations.
 
 ## Security status
 

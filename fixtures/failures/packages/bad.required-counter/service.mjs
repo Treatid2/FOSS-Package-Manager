@@ -15,7 +15,7 @@ export function createService() {
       return {
         protocol: "fpm.runtime-service-response/1",
         capabilities: {
-          "runtime.required-counter.state": freeze({
+          "runtime.state.owner": freeze({
             protocol: "fpm.state-owner/1",
             semanticSchema: "fpm.demo.required-counter-state",
             schemaVersion: 1,

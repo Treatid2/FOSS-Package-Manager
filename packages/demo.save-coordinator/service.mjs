@@ -45,41 +45,69 @@ async function writeAtomic(filePath, value) {
 }
 
 function ownerOrder(owners) {
-  const bySchema = new Map(owners.map((owner) => [owner.semanticSchema, owner]));
+  const byMember = new Map(owners.map((owner) => [owner.member, owner]));
   const ordered = [];
   const state = new Map();
   function visit(owner) {
-    if (state.get(owner.semanticSchema) === "done") return;
-    if (state.get(owner.semanticSchema) === "visiting") {
+    if (state.get(owner.member) === "done") return;
+    if (state.get(owner.member) === "visiting") {
       fail("FPM_STATE_OWNER_CYCLE", "Persistent-state owner dependencies contain a cycle.", {
-        schema: owner.semanticSchema,
+        member: owner.member,
       });
     }
-    state.set(owner.semanticSchema, "visiting");
+    state.set(owner.member, "visiting");
     for (const dependency of [...owner.dependsOn].sort()) {
-      const selected = bySchema.get(dependency);
+      const selected = byMember.get(dependency);
       if (selected) visit(selected);
     }
-    state.set(owner.semanticSchema, "done");
+    state.set(owner.member, "done");
     ordered.push(owner);
   }
-  for (const owner of [...owners].sort((left, right) => left.semanticSchema.localeCompare(right.semanticSchema))) {
+  for (const owner of [...owners].sort((left, right) => left.member.localeCompare(right.member))) {
     visit(owner);
   }
   return ordered;
 }
 
-function validateOwner(owner) {
+function validateOwner(member) {
+  const owner = member?.value;
   if (owner?.protocol !== "fpm.state-owner/1" || typeof owner.semanticSchema !== "string"
     || !Number.isInteger(owner.schemaVersion) || typeof owner.required !== "boolean"
     || typeof owner.governingCapability !== "string" || typeof owner.provider !== "string"
-    || !Array.isArray(owner.dependsOn) || typeof owner.capture !== "function"
+    || typeof owner.capture !== "function"
     || typeof owner.restore !== "function") {
     fail("FPM_STATE_OWNER_INVALID", "A runtime state owner returned an invalid persistence contract.", {
+      member: member?.id ?? null,
       owner: owner?.semanticSchema ?? null,
     });
   }
-  return owner;
+  const metadata = member.metadata;
+  if (metadata?.semanticSchema !== owner.semanticSchema || metadata.schemaVersion !== owner.schemaVersion
+    || metadata.required !== owner.required || metadata.governingCapability !== owner.governingCapability
+    || member.providerInstance !== owner.provider) {
+    fail("FPM_STATE_OWNER_METADATA_MISMATCH",
+      "A state owner runtime value does not match its attributed collection declaration.", {
+        member: member.id,
+        metadata,
+        runtime: {
+          semanticSchema: owner.semanticSchema,
+          schemaVersion: owner.schemaVersion,
+          required: owner.required,
+          governingCapability: owner.governingCapability,
+          provider: owner.provider,
+        },
+      });
+  }
+  return {
+    ...owner,
+    member: member.id,
+    provider: member.providerInstance,
+    providerBinding: member.providerBinding,
+    providerPackage: member.package,
+    providerImplementationHash: member.packageContentHash,
+    metadataRoot: member.metadataRoot,
+    dependsOn: [...member.dependencies],
+  };
 }
 
 function fragmentPath(index) {
@@ -89,6 +117,7 @@ function fragmentPath(index) {
 export function createService() {
   let store;
   let clock;
+  let ownerCollection;
   let owners = [];
   let migration = null;
   let session;
@@ -115,15 +144,17 @@ export function createService() {
       const relativePath = fragmentPath(index);
       const content = json(fragment);
       files[relativePath] = content;
-      const providerRecord = options.runtimePlan.services.find((service) => service.id === owner.provider);
       fragments.push({
+        member: owner.member,
         semanticSchema: owner.semanticSchema,
         schemaVersion: owner.schemaVersion,
         required: owner.required,
         governingCapability: owner.governingCapability,
         provider: owner.provider,
-        providerPackage: providerRecord?.package ?? null,
-        providerImplementationHash: providerRecord?.packageContentHash ?? null,
+        providerBinding: owner.providerBinding,
+        providerPackage: owner.providerPackage,
+        providerImplementationHash: owner.providerImplementationHash,
+        metadataRoot: owner.metadataRoot,
         stateRevision: fragment.stateRevision,
         dependsOn: [...owner.dependsOn].sort(),
         references: fragment.references ?? {},
@@ -162,16 +193,18 @@ export function createService() {
       || !Array.isArray(manifest.fragments)) {
       fail("FPM_SAVE_MANIFEST_INVALID", "The selected save manifest has an unsupported shape.", { saveId });
     }
+    const byMember = new Map(owners.map((owner) => [owner.member, owner]));
     const bySchema = new Map(owners.map((owner) => [owner.semanticSchema, owner]));
     const restoreFragments = new Map();
     const retainedOpaque = [];
     const migrations = [];
     for (const entry of manifest.fragments) {
-      const owner = bySchema.get(entry.semanticSchema);
+      const owner = entry.member ? byMember.get(entry.member) : bySchema.get(entry.semanticSchema);
       if (!owner) {
         if (entry.required) {
           fail("FPM_STATE_OWNER_REQUIRED_MISSING", "A required saved state owner is unavailable.", {
             requiredStateSchema: entry.semanticSchema,
+            requiredCollectionMember: entry.member ?? null,
             schemaVersion: entry.schemaVersion,
             owningCapability: entry.governingCapability,
             lastKnownProvider: entry.provider,
@@ -180,7 +213,8 @@ export function createService() {
             reason: "no-current-provider-can-restore",
           });
         }
-        retainedOpaque.push({ semanticSchema: entry.semanticSchema, schemaVersion: entry.schemaVersion,
+        retainedOpaque.push({ member: entry.member ?? null, semanticSchema: entry.semanticSchema,
+          schemaVersion: entry.schemaVersion,
           root: entry.root, provider: entry.provider, status: "retained-uninterpreted" });
         continue;
       }
@@ -248,18 +282,19 @@ export function createService() {
             ?.reason ?? "sole-compatible-provider",
         });
       }
-      restoreFragments.set(owner.semanticSchema, fragment);
+      restoreFragments.set(owner.member, fragment);
     }
-    const missingCurrentRequired = owners.filter((owner) => owner.required && !restoreFragments.has(owner.semanticSchema));
+    const missingCurrentRequired = owners.filter((owner) => owner.required && !restoreFragments.has(owner.member));
     if (missingCurrentRequired.length > 0) {
       fail("FPM_STATE_FRAGMENT_REQUIRED_MISSING", "The save omits state required by the current runtime graph.", {
+        members: missingCurrentRequired.map((owner) => owner.member).sort(),
         schemas: missingCurrentRequired.map((owner) => owner.semanticSchema).sort(),
       });
     }
-    const ordered = ownerOrder(owners.filter((owner) => restoreFragments.has(owner.semanticSchema)));
+    const ordered = ownerOrder(owners.filter((owner) => restoreFragments.has(owner.member)));
     for (const owner of [...ordered].reverse()) await owner.prepareRestore?.();
     const restored = [];
-    for (const owner of ordered) restored.push(await owner.restore(restoreFragments.get(owner.semanticSchema)));
+    for (const owner of ordered) restored.push(await owner.restore(restoreFragments.get(owner.member)));
     return {
       schema: "fpm.runtime-session/1",
       state: "restored-pending-commit",
@@ -276,6 +311,7 @@ export function createService() {
         current: options.runtimePlanIdentity,
         compatible: manifest.runtimePlanIdentity === options.runtimePlanIdentity,
       },
+      stateOwnerCollection: options.runtimePlan.collections.find((entry) => entry.capability === "runtime.state.owner"),
       restored,
       retainedOpaque,
       migrations,
@@ -287,12 +323,8 @@ export function createService() {
       store = context.artifactStore;
       clock = context.require("runtime.clock.tick");
       options = context.options;
-      owners = [
-        context.require("runtime.instances.state"),
-        context.require("runtime.transforms.state"),
-        context.require("runtime.marker.state"),
-        context.require("runtime.required-counter.state"),
-      ].filter(Boolean).map(validateOwner);
+      ownerCollection = context.require("runtime.state.owner");
+      owners = ownerCollection.members.map(validateOwner);
       migration = context.require("runtime.transforms.migration");
       const duplicate = owners.map((owner) => owner.semanticSchema)
         .find((schema, index, entries) => entries.indexOf(schema) !== index);
@@ -306,6 +338,7 @@ export function createService() {
         saveId: null,
         distribution: { current: options.distributionIdentity },
         runtimePlan: { current: options.runtimePlanIdentity },
+        stateOwnerCollection: options.runtimePlan.collections.find((entry) => entry.capability === "runtime.state.owner"),
         restored: [],
         retainedOpaque: [],
         migrations: [],
@@ -326,6 +359,7 @@ export function createService() {
     },
     async deactivate() {
       owners = [];
+      ownerCollection = null;
       migration = null;
       store = null;
       clock = null;

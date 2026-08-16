@@ -7,7 +7,7 @@ import { readJson } from "./io.mjs";
 const PROFILE_2_KEYS = new Set(["schema", "name", "packageRoots", "distribution", "target", "policy", "user"]);
 const DISTRIBUTION_KEYS = new Set(["roots", "entryPoint", "artifact", "activation"]);
 const POLICY_KEYS = new Set([
-  "providers", "handlerSelections", "adapterSelections", "validation", "environmentKey", "permissions",
+  "providers", "handlerSelections", "adapterSelections", "collectionPolicy", "validation", "environmentKey", "permissions",
 ]);
 const USER_KEYS = new Set(["roots", "replacements", "activation"]);
 
@@ -89,6 +89,12 @@ export async function loadProfile(profilePath) {
     && Array.isArray(policy.validation.requiredValidators ?? [])
     && Array.isArray(policy.validation.waivers ?? [])), "FPM_PROFILE_INVALID",
   "Profile validation policy is malformed.", { path: absolutePath });
+  invariant(policy?.collectionPolicy === undefined || (policy.collectionPolicy
+    && typeof policy.collectionPolicy === "object" && !Array.isArray(policy.collectionPolicy)
+    && Object.values(policy.collectionPolicy).every((entry) => typeof entry?.id === "string" && entry.id.length > 0
+      && Array.isArray(entry.exclude) && entry.exclude.every((member) => typeof member === "string" && member.length > 0)
+      && new Set(entry.exclude).size === entry.exclude.length)),
+  "FPM_PROFILE_INVALID", "Profile collection policy is malformed.", { path: absolutePath });
 
   const effectiveRoots = [...new Set([...distribution.roots, ...userRoots])];
   const effectiveActivation = user?.activation ?? distribution.activation;
@@ -102,6 +108,8 @@ export async function loadProfile(profilePath) {
     authorityRecord("providers", policy?.providers ?? {}, "policy", "explicit-selection", "keyed-exact-choice"),
     authorityRecord("handlerSelections", policy?.handlerSelections ?? {}, "policy", "explicit-selection", "keyed-exact-choice"),
     authorityRecord("adapterSelections", policy?.adapterSelections ?? {}, "policy", "explicit-selection", "keyed-exact-choice"),
+    authorityRecord("collectionPolicy", policy?.collectionPolicy ?? {}, "policy", "explicit-exclusion",
+      "keyed-member-subtraction"),
     authorityRecord("validation", policy?.validation ?? null, "policy", "constraint", "monotonic-with-explicit-waivers"),
     authorityRecord("environmentKey", policy?.environmentKey ?? { widen: [] }, "policy", "constraint", "monotonic-widening"),
     authorityRecord("replacements", user?.replacements ?? {}, "user", "explicit-selection", "keyed-exact-choice"),
@@ -130,6 +138,7 @@ export async function loadProfile(profilePath) {
     providers: policy?.providers ?? {},
     handlerSelections: policy?.handlerSelections ?? {},
     adapterSelections: policy?.adapterSelections ?? {},
+    collectionPolicy: policy?.collectionPolicy ?? {},
     validationPolicy: policy?.validation ?? {
       id: "policy:fpm.validation/no-unwaived-failures/1",
       requiredValidators: [],

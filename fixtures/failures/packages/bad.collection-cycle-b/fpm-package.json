@@ -1,0 +1,28 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.collection-cycle-b",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "runtimeServices": [{
+    "id": "service:bad.collection-cycle-b/1",
+    "protocol": "fpm.runtime-service/1",
+    "provides": [{
+      "capability": "runtime.state.owner",
+      "version": "1.0.0",
+      "exclusive": false,
+      "cardinality": "collection",
+      "member": "state-owner:fixture.cycle-b/1",
+      "binding": "fixture.cycle-b/1",
+      "memberDependencies": ["state-owner:fixture.cycle-a/1"],
+      "metadata": {
+        "semanticSchema": "fpm.fixture.cycle-b-state",
+        "schemaVersion": 1,
+        "required": false,
+        "governingCapability": "runtime.fixture.cycle-b"
+      }
+    }],
+    "requires": [],
+    "execution": { "form": "native-in-process", "securityBoundary": "none", "requestedPowers": ["host-user-authority"] },
+    "module": "./service.mjs"
+  }]
+}

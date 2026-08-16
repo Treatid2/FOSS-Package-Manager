@@ -79,13 +79,52 @@ export function resolveRuntimePlan(result) {
       providers.set(provided.capability, candidates);
     }
   }
+  for (const candidates of providers.values()) {
+    candidates.sort((left, right) => (left.provided.member ?? "").localeCompare(right.provided.member ?? "")
+      || left.service.id.localeCompare(right.service.id));
+  }
   const selectedCapabilities = new Map();
+  const selectedCollections = new Map();
   const selectedBindings = new Map();
   const selectedServices = new Map();
   const edges = new Map();
   const selections = [];
 
-  function select(requirement, requestedBy) {
+  function matchesExplicit(entry, explicit) {
+    return !explicit || entry.service.owner.id === explicit || entry.service.id === explicit;
+  }
+
+  function bind(entry, binding, capability, requestedBy, explicit = null) {
+    if (!binding) return;
+    const previous = selectedBindings.get(binding);
+    invariant(!previous || previous.service.id === entry.service.id, "FPM_RUNTIME_PROVIDER_BINDING_CONFLICT",
+      "Capabilities bound to one provider instance resolved to different services.", {
+        binding,
+        existingProvider: previous?.service.id ?? null,
+        proposedProvider: entry.service.id,
+        capability,
+        requestedBy,
+      });
+    invariant(matchesExplicit(entry, explicit), "FPM_RUNTIME_PROVIDER_BINDING_CONFLICT",
+      "A provider-instance binding conflicts with explicit profile policy.", {
+        binding, capability, requestedBy, selectedProvider: explicit, proposedProvider: entry.service.id,
+      });
+    selectedBindings.set(binding, entry);
+  }
+
+  function ensureService(service) {
+    if (selectedServices.has(service.id)) return service;
+    selectedServices.set(service.id, service);
+    edges.set(service.id, new Set());
+    for (const dependency of [...service.requires]
+      .sort((left, right) => left.capability.localeCompare(right.capability)
+        || left.cardinality.localeCompare(right.cardinality))) {
+      for (const provider of selectRequirement(dependency, service.id)) edges.get(service.id).add(provider.id);
+    }
+    return service;
+  }
+
+  function selectExclusive(requirement, requestedBy) {
     const previous = selectedCapabilities.get(requirement.capability);
     if (previous) {
       invariant(satisfies(previous.provided.version, requirement.range), "FPM_RUNTIME_VERSION_CONFLICT",
@@ -104,7 +143,7 @@ export function resolveRuntimePlan(result) {
         selectedProvider: previous.service.id,
         requestedBy,
       });
-      return previous.service;
+      return [previous.service];
     }
     const explicit = result.profile.providers[requirement.binding] ?? result.profile.providers[requirement.capability];
     let candidates = (providers.get(requirement.capability) ?? [])
@@ -127,7 +166,7 @@ export function resolveRuntimePlan(result) {
         providedVersion: null,
         reason: "optional-unavailable",
       });
-      return null;
+      return [];
     }
     invariant(candidates.length > 0, "FPM_RUNTIME_CAPABILITY_MISSING",
       "No selected runtime service provides a required capability.", {
@@ -148,18 +187,7 @@ export function resolveRuntimePlan(result) {
         })).sort((left, right) => left.service.localeCompare(right.service)),
       });
     const selected = candidates[0];
-    if (requirement.binding) {
-      const bound = selectedBindings.get(requirement.binding);
-      invariant(!bound || bound.service.id === selected.service.id, "FPM_RUNTIME_PROVIDER_BINDING_CONFLICT",
-        "Capabilities bound to one provider instance resolved to different services.", {
-          binding: requirement.binding,
-          existingProvider: bound?.service.id ?? null,
-          proposedProvider: selected.service.id,
-          capability: requirement.capability,
-          requestedBy,
-        });
-      selectedBindings.set(requirement.binding, selected);
-    }
+    bind(selected, requirement.binding, requirement.capability, requestedBy, explicit);
     selectedCapabilities.set(requirement.capability, selected);
     selections.push({
       capability: requirement.capability,
@@ -171,21 +199,177 @@ export function resolveRuntimePlan(result) {
       providedVersion: selected.provided.version,
       reason: explicit ? "profile-policy" : "sole-compatible-provider",
     });
-    if (!selectedServices.has(selected.service.id)) {
-      selectedServices.set(selected.service.id, selected.service);
-      edges.set(selected.service.id, new Set());
-      for (const dependency of [...selected.service.requires]
-        .sort((left, right) => left.capability.localeCompare(right.capability))) {
-        const provider = select(dependency, selected.service.id);
-        if (provider) edges.get(selected.service.id).add(provider.id);
+    ensureService(selected.service);
+    return [selected.service];
+  }
+
+  function selectCollection(requirement, requestedBy) {
+    const previous = selectedCollections.get(requirement.capability);
+    if (previous) {
+      invariant(previous.members.every((entry) => satisfies(entry.provided.version, requirement.range)),
+        "FPM_RUNTIME_COLLECTION_RANGE_CONFLICT",
+        "A capability collection cannot satisfy every requested version range.", {
+          capability: requirement.capability,
+          required: requirement.range,
+          requestedBy,
+          members: previous.members.map((entry) => ({ member: entry.provided.member,
+            version: entry.provided.version })),
+        });
+      previous.requests.push({ requestedBy, required: requirement.range });
+      return previous.members.map((entry) => entry.service);
+    }
+    const compatible = (providers.get(requirement.capability) ?? [])
+      .filter((entry) => entry.provided.cardinality === "collection"
+        && satisfies(entry.provided.version, requirement.range));
+    invariant(compatible.length > 0, "FPM_RUNTIME_COLLECTION_EMPTY",
+      "No selected runtime service contributes to a required capability collection.", {
+        capability: requirement.capability,
+        required: requirement.range,
+        requestedBy,
+      });
+
+    const byBinding = new Map();
+    for (const entry of compatible) {
+      const candidates = byBinding.get(entry.provided.binding) ?? [];
+      candidates.push(entry);
+      byBinding.set(entry.provided.binding, candidates);
+    }
+    const boundMembers = [];
+    for (const binding of [...byBinding.keys()].sort()) {
+      const explicit = result.profile.providers[binding];
+      const alreadyBound = selectedBindings.get(binding);
+      let candidates = byBinding.get(binding);
+      if (alreadyBound) candidates = candidates.filter((entry) => entry.service.id === alreadyBound.service.id);
+      if (explicit) candidates = candidates.filter((entry) => matchesExplicit(entry, explicit));
+      invariant(candidates.length > 0, "FPM_RUNTIME_COLLECTION_BINDING_MISSING",
+        "No collection member matches its selected provider-instance binding.", {
+          capability: requirement.capability, binding, requestedBy,
+          selectedProvider: explicit ?? alreadyBound?.service.id ?? null,
+        });
+      invariant(candidates.length === 1, "FPM_RUNTIME_PROVIDER_AMBIGUOUS",
+        "Several services contribute one provider-bound collection member; policy must select one.", {
+          capability: requirement.capability,
+          binding,
+          requestedBy,
+          candidates: candidates.map((entry) => ({ member: entry.provided.member,
+            service: entry.service.id, package: entry.service.owner.id, version: entry.provided.version })),
+        });
+      bind(candidates[0], binding, requirement.capability, requestedBy, explicit);
+      boundMembers.push(candidates[0]);
+    }
+
+    const identities = new Map();
+    for (const entry of boundMembers) {
+      const duplicates = identities.get(entry.provided.member) ?? [];
+      duplicates.push(entry);
+      identities.set(entry.provided.member, duplicates);
+    }
+    const duplicate = [...identities.entries()].find(([, entries]) => entries.length > 1);
+    invariant(!duplicate, "FPM_RUNTIME_COLLECTION_MEMBER_DUPLICATE",
+      "Two selected packages contribute the same collection-member identity.", {
+        capability: requirement.capability,
+        member: duplicate?.[0] ?? null,
+        contributors: (duplicate?.[1] ?? []).map((entry) => ({ service: entry.service.id,
+          package: entry.service.owner.id, binding: entry.provided.binding })),
+      });
+
+    const policy = result.profile.collectionPolicy[requirement.capability] ?? null;
+    const excludedIds = new Set(policy?.exclude ?? []);
+    for (const member of excludedIds) {
+      invariant(identities.has(member), "FPM_RUNTIME_COLLECTION_EXCLUSION_UNKNOWN",
+        "Collection policy excludes a member which is not available in the selected graph.", {
+          capability: requirement.capability, member, policy: policy.id,
+        });
+    }
+    const members = boundMembers.filter((entry) => !excludedIds.has(entry.provided.member))
+      .sort((left, right) => left.provided.member.localeCompare(right.provided.member));
+    invariant(members.length > 0, "FPM_RUNTIME_COLLECTION_EMPTY",
+      "Collection policy excluded every compatible member.", {
+        capability: requirement.capability, policy: policy?.id ?? null,
+      });
+    const memberById = new Map(members.map((entry) => [entry.provided.member, entry]));
+    for (const entry of members) {
+      for (const dependency of entry.provided.memberDependencies) {
+        invariant(memberById.has(dependency), "FPM_RUNTIME_COLLECTION_DEPENDENCY_MISSING",
+          "A selected collection member depends on an absent or excluded member.", {
+            capability: requirement.capability,
+            member: entry.provided.member,
+            dependency,
+            excluded: excludedIds.has(dependency),
+            policy: policy?.id ?? null,
+          });
       }
     }
-    return selected.service;
+    const memberOrder = [];
+    const memberState = new Map();
+    const memberStack = [];
+    function visitMember(memberId) {
+      if (memberState.get(memberId) === "done") return;
+      if (memberState.get(memberId) === "visiting") {
+        const start = memberStack.indexOf(memberId);
+        throw new FpmError("FPM_RUNTIME_COLLECTION_DEPENDENCY_CYCLE",
+          "Capability collection member dependencies contain a cycle.", {
+            capability: requirement.capability,
+            cycle: [...memberStack.slice(start), memberId],
+          });
+      }
+      memberState.set(memberId, "visiting");
+      memberStack.push(memberId);
+      for (const dependency of [...memberById.get(memberId).provided.memberDependencies].sort()) {
+        visitMember(dependency);
+      }
+      memberStack.pop();
+      memberState.set(memberId, "done");
+      memberOrder.push(memberId);
+    }
+    for (const memberId of [...memberById.keys()].sort()) visitMember(memberId);
+
+    const publicMember = (entry) => ({
+      id: entry.provided.member,
+      providerInstance: entry.service.id,
+      providerBinding: entry.provided.binding,
+      package: entry.service.owner.id,
+      packageVersion: entry.service.owner.version,
+      packageContentHash: `sha256:${entry.service.owner.contentHash}`,
+      capabilityVersion: entry.provided.version,
+      dependencies: [...entry.provided.memberDependencies].sort(),
+      metadata: entry.provided.metadata,
+      metadataRoot: `sha256:${sha256(stableJson(entry.provided.metadata))}`,
+    });
+    const collection = {
+      capability: requirement.capability,
+      requests: [{ requestedBy, required: requirement.range }],
+      members,
+      memberOrder,
+      publicMembers: memberOrder.map((memberId) => publicMember(memberById.get(memberId))),
+      exclusions: boundMembers.filter((entry) => excludedIds.has(entry.provided.member)).map((entry) => ({
+        member: entry.provided.member,
+        providerInstance: entry.service.id,
+        package: entry.service.owner.id,
+        policy: policy.id,
+        reason: "profile-policy-exclusion",
+      })).sort((left, right) => left.member.localeCompare(right.member)),
+    };
+    selectedCollections.set(requirement.capability, collection);
+    for (const entry of members) ensureService(entry.service);
+    for (const entry of members) {
+      for (const dependency of entry.provided.memberDependencies) {
+        const dependencyService = memberById.get(dependency).service;
+        if (dependencyService.id !== entry.service.id) edges.get(entry.service.id).add(dependencyService.id);
+      }
+    }
+    return members.map((entry) => entry.service);
+  }
+
+  function selectRequirement(requirement, requestedBy) {
+    return requirement.cardinality === "collection"
+      ? selectCollection(requirement, requestedBy)
+      : selectExclusive(requirement, requestedBy);
   }
 
   for (const requirement of [...activation.requires]
     .sort((left, right) => left.capability.localeCompare(right.capability))) {
-    select(requirement, activation.id);
+    selectRequirement({ ...requirement, cardinality: requirement.cardinality ?? "exclusive" }, activation.id);
   }
 
   const ordered = [];
@@ -209,7 +393,7 @@ export function resolveRuntimePlan(result) {
   for (const serviceId of [...selectedServices.keys()].sort()) visit(serviceId);
 
   const record = {
-    schema: "fpm.runtime-plan/1",
+    schema: "fpm.runtime-plan/2",
     activation: {
       id: activation.id,
       package: activation.package,
@@ -230,10 +414,19 @@ export function resolveRuntimePlan(result) {
       package: selected.service.owner.id,
       reason: result.profile.providers[binding] ? "profile-policy" : "capability-selection",
     })).sort((left, right) => left.binding.localeCompare(right.binding)),
+    collections: [...selectedCollections.values()].map((collection) => ({
+      schema: "fpm.capability-collection-plan/1",
+      capability: collection.capability,
+      requests: collection.requests.sort((left, right) => left.requestedBy.localeCompare(right.requestedBy)
+        || left.required.localeCompare(right.required)),
+      memberOrder: collection.memberOrder,
+      members: collection.publicMembers,
+      exclusions: collection.exclusions,
+    })).sort((left, right) => left.capability.localeCompare(right.capability)),
     activationOrder: ordered.map((service) => service.id),
     services: ordered.map(publicService),
   };
-  return { activation, ordered, edges, selectedCapabilities, selectedBindings, record };
+  return { activation, ordered, edges, selectedCapabilities, selectedCollections, selectedBindings, record };
 }
 
 export class RuntimeHost {
@@ -242,6 +435,7 @@ export class RuntimeHost {
     this.artifact = immutable(structuredClone(artifact));
     this.options = options;
     this.capabilities = new Map();
+    this.collectionValues = new Map();
     this.active = [];
     this.ticks = 0;
     this.lifecycle = {
@@ -255,6 +449,25 @@ export class RuntimeHost {
   }
 
   capability(capability) {
+    const collection = this.plan.selectedCollections.get(capability);
+    if (collection) {
+      const values = this.collectionValues.get(capability) ?? new Map();
+      invariant(values.size === collection.members.length, "FPM_RUNTIME_COLLECTION_INCOMPLETE",
+        "A capability collection was requested before every selected member activated.", {
+          capability,
+          expected: collection.members.map((entry) => entry.provided.member),
+          active: [...values.keys()].sort(),
+        });
+      return immutable({
+        schema: "fpm.capability-collection/1",
+        capability,
+        memberOrder: [...collection.memberOrder],
+        members: collection.publicMembers.map((member) => ({
+          ...structuredClone(member),
+          value: values.get(member.id),
+        })),
+      });
+    }
     const selected = this.capabilities.get(capability);
     invariant(selected, "FPM_RUNTIME_CAPABILITY_INACTIVE", "A runtime capability is not active.", { capability });
     return selected.value;
@@ -307,6 +520,26 @@ export class RuntimeHost {
           && response.capabilities && typeof response.capabilities === "object", "FPM_RUNTIME_SERVICE_INVALID",
         "A runtime service returned an invalid activation response.", { service: service.id });
         for (const provided of service.provides) {
+          if (provided.cardinality === "collection") {
+            const collection = this.plan.selectedCollections.get(provided.capability);
+            const selectedMember = collection?.members.find((entry) => entry.service.id === service.id
+              && entry.provided.member === provided.member);
+            if (!selectedMember) continue;
+            invariant(Object.hasOwn(response.capabilities, provided.capability), "FPM_RUNTIME_SERVICE_INVALID",
+              "A runtime service did not publish its selected collection-member capability.", {
+                service: service.id,
+                capability: provided.capability,
+                member: provided.member,
+              });
+            const values = this.collectionValues.get(provided.capability) ?? new Map();
+            invariant(!values.has(provided.member), "FPM_RUNTIME_COLLECTION_MEMBER_DUPLICATE",
+              "Two active services attempted to publish one collection-member identity.", {
+                capability: provided.capability, member: provided.member, service: service.id,
+              });
+            values.set(provided.member, response.capabilities[provided.capability]);
+            this.collectionValues.set(provided.capability, values);
+            continue;
+          }
           invariant(Object.hasOwn(response.capabilities, provided.capability), "FPM_RUNTIME_SERVICE_INVALID",
             "A runtime service did not publish a declared capability.", {
               service: service.id,
@@ -345,6 +578,7 @@ export class RuntimeHost {
       }
       this.active = [];
       this.capabilities.clear();
+      this.collectionValues.clear();
       if (this.options.recordPath) await rm(this.options.recordPath, { force: true });
       if (error instanceof FpmError) {
         error.details = { ...error.details, lifecycle: { committed: false, activated, rolledBack } };
@@ -386,6 +620,12 @@ export class RuntimeHost {
     if (typeof entry.controller.deactivate === "function") await entry.controller.deactivate(entry.context);
     for (const [capability, selected] of this.capabilities) {
       if (selected.service.id === serviceId) this.capabilities.delete(capability);
+    }
+    for (const collection of this.plan.selectedCollections.values()) {
+      const values = this.collectionValues.get(collection.capability);
+      for (const member of collection.members.filter((candidate) => candidate.service.id === serviceId)) {
+        values?.delete(member.provided.member);
+      }
     }
     this.active = this.active.filter((candidate) => candidate !== entry);
     this.lifecycle.events.push({ event: "deactivate", service: serviceId });
@@ -480,13 +720,22 @@ export function explainRuntime(lifecycle, target) {
   const service = lifecycle.plan.services.find((entry) => entry.id === target || entry.package === target);
   const selections = lifecycle.plan.selections.filter((entry) => entry.capability === target
     || entry.provider === target || entry.package === target);
-  invariant(service || selections.length > 0, "FPM_RUNTIME_EXPLANATION_MISSING",
+  const collections = (lifecycle.plan.collections ?? []).filter((collection) => collection.capability === target
+    || collection.members.some((member) => member.id === target || member.providerInstance === target
+      || member.package === target)
+    || collection.exclusions.some((member) => member.member === target || member.providerInstance === target
+      || member.package === target));
+  invariant(service || selections.length > 0 || collections.length > 0, "FPM_RUNTIME_EXPLANATION_MISSING",
     "No runtime service or capability matches the requested explanation target.", { target });
-  const serviceIds = new Set([service?.id, ...selections.map((entry) => entry.provider)].filter(Boolean));
+  const serviceIds = new Set([service?.id, ...selections.map((entry) => entry.provider),
+    ...collections.flatMap((collection) => collection.members.map((member) => member.providerInstance)),
+    ...collections.flatMap((collection) => collection.exclusions.map((member) => member.providerInstance)),
+    ...collections.flatMap((collection) => collection.requests.map((request) => request.requestedBy))].filter(Boolean));
   return {
     target,
     service: service ?? null,
     selections,
+    collections,
     lifecycle: lifecycle.events.filter((entry) => entry.service === undefined || serviceIds.has(entry.service)),
     state: lifecycle.state,
     committed: lifecycle.committed,

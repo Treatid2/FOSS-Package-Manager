@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "license": "Apache-2.0",
   "dependencies": [
-    { "package": "demo.runtime-instance-store", "range": "^0.5.0" }
+    { "package": "demo.runtime-instance-store", "range": "^0.6.0" }
   ],
   "runtimeServices": [
     {
@@ -13,7 +13,21 @@
       "provides": [
         { "capability": "runtime.transforms.read", "version": "1.0.0", "exclusive": true, "binding": "runtime.transforms/1" },
         { "capability": "runtime.transforms.write", "version": "1.0.0", "exclusive": true, "binding": "runtime.transforms/1" },
-        { "capability": "runtime.transforms.state", "version": "1.0.0", "exclusive": true, "binding": "runtime.transforms/1" }
+        {
+          "capability": "runtime.state.owner",
+          "version": "1.0.0",
+          "exclusive": false,
+          "cardinality": "collection",
+          "member": "state-owner:demo.transforms/1",
+          "binding": "runtime.transforms/1",
+          "memberDependencies": ["state-owner:demo.instances/1"],
+          "metadata": {
+            "semanticSchema": "fpm.demo.transform-state",
+            "schemaVersion": 1,
+            "required": true,
+            "governingCapability": "runtime.transforms.write"
+          }
+        }
       ],
       "requires": [
         { "capability": "runtime.instances.read", "range": "^1.0.0", "binding": "runtime.instances/1" }

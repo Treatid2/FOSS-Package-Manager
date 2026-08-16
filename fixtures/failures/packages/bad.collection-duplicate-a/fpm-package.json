@@ -1,0 +1,28 @@
+{
+  "schema": "fpm.package/1",
+  "id": "bad.collection-duplicate-a",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "runtimeServices": [{
+    "id": "service:bad.collection-duplicate-a/1",
+    "protocol": "fpm.runtime-service/1",
+    "provides": [{
+      "capability": "runtime.state.owner",
+      "version": "1.0.0",
+      "exclusive": false,
+      "cardinality": "collection",
+      "member": "state-owner:fixture.duplicate/1",
+      "binding": "fixture.duplicate-a/1",
+      "memberDependencies": [],
+      "metadata": {
+        "semanticSchema": "fpm.fixture.duplicate-state",
+        "schemaVersion": 1,
+        "required": false,
+        "governingCapability": "runtime.fixture.duplicate-a"
+      }
+    }],
+    "requires": [],
+    "execution": { "form": "native-in-process", "securityBoundary": "none", "requestedPowers": ["host-user-authority"] },
+    "module": "./service.mjs"
+  }]
+}

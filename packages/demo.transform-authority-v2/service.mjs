@@ -115,7 +115,7 @@ export function createService() {
               return existed;
             },
           }),
-          "runtime.transforms.state": freeze({
+          "runtime.state.owner": freeze({
             protocol: "fpm.state-owner/1",
             semanticSchema: stateSchema,
             schemaVersion: 2,

@@ -1,12 +1,12 @@
 {
   "schema": "fpm.package/1",
   "id": "demo.scene-extractor",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "license": "Apache-2.0",
   "dependencies": [
-    { "package": "demo.runtime-instance-store", "range": "^0.5.0" },
-    { "package": "demo.transform-authority", "range": "^0.5.0" },
-    { "package": "demo.save-coordinator", "range": "^0.5.0" }
+    { "package": "demo.runtime-instance-store", "range": "^0.6.0" },
+    { "package": "demo.transform-authority", "range": "^0.6.0" },
+    { "package": "demo.save-coordinator", "range": "^0.6.0" }
   ],
   "runtimeServices": [
     {

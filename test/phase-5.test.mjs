@@ -214,6 +214,7 @@ test("missing required state owner prevents partial runtime activation", async (
     snapshotPath: path.join(root, "missing.svg") }), (error) => {
     assert.equal(error.code, "FPM_STATE_OWNER_REQUIRED_MISSING");
     assert.equal(error.details.requiredStateSchema, "fpm.demo.required-counter-state");
+    assert.equal(error.details.requiredCollectionMember, "state-owner:fixture.required-counter/1");
     assert.equal(error.details.owningCapability, "runtime.required-counter.state");
     assert.equal(error.details.lifecycle.committed, false);
     return true;
@@ -238,9 +239,12 @@ test("migration ambiguity requires exact policy and provider bindings co-select 
     "profile-policy");
   assert.equal(plan.providerBindings.find((entry) => entry.binding === "runtime.transforms/1").providerInstance,
     "service:demo.transform-authority-v2/1");
-  assert.ok(plan.selections.filter((entry) => ["runtime.transforms.read", "runtime.transforms.write",
-    "runtime.transforms.state"].includes(entry.capability))
+  assert.ok(plan.selections.filter((entry) => ["runtime.transforms.read", "runtime.transforms.write"]
+    .includes(entry.capability))
     .every((entry) => entry.provider === "service:demo.transform-authority-v2/1"));
+  assert.equal(plan.collections.find((entry) => entry.capability === "runtime.state.owner").members
+    .find((entry) => entry.id === "state-owner:demo.transforms/1").providerInstance,
+    "service:demo.transform-authority-v2/1");
 });
 
 test("the interactive renderer streams subsequent immutable SVG frames without page refresh", async (context) => {
