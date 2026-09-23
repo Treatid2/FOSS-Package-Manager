@@ -1,0 +1,22 @@
+{
+  "schema": "fgpm.host-portable-maintenance/1",
+  "purpose": "Descriptor-only manager integration host; no executable package entrypoint",
+  "package": { "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4", "id": "fgpm.grid-dungeon-integration-runtime", "version": "0.2.2", "license": "MPL-2.0" },
+  "historicalPredecessor": { "root": "sha256:2e0d44cdc4756a3962f133364616c7d57889f18801dc6b2cc4200e52f666f475", "sourceCommit": "e37daa7e4940fdc2e9c0f3c65bc4e8e44ed973a9", "files": { "fpm-package.json": "125c665302c7d4fbcbe5fbb54c046351f34c21a4a8f6a6faf545a23e7202e28b", "runtime.json": "8f21b0c01cc0da63738a5f3db62b215846a65894a0707e2d95ca5b27d265ed1f" } },
+  "predecessor": { "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4", "name": "fgpm.grid-dungeon-integration-runtime", "version": "0.2.1", "root": "sha256:df991de127867422ae60bc041b02efb503a93748cfc696af5d324c4b7d5e8090", "sourceCommit": "0ace04c117ffe21d310dddd5a8e96a06f860cfb3", "relationship": "documentation-and-custodian-metadata-privacy-correction" },
+  "successor": { "format": "fgpm.package/1", "files": { "fgpm-package.json": "33a17b3f0abee2704018e4833d5b39c432b963ded247ae2f533429230438ad8c", "runtime.json": "c47108a7287935d321b906d5f863c68e1046e378b2bcaa3a1337b3dd731016cd" } },
+  "dependencies": [ { "package": "demo.runtime-task-v2-distribution", "range": "0.8.0" }, { "package": "fgdungeon.reference-runtime", "range": "0.1.0" } ],
+  "contribution": { "id": "pkg:fgpm.grid-dungeon-integration-runtime/runtime/dungeon-v04", "manifestType": "fgpm.demo.runtime/1", "manifest": "runtime.json" },
+  "runtime": { "schema": "fgpm.demo.runtime/1", "activation": { "id": "runtime:fgpm.grid-dungeon-integration/dungeon-v04", "protocol": "fgpm.runtime-activation/1", "accepts": ["fgpm.render-bundle/1"], "requires": [ { "capability": "fgdungeon.reference-runtime", "range": "0.1.0" }, { "capability": "runtime.scheduler.barrier", "range": "^2.0.0", "binding": "runtime.scheduler/2" }, { "capability": "runtime.renderer.window", "range": "^1.0.0" }, { "capability": "runtime.persistence.world", "range": "^1.0.0", "binding": "runtime.persistence/1" } ], "ticks": 18 } },
+  "custodian": { "project": "FGPM", "owner": "FGPM package owner", "sourceDirectory": "maintained-packages/fgpm.grid-dungeon-integration-runtime" },
+  "licenseFile": "LICENSE",
+  "noticeFile": "NOTICE.md",
+  "documentation": "README.md",
+  "descriptorEquivalence": "descriptor-equivalence.json",
+  "schemaStatus": "provisional-v1",
+  "testCommand": "node --test tests/maintenance.test.mjs",
+  "testsInert": true,
+  "limits": ["experimental-no-compatibility-promise", "no-hostile-code-containment", "content-identity-not-trust", "no-project-adoption-or-runtime-execution"],
+  "acceptedV05SelectionChanged": false,
+  "cutover": "public-contract-stage-a"
+}

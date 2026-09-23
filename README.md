@@ -9,6 +9,8 @@ Current manager prerelease: **0.11.0-rc.6**. See the
 [standalone release verification path](docs/reference-tools-readme.md). Build-to-public-source
 mapping is recorded in the
 [RC6 source-correspondence note](docs/source-correspondence-0.11.0-rc.6.md).
+The public-safe Grid Dungeon integration host successor is released independently as
+[`fgpm.grid-dungeon-integration-runtime@0.2.2`](https://github.com/Treatid2/FOSS-Package-Manager/releases/tag/fgpm-grid-dungeon-integration-runtime-v0.2.2).
 
 This repository now tests seven related propositions:
 

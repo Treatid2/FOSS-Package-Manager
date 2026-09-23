@@ -1,0 +1,26 @@
+{
+  "schema": "fgpm.host-descriptor-equivalence/1",
+  "decision": "MIGRATE_TO_FGPM_PACKAGE_ENTRYPOINT_AND_NAMESPACE",
+  "migrationApplied": true,
+  "reason": "The authorised public-contract cutover changes only descriptor identity fields and labels; the runtime contribution remains semantically unchanged.",
+  "publicSchemaStatus": "provisional-v1",
+  "predecessorRoot": "sha256:2e0d44cdc4756a3962f133364616c7d57889f18801dc6b2cc4200e52f666f475",
+  "versionDecision": "0.2.2 is the public-safe documentation successor to accepted 0.2.1 and remains distinct from the minimal 0.2.0 fixture successor",
+  "publicSafePredecessor": {
+    "version": "0.2.1",
+    "root": "sha256:df991de127867422ae60bc041b02efb503a93748cfc696af5d324c4b7d5e8090",
+    "change": "Remove private coordination identifiers from public documentation and custodian metadata without changing runtime semantics."
+  },
+  "fields": [
+    { "path": "/format", "before": "fpm.package/1", "after": "fgpm.package/1", "equivalence": "label-cutover" },
+    { "path": "/namespace", "before": null, "after": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4", "equivalence": "publisher-identity-added" },
+    { "path": "/name", "before": "fgpm.grid-dungeon-integration-runtime", "after": "fgpm.grid-dungeon-integration-runtime", "equivalence": "field-renamed" },
+    { "path": "/version", "before": "0.1.0", "after": "0.2.2", "equivalence": "public-boundary-version-and-documentation-correction" },
+    { "path": "/license", "before": "MPL-2.0", "after": "MPL-2.0", "equivalence": "unchanged" },
+    { "path": "/dependencies/0", "before": { "package": "demo.runtime-task-v2-distribution", "range": "0.8.0" }, "after": { "package": "demo.runtime-task-v2-distribution", "range": "0.8.0" }, "equivalence": "unchanged" },
+    { "path": "/dependencies/1", "before": { "package": "fgdungeon.reference-runtime", "range": "0.1.0" }, "after": { "package": "fgdungeon.reference-runtime", "range": "0.1.0" }, "equivalence": "unchanged" },
+    { "path": "/contributions/0/id", "before": "pkg:fgpm.grid-dungeon-integration-runtime/runtime/dungeon-v04", "after": "pkg:fgpm.grid-dungeon-integration-runtime/runtime/dungeon-v04", "equivalence": "unchanged" },
+    { "path": "/contributions/0/manifestType", "before": "fgpm.demo.runtime/1", "after": "fgpm.demo.runtime/1", "equivalence": "unchanged" },
+    { "path": "/contributions/0/manifest", "before": "runtime.json", "after": "runtime.json", "equivalence": "unchanged" }
+  ]
+}
