@@ -1,0 +1,19 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "bad.duplicate-public",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "contributions": [
+    {
+      "id": "pkg:bad.duplicate-public/contribution/one",
+      "manifestType": "fgpm.demo.solid-colour/1",
+      "manifest": "one.json"
+    },
+    {
+      "id": "pkg:bad.duplicate-public/contribution/two",
+      "manifestType": "fgpm.demo.solid-colour/1",
+      "manifest": "two.json"
+    }
+  ]
+}

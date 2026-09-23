@@ -1,0 +1,46 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.scene-toolchain",
+  "version": "0.4.0",
+  "license": "Apache-2.0",
+  "provides": [
+    {
+      "capability": "fgpm.handler.scene",
+      "version": "1.0.0"
+    }
+  ],
+  "handlers": [
+    {
+      "id": "handler:demo.scene-toolchain/1",
+      "protocol": "fgpm.handler-stdio/1",
+      "handles": [
+        "fgpm.demo.mesh/1",
+        "fgpm.demo.visual-assembly/1",
+        "fgpm.demo.camera/1",
+        "fgpm.demo.worldspace/1",
+        "fgpm.demo.runtime/1",
+        "fgpm.demo.fail/1"
+      ],
+      "builds": [
+        "fgpm.render-bundle/1"
+      ],
+      "buildEnvironment": {
+        "schema": "fgpm.build-environment/1",
+        "dimensions": []
+      },
+      "execution": {
+        "form": "external-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "read-declared-input-artifacts",
+          "write-manager-staging"
+        ]
+      },
+      "command": [
+        "node",
+        "./handler.mjs"
+      ]
+    }
+  ]
+}

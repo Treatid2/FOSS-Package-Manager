@@ -1,0 +1,50 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.motion",
+  "version": "0.7.0",
+  "license": "Apache-2.0",
+  "runtimeServices": [
+    {
+      "id": "service:demo.motion/1",
+      "protocol": "fgpm.runtime-service/1",
+      "provides": [
+        {
+          "capability": "runtime.task",
+          "version": "1.0.0",
+          "exclusive": false,
+          "cardinality": "collection",
+          "member": "task:demo.motion/set-x/1",
+          "binding": "runtime.task.demo-motion/1",
+          "memberDependencies": [],
+          "metadata": {
+            "phase": "simulation",
+            "snapshots": [
+              "runtime.transforms.read"
+            ],
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "composition": "ordered",
+                "commitAfter": []
+              }
+            ],
+            "affinity": "any-worker",
+            "reentrancy": "non-reentrant",
+            "required": true,
+            "failure": "abort-tick"
+          }
+        }
+      ],
+      "requires": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority"
+        ]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

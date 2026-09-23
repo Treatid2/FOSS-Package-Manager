@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fgpm:fgpm.package-identity:1",
+  "title": "FGPM content-only directory identity result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "input", "expected", "observed", "exitCode", "contentOnly", "error"],
+  "properties": {
+    "schema": { "const": "fgpm.package-identity/1" },
+    "status": { "enum": ["computed", "match", "mismatch", "error"] },
+    "input": { "type": ["string", "null"] },
+    "expected": { "type": ["string", "null"] },
+    "observed": { "type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$" },
+    "exitCode": { "enum": [0, 1, 2] },
+    "contentOnly": { "const": true },
+    "error": { "type": ["object", "null"] }
+  }
+}

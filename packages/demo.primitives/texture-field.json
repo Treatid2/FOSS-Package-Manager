@@ -1,5 +1,5 @@
 {
-  "schema": "fpm.demo.texture-file/1",
+  "schema": "fgpm.demo.texture-file/1",
   "export": {
     "id": "pkg:demo.primitives/texture/field",
     "semanticType": "texture.file.ppm-p3-srgb/1",

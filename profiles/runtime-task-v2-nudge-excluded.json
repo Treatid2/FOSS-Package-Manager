@@ -1,0 +1,31 @@
+{
+  "schema": "fgpm.profile/3",
+  "name": "runtime-task-v2-nudge-equivalence",
+  "packageRoots": ["../packages"],
+  "distribution": {
+    "roots": [
+      "demo.runtime-task-v2-distribution", "demo.scene-validator",
+      "demo.solid-colour-adapter", "demo.worldspace"
+    ],
+    "entryPoint": "pkg:demo.worldspace/world/demo",
+    "artifact": { "type": "fgpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
+    "activation": "runtime:demo.runtime-task-v2/browser-svg"
+  },
+  "target": { "platform": "portable-demo", "textureFormat": "rgba8-srgb" },
+  "policy": {
+    "providers": { "runtime.scene-snapshot": "demo.scene-extractor-v2" },
+    "handlerSelections": {}, "adapterSelections": {},
+    "collectionPolicy": {
+      "runtime.task": {
+        "id": "policy:demo.exclude-external-nudge-v2/1",
+        "exclude": ["task:demo.external-nudge-v2/add-x/1"]
+      }
+    },
+    "validation": {
+      "id": "policy:demo.require-scene-validator/1",
+      "requiredValidators": ["validator:demo.scene-proposal/1"], "waivers": []
+    },
+    "environmentKey": { "widen": ["host.platform", "host.architecture"] }
+  },
+  "user": { "roots": [], "replacements": {} }
+}

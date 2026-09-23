@@ -1,10 +1,10 @@
 {
-  "schema": "fpm.demo.runtime/1",
+  "schema": "fgpm.demo.runtime/1",
   "activation": {
     "id": "runtime:demo.simple-runtime/browser-svg",
-    "protocol": "fpm.runtime-activation/1",
+    "protocol": "fgpm.runtime-activation/1",
     "accepts": [
-      "fpm.render-bundle/1"
+      "fgpm.render-bundle/1"
     ],
     "requires": [
       { "capability": "runtime.scheduler.barrier", "range": "^1.0.0", "binding": "runtime.scheduler/1" },

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-package-manager.example/schema/transform-task-v1.schema.json",
+  "title": "FGPM transform task and command-channel vocabulary",
+  "x-fgpm-license": "Apache-2.0",
+  "x-fgpm-identity": "fgpm.transform-task-vocabulary/1",
+  "x-fgpm-steward": "fgpm.transform-task-vocabulary/1",
+  "x-fgpm-status": "experimental-no-compatibility-promise",
+  "$defs": {
+    "snapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "revision", "transforms"],
+      "properties": {
+        "schema": { "const": "fgpm.transform-snapshot/1" }, "revision": { "type": "integer", "minimum": 0 },
+        "transforms": { "type": "array", "items": { "type": "object", "required": ["instanceId", "translation", "revision"] } }
+      }
+    },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "operation", "instanceId", "axis", "value"],
+      "properties": {
+        "schema": { "const": "fgpm.transform-operation/1" }, "operation": { "enum": ["set-axis", "add-axis"] },
+        "instanceId": { "type": "string" }, "axis": { "enum": ["x", "y", "z"] }, "value": { "type": "number" }
+      }
+    },
+    "commandBuffer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "task", "checkpoint", "channel", "commands", "root"],
+      "properties": {
+        "schema": { "const": "fgpm.runtime-command-buffer/2" }, "task": { "type": "string", "pattern": "^task:" },
+        "checkpoint": { "type": "object" }, "channel": { "const": "runtime.transforms.commands" },
+        "commands": { "type": "array", "items": { "$ref": "#/$defs/operation" } }, "root": { "type": "string", "pattern": "^sha256:" }
+      }
+    },
+    "composition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "channel", "vocabulary", "steward", "rule", "stages", "commitOrder"],
+      "properties": {
+        "schema": { "const": "fgpm.command-channel-composition/1" }, "channel": { "const": "runtime.transforms.commands" },
+        "vocabulary": { "const": "fgpm.transform-task-vocabulary/1" }, "steward": { "type": "string" },
+        "rule": { "const": "fgpm.transform.staged-axis-compose/1" }, "stages": { "type": "array" },
+        "commitOrder": { "type": "array", "items": { "type": "string", "pattern": "^task:" } }
+      }
+    }
+  }
+}

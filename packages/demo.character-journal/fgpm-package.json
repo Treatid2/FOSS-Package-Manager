@@ -1,0 +1,65 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.character-journal",
+  "version": "0.6.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.runtime-instance-store",
+      "range": "^0.6.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:demo.character-journal/1",
+      "protocol": "fgpm.runtime-service/1",
+      "provides": [
+        {
+          "capability": "runtime.journal.read",
+          "version": "1.0.0",
+          "exclusive": true,
+          "binding": "runtime.journal/1"
+        },
+        {
+          "capability": "runtime.journal.write",
+          "version": "1.0.0",
+          "exclusive": true,
+          "binding": "runtime.journal/1"
+        },
+        {
+          "capability": "runtime.state.owner",
+          "version": "1.0.0",
+          "exclusive": false,
+          "cardinality": "collection",
+          "member": "state-owner:demo.character-journal/1",
+          "binding": "runtime.journal/1",
+          "memberDependencies": [
+            "state-owner:demo.instances/1"
+          ],
+          "metadata": {
+            "semanticSchema": "fgpm.demo.character-journal-state",
+            "schemaVersion": 1,
+            "required": false,
+            "governingCapability": "runtime.journal.read"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "capability": "runtime.instances.read",
+          "range": "^1.0.0",
+          "binding": "runtime.instances/1"
+        }
+      ],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority"
+        ]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

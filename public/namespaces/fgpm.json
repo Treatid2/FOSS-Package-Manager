@@ -1,0 +1,10 @@
+{
+  "schema": "fgpm.publisher-namespace/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "publisher": "FOSS Package Manager project",
+  "project": "FGPM",
+  "issued": "2026-09-20",
+  "status": "active",
+  "authority": "self-issued-rfc9562-uuid",
+  "license": "CC0-1.0"
+}

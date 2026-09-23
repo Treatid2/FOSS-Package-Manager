@@ -1,0 +1,44 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.runtime-task-v2-distribution",
+  "version": "0.8.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.simple-runtime",
+      "range": "^0.7.0"
+    },
+    {
+      "package": "demo.scene-extractor-v2",
+      "range": "^0.8.0"
+    },
+    {
+      "package": "demo.deterministic-scheduler-v2",
+      "range": "^0.8.0"
+    },
+    {
+      "package": "demo.motion-v2",
+      "range": "^0.8.0"
+    },
+    {
+      "package": "demo.motion-offset-v2",
+      "range": "^0.8.0"
+    },
+    {
+      "package": "demo.external-nudge-v2",
+      "range": "^1.0.0"
+    },
+    {
+      "package": "demo.wind-offset-v2",
+      "range": "^1.0.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:demo.runtime-task-v2-distribution/runtime/browser-svg",
+      "manifestType": "fgpm.demo.runtime/1",
+      "manifest": "runtime.json"
+    }
+  ]
+}

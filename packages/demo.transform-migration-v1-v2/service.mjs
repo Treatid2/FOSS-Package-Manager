@@ -12,17 +12,17 @@ export function createService() {
   return {
     async activate() {
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: {
           "runtime.transforms.migration": freeze({
-            protocol: "fpm.state-migration/1",
+            protocol: "fgpm.state-migration/1",
             package: "demo.transform-migration-v1-v2",
             provider: "service:demo.transform-migration-v1-v2/1",
-            from: { semanticSchema: "fpm.demo.transform-state", schemaVersion: 1 },
-            to: { semanticSchema: "fpm.demo.transform-state", schemaVersion: 2 },
+            from: { semanticSchema: "fgpm.demo.transform-state", schemaVersion: 1 },
+            to: { semanticSchema: "fgpm.demo.transform-state", schemaVersion: 2 },
             migrate: (fragment) => freeze({
-              protocol: "fpm.state-fragment/1",
-              semanticSchema: "fpm.demo.transform-state",
+              protocol: "fgpm.state-fragment/1",
+              semanticSchema: "fgpm.demo.transform-state",
               schemaVersion: 2,
               checkpoint: structuredClone(fragment.checkpoint),
               stateRevision: fragment.stateRevision,

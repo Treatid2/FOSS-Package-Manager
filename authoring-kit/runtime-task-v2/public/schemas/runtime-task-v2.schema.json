@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-package-manager.example/schema/runtime-task-v2.schema.json",
+  "title": "FGPM corrected runtime-task vocabulary",
+  "x-fgpm-license": "Apache-2.0",
+  "x-fgpm-identity": "fgpm.runtime-task-member/2",
+  "x-fgpm-steward": "fgpm.runtime-task-vocabulary/2",
+  "x-fgpm-status": "experimental-no-compatibility-promise",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "vocabulary", "participation", "failurePolicy", "affinity", "snapshots", "outputs"],
+  "properties": {
+    "schema": { "const": "fgpm.runtime-task-member/2" },
+    "vocabulary": { "const": "fgpm.runtime-task-vocabulary/2" },
+    "participation": { "enum": ["required", "optional"] },
+    "failurePolicy": { "enum": ["abort-tick", "drop-task"] },
+    "affinity": { "enum": ["main-thread", "any-worker"] },
+    "snapshots": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["capability", "schema", "vocabulary"],
+        "properties": {
+          "capability": { "type": "string" }, "schema": { "type": "string" },
+          "vocabulary": { "type": "string", "pattern": "-vocabulary/[0-9]+$" }
+        }
+      }
+    },
+    "outputs": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["channel", "vocabulary", "stage", "law"],
+        "properties": {
+          "channel": { "type": "string" }, "vocabulary": { "type": "string" },
+          "stage": { "type": "string" }, "law": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "taskActivation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["protocol", "provider", "workerModule"],
+      "properties": {
+        "protocol": { "const": "fgpm.runtime-task/2" }, "provider": { "type": "string", "pattern": "^service:" },
+        "workerModule": { "type": "string", "minLength": 1 }
+      }
+    },
+    "workerResponse": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "task", "outcome", "emissions"],
+      "properties": {
+        "schema": { "const": "fgpm.runtime-task-worker-response/2" }, "task": { "type": "string", "pattern": "^task:" },
+        "outcome": { "enum": ["completed", "failed"] }, "emissions": { "type": "array" }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "bad.missing-dependency",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "absent.package",
+      "range": "^1.0.0"
+    }
+  ]
+}

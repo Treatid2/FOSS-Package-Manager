@@ -1,8 +1,8 @@
 {
-  "schema": "fpm.profile/1",
+  "schema": "fgpm.profile/1",
   "name": "failure-cyclic-dependency",
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.cycle-a"],
   "entryPoint": "pkg:bad.cycle-a/none",
-  "artifact": { "type": "fpm.render-bundle/1" }
+  "artifact": { "type": "fgpm.render-bundle/1" }
 }

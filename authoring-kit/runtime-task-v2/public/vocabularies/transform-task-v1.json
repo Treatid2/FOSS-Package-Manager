@@ -1,0 +1,37 @@
+{
+  "schema": "fgpm.public-vocabulary/1",
+  "identity": "fgpm.transform-task-vocabulary/1",
+  "status": "experimental-no-compatibility-promise",
+  "license": "Apache-2.0",
+  "stewardPackage": "fgpm.transform-task-contracts",
+  "unknownTermPolicy": "reject",
+  "channel": "runtime.transforms.commands",
+  "snapshotSchema": "fgpm.transform-snapshot/1",
+  "operationSchema": "fgpm.transform-operation/1",
+  "targetKey": ["instanceId", "axis"],
+  "stages": [
+    {
+      "id": "set-axis",
+      "law": "exclusive-per-target",
+      "meaning": "Exactly zero or one base value may be supplied for each target key."
+    },
+    {
+      "id": "add-axis",
+      "law": "deterministic-sum-per-target",
+      "meaning": "All additions for a target key are sorted by public task member identity and summed using decimal six-place normalization."
+    }
+  ],
+  "commitOrder": ["set-axis", "add-axis"],
+  "numericModel": {
+    "scale": 1000000,
+    "valueParsing": "Parse the worker JSON number as IEEE-754 binary64 using ECMAScript JSON.parse semantics; exponent notation is permitted by the JSON grammar.",
+    "acceptedValue": "A finite JSON number whose value multiplied by scale is a safe integer.",
+    "rounding": "none; reject values which are not exactly representable in integer micro-units",
+    "accumulation": "Convert the current value and each operation to signed integer micro-units; reject any unsafe-integer input or sum; apply operations in vocabulary stage order and stable public task-member identity order; divide by scale after each operation.",
+    "normalizationPoint": "Each set-axis or add-axis operation is validated and normalized in the pre-commit staged copy.",
+    "negativeZero": "canonicalize to positive zero",
+    "overflow": "reject the complete batch before authoritative mutation"
+  },
+  "unknownStagePolicy": "reject-before-mutation",
+  "ambiguityPolicy": "reject-before-mutation"
+}

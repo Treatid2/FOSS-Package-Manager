@@ -1,0 +1,66 @@
+{
+  "format": "fgpm.package/2",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.wind-offset-v2",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "fgpm.runtime-task-contracts",
+      "range": "^2.0.0"
+    },
+    {
+      "package": "fgpm.transform-task-contracts",
+      "range": "^1.0.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:demo.wind-offset-v2/1",
+      "protocol": "fgpm.runtime-service/2",
+      "provides": [
+        {
+          "capability": "runtime.task",
+          "version": "2.0.0",
+          "cardinality": "collection",
+          "member": "task:demo.wind-offset-v2/add-x/1",
+          "binding": "runtime.task.demo-wind-offset-v2/1",
+          "memberDependencies": [],
+          "metadata": {
+            "schema": "fgpm.runtime-task-member/2",
+            "vocabulary": "fgpm.runtime-task-vocabulary/2",
+            "participation": "optional",
+            "failurePolicy": "drop-task",
+            "affinity": "any-worker",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fgpm.transform-snapshot/1",
+                "vocabulary": "fgpm.transform-task-vocabulary/1"
+              }
+            ],
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "vocabulary": "fgpm.transform-task-vocabulary/1",
+                "stage": "add-axis",
+                "law": "deterministic-sum-per-target"
+              }
+            ]
+          }
+        }
+      ],
+      "requires": [],
+      "artifactAccess": "none",
+      "artifactStoreAccess": "none",
+      "hostGrants": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": []
+      },
+      "module": "service.mjs",
+      "activationContract": "activation.json"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.character",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.primitives",
+      "range": "^0.1.0"
+    },
+    {
+      "package": "demo.texture-vocabulary",
+      "range": "^0.3.0"
+    }
+  ],
+  "requires": [
+    {
+      "capability": "fgpm.handler.scene",
+      "range": "^1.0.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:demo.character/assembly/block-character",
+      "manifestType": "fgpm.demo.visual-assembly/1",
+      "manifest": "character.json"
+    }
+  ]
+}

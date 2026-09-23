@@ -1,0 +1,20 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.camera",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "requires": [
+    {
+      "capability": "fgpm.handler.scene",
+      "range": "^1.0.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:demo.camera/camera/fixed",
+      "manifestType": "fgpm.demo.camera/1",
+      "manifest": "camera.json"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "fgpm.public-label-cutover/1",
+  "managerBoundary": {
+    "predecessorVersion": "0.10.0-rc.3",
+    "successorVersion": "0.11.0-rc.6"
+  },
+  "mapping": [
+    { "from": "fpm-package.json", "to": "fgpm-package.json" },
+    { "from": "fpm.*", "to": "fgpm.*" },
+    { "from": "FPM_*", "to": "FGPM_*" },
+    { "from": ".fpm-manager", "to": ".fgpm-manager" },
+    { "from": ".fpm-store", "to": ".fgpm-store" },
+    { "from": "fpm.lock.json", "to": "fgpm.lock.json" }
+  ],
+  "normalReader": {
+    "entrypoint": "fgpm-package.json",
+    "formats": ["fgpm.package/1", "fgpm.package/2"],
+    "prePublicAccepted": false
+  },
+  "packageCutoverInventory": {
+    "scope": "fgpm-owned",
+    "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+    "externalOwnerSuccessorsAssigned": false
+  },
+  "allowedPrePublicOccurrences": [
+    "src/core/discovery.mjs: explicit rejection diagnostic",
+    "src/core/migration.mjs: finite migration reader",
+    "src/cli.mjs: finite migration help",
+    "tools/map-public-package-cutover.mjs: predecessor-to-successor evidence generator",
+    "test/public-contract-cutover.test.mjs: migration and rejection conformance inputs",
+    "maintained-packages/fgpm.grid-dungeon-integration-runtime: immutable predecessor evidence only",
+    "docs/package-entrypoint-and-identity.md: migration history",
+    "docs/release-notes-0.11.0-rc.1.md: migration history",
+    "public/public-label-cutover.json: auditable mapping",
+    "retained phase findings and 0.10 release notes: immutable historical evidence"
+  ],
+  "excludedIndependentIdentity": "fgdungeon.*"
+}

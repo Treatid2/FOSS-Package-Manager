@@ -1,9 +1,9 @@
 {
-  "schema": "fpm.profile/1",
+  "schema": "fgpm.profile/1",
   "name": "runtime-authority-violation",
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.runtime-authority", "demo.solid-colour-adapter", "demo.worldspace"],
   "entryPoint": "pkg:demo.worldspace/world/demo",
-  "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
+  "artifact": { "type": "fgpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
   "activation": "runtime:bad.runtime-authority/denied-observer"
 }

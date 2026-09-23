@@ -1,0 +1,47 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "bad.runtime-authority",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.simple-runtime",
+      "range": "^0.7.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:bad.runtime-authority/runtime/denied-observer",
+      "manifestType": "fgpm.demo.runtime/1",
+      "manifest": "runtime.json"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:bad.runtime-authority/observer/1",
+      "protocol": "fgpm.runtime-service/1",
+      "provides": [
+        {
+          "capability": "runtime.fixture.authority",
+          "version": "1.0.0",
+          "exclusive": true
+        }
+      ],
+      "requires": [
+        {
+          "capability": "runtime.transforms.read",
+          "range": "^1.0.0"
+        }
+      ],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority"
+        ]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

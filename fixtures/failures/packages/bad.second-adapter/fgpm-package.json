@@ -1,0 +1,44 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "bad.second-adapter",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.texture-vocabulary",
+      "range": "^0.3.0"
+    }
+  ],
+  "handlers": [
+    {
+      "id": "handler:bad.second-adapter/1",
+      "protocol": "fgpm.handler-stdio/1",
+      "adapts": [
+        {
+          "id": "adapter:bad.second-solid-colour-to-rgba8-srgb/1",
+          "relation": "relation:demo.texture/base-colour-solid-to-runtime/1",
+          "from": "texture.solid-colour/1",
+          "to": "texture.runtime.rgba8-srgb/1",
+          "conversion": "lossless"
+        }
+      ],
+      "buildEnvironment": {
+        "schema": "fgpm.build-environment/1",
+        "dimensions": []
+      },
+      "execution": {
+        "form": "external-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "read-declared-input-artifacts",
+          "write-manager-staging"
+        ]
+      },
+      "command": [
+        "node",
+        "./handler.mjs"
+      ]
+    }
+  ]
+}

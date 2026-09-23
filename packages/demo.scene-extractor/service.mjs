@@ -13,12 +13,10 @@ function add(left, right) {
 }
 
 export function createService() {
-  let artifact;
   let instances;
   let transforms;
   return {
     async activate(context) {
-      artifact = context.artifact;
       instances = context.require("runtime.instances.read");
       transforms = context.require("runtime.transforms.read");
       context.require("runtime.scheduler.barrier");
@@ -35,26 +33,26 @@ export function createService() {
             }
           }
           objects.sort((left, right) => left.id.localeCompare(right.id));
+          const world = instances.world();
           return freeze({
-            schema: "fpm.render-scene/1",
-            profile: artifact.profile,
-            entryPoint: artifact.entryPoint,
-            camera: structuredClone(artifact.camera),
+            schema: "fgpm.render-scene/1",
+            profile: world.profile,
+            entryPoint: world.entryPoint,
+            camera: structuredClone(world.camera),
             objects,
             runtime: {
-              schema: "fpm.runtime-scene-revision/1",
+              schema: "fgpm.runtime-scene-revision/1",
               transformRevision: transformSnapshot.revision,
             },
           });
         },
       });
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: { "runtime.scene-snapshot": snapshots },
       };
     },
     async deactivate() {
-      artifact = null;
       instances = null;
       transforms = null;
     },

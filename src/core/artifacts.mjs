@@ -5,7 +5,7 @@ import {
   access, copyFile, link, lstat, mkdir, readFile, readdir, rename, rm, stat, writeFile,
 } from "node:fs/promises";
 import path from "node:path";
-import { FpmError, invariant } from "./errors.mjs";
+import { FgpmError, invariant } from "./errors.mjs";
 import { handlerExecutionRecord, invokeHandler } from "./handler.mjs";
 import { hashFile, resolveInside, sha256, stableJson } from "./io.mjs";
 
@@ -54,7 +54,7 @@ async function writeCreateOnly(filePath, content) {
 
 function normalizedOutputs(action) {
   const outputs = action.outputs ?? (action.output ? [{ name: "primary", ...action.output }] : []);
-  invariant(outputs.length > 0, "FPM_ACTION_OUTPUT_MISSING", "An artifact action declares no outputs.", {
+  invariant(outputs.length > 0, "FGPM_ACTION_OUTPUT_MISSING", "An artifact action declares no outputs.", {
     action: action.id,
   });
   const names = new Set();
@@ -63,14 +63,14 @@ function normalizedOutputs(action) {
     const normalized = { kind: "blob", ...output };
     invariant(typeof normalized.name === "string" && typeof normalized.id === "string"
       && typeof normalized.type === "string" && typeof normalized.fileName === "string"
-      && ["blob", "tree"].includes(normalized.kind), "FPM_ACTION_OUTPUT_INVALID",
+      && ["blob", "tree"].includes(normalized.kind), "FGPM_ACTION_OUTPUT_INVALID",
     "An artifact action output declaration is malformed.", { action: action.id, output });
-    invariant(path.basename(normalized.fileName) === normalized.fileName, "FPM_ARTIFACT_PATH_INVALID",
+    invariant(path.basename(normalized.fileName) === normalized.fileName, "FGPM_ARTIFACT_PATH_INVALID",
       "An artifact output must use one plain file or directory name.", {
         action: action.id,
         fileName: normalized.fileName,
       });
-    invariant(!names.has(normalized.name) && !ids.has(normalized.id), "FPM_ACTION_OUTPUT_DUPLICATE",
+    invariant(!names.has(normalized.name) && !ids.has(normalized.id), "FGPM_ACTION_OUTPUT_DUPLICATE",
       "An action repeats an output name or artifact identity.", { action: action.id, output: normalized });
     names.add(normalized.name);
     ids.add(normalized.id);
@@ -88,7 +88,7 @@ function actionEnvironment(handler, environmentContext) {
   const dimensions = [...new Set([...declared, ...widened])].sort();
   return {
     declaration: {
-      schema: "fpm.build-environment/1",
+      schema: "fgpm.build-environment/1",
       declared,
       widened,
       protocol: environmentContext.protocol,
@@ -99,7 +99,7 @@ function actionEnvironment(handler, environmentContext) {
 
 function portableAction(action, handler, inputs, outputs, environment, execution) {
   return {
-    schema: "fpm.action-key/2",
+    schema: "fgpm.action-key/2",
     id: action.id,
     kind: action.kind,
     handler: {
@@ -130,11 +130,11 @@ async function listFiles(root) {
     for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
       const absolute = path.join(directory, entry.name);
       const information = await lstat(absolute);
-      invariant(!information.isSymbolicLink(), "FPM_TREE_ENTRY_UNSUPPORTED",
+      invariant(!information.isSymbolicLink(), "FGPM_TREE_ENTRY_UNSUPPORTED",
         "Tree artifacts cannot contain symbolic links or junctions.", { path: absolute });
       if (entry.isDirectory()) await visit(absolute);
       else {
-        invariant(entry.isFile(), "FPM_TREE_ENTRY_UNSUPPORTED",
+        invariant(entry.isFile(), "FGPM_TREE_ENTRY_UNSUPPORTED",
           "Tree artifacts currently accept only regular files and directories.", { path: absolute });
         files.push(absolute);
       }
@@ -168,7 +168,7 @@ export class ArtifactStore {
 
   referencePath(namespace, identity) {
     invariant(/^[a-z0-9][a-z0-9.-]*$/.test(namespace ?? "") && typeof identity === "string"
-      && identity.length > 0, "FPM_ARTIFACT_REFERENCE_INVALID",
+      && identity.length > 0, "FGPM_ARTIFACT_REFERENCE_INVALID",
     "An artifact reference namespace or identity is invalid.", { namespace, identity });
     return path.join(this.directory, "references", namespace, `${sha256(identity)}.json`);
   }
@@ -182,7 +182,7 @@ export class ArtifactStore {
     if (root.kind !== "tree") return false;
     try {
       const manifest = JSON.parse(await readFile(objectPath, "utf8"));
-      if (manifest.schema !== "fpm.tree/1" || !Array.isArray(manifest.entries)) return false;
+      if (manifest.schema !== "fgpm.tree/1" || !Array.isArray(manifest.entries)) return false;
       for (const entry of manifest.entries) {
         const entryMatch = HASH.exec(entry.hash ?? "");
         if (entry.kind !== "blob" || !entryMatch) return false;
@@ -195,13 +195,47 @@ export class ArtifactStore {
     }
   }
 
+  async readArtifactEntry(reference, requestedEntry = reference?.entry ?? null) {
+    invariant(reference?.schema === "fgpm.typed-artifact-reference/1"
+      && typeof reference.semanticType === "string" && reference.root
+      && ["blob", "tree"].includes(reference.root.kind), "FGPM_TYPED_ARTIFACT_REFERENCE_INVALID",
+    "The runtime supplied an invalid typed artifact reference.", { reference });
+    invariant(await this.verifyRoot(reference.root), "FGPM_RUNTIME_ARTIFACT_ROOT_INVALID",
+      "The typed activation artifact root is absent, mismatched, or corrupt.", {
+        artifact: reference.id, semanticType: reference.semanticType, root: reference.root,
+      });
+    if (reference.root.kind === "blob") {
+      invariant(requestedEntry === null, "FGPM_ARTIFACT_ENTRY_INVALID",
+        "A blob activation artifact does not contain named entries.", {
+          artifact: reference.id, requestedEntry,
+        });
+      const hash = HASH.exec(reference.root.hash)[1];
+      return Buffer.from(await readFile(this.objectPath(hash)));
+    }
+    invariant(typeof requestedEntry === "string" && requestedEntry.length > 0
+      && requestedEntry === requestedEntry.replaceAll("\\", "/")
+      && !requestedEntry.startsWith("../") && !path.posix.isAbsolute(requestedEntry),
+    "FGPM_ARTIFACT_ENTRY_INVALID", "A tree activation artifact requires a safe named entry.", {
+      artifact: reference.id, requestedEntry,
+    });
+    const rootHash = HASH.exec(reference.root.hash)[1];
+    const manifest = JSON.parse(await readFile(this.objectPath(rootHash), "utf8"));
+    const entry = manifest.entries.find((candidate) => candidate.path === requestedEntry);
+    invariant(entry?.kind === "blob" && HASH.test(entry.hash ?? ""), "FGPM_ARTIFACT_ENTRY_MISSING",
+      "The typed activation artifact does not contain the requested entry.", {
+        artifact: reference.id, requestedEntry,
+      });
+    const hash = HASH.exec(entry.hash)[1];
+    return Buffer.from(await readFile(this.objectPath(hash)));
+  }
+
   async cached(buildKey, action) {
     const recordPath = this.actionRecordPath(buildKey);
     if (!await exists(recordPath)) return null;
     try {
       const record = JSON.parse(await readFile(recordPath, "utf8"));
       const expectedOutputs = normalizedOutputs(action);
-      if (record.schema !== "fpm.action-cache/2" || record.buildKey !== `sha256:${buildKey}`
+      if (record.schema !== "fgpm.action-cache/2" || record.buildKey !== `sha256:${buildKey}`
         || record.action !== action.id || !Array.isArray(record.outputs)
         || record.outputs.length !== expectedOutputs.length) return null;
       for (const expected of expectedOutputs) {
@@ -236,7 +270,7 @@ export class ArtifactStore {
     try {
       await mkdir(directory);
       const lease = {
-        schema: "fpm.build-lease/1",
+        schema: "fgpm.build-lease/1",
         buildKey: `sha256:${buildKey}`,
         action: actionId,
         owner,
@@ -312,7 +346,7 @@ export class ArtifactStore {
 
   async importFile(filePath, expectedHash = null) {
     const hash = await hashFile(filePath);
-    invariant(!expectedHash || expectedHash === `sha256:${hash}`, "FPM_ARTIFACT_VERIFICATION_FAILED",
+    invariant(!expectedHash || expectedHash === `sha256:${hash}`, "FGPM_ARTIFACT_VERIFICATION_FAILED",
       "A staged artifact hash does not match the handler claim.", {
         claimedHash: expectedHash,
         actualHash: `sha256:${hash}`,
@@ -327,7 +361,7 @@ export class ArtifactStore {
       if (error.code !== "EEXIST") throw error;
     }
     if (!created) {
-      invariant(await hashFile(objectPath) === hash, "FPM_STORE_OBJECT_CORRUPT",
+      invariant(await hashFile(objectPath) === hash, "FGPM_STORE_OBJECT_CORRUPT",
         "An immutable store object exists at its hash path with different content.", {
           object: `sha256:${hash}`,
           path: objectPath,
@@ -345,7 +379,7 @@ export class ArtifactStore {
 
   async publishTreeReference(namespace, identity, files, metadata = {}, options = {}) {
     invariant(files && typeof files === "object" && !Array.isArray(files)
-      && Object.keys(files).length > 0, "FPM_TREE_EMPTY",
+      && Object.keys(files).length > 0, "FGPM_TREE_EMPTY",
     "A referenced tree must contain at least one file.", { namespace, identity });
     const stagingDirectory = path.join(this.directory, "staging", randomUUID());
     await mkdir(stagingDirectory, { recursive: true });
@@ -353,7 +387,7 @@ export class ArtifactStore {
     try {
       for (const relative of Object.keys(files).sort()) {
         invariant(relative.length > 0 && relative === relative.replaceAll("\\", "/")
-          && !relative.startsWith("../") && !path.posix.isAbsolute(relative), "FPM_TREE_PATH_INVALID",
+          && !relative.startsWith("../") && !path.posix.isAbsolute(relative), "FGPM_TREE_PATH_INVALID",
         "A referenced tree entry has an invalid relative path.", { namespace, identity, relative });
         const stagedPath = resolveInside(stagingDirectory, relative, "referenced tree entry");
         await mkdir(path.dirname(stagedPath), { recursive: true });
@@ -364,11 +398,11 @@ export class ArtifactStore {
         const imported = await this.importFile(stagedPath);
         entries.push({ path: relative, kind: "blob", hash: imported.hash, size });
       }
-      const manifestText = stableJson({ schema: "fpm.tree/1", entries });
+      const manifestText = stableJson({ schema: "fgpm.tree/1", entries });
       const importedRoot = await this.importContent(manifestText, stagingDirectory);
       const importedRoots = [...entries.map((entry) => entry.hash), importedRoot.hash];
       if (options.interruptBeforeReference) {
-        throw new FpmError("FPM_SIMULATED_INTERRUPTION",
+        throw new FgpmError("FGPM_SIMULATED_INTERRUPTION",
           "The test fixture interrupted publication after object import and before reference commit.", {
             namespace,
             identity,
@@ -376,7 +410,7 @@ export class ArtifactStore {
           });
       }
       const record = {
-        schema: "fpm.artifact-reference/1",
+        schema: "fgpm.artifact-reference/1",
         namespace,
         identity,
         root: {
@@ -393,13 +427,13 @@ export class ArtifactStore {
       try {
         existing = JSON.parse(await readFile(recordPath, "utf8"));
       } catch (error) {
-        throw new FpmError("FPM_ARTIFACT_REFERENCE_INVALID", "An existing artifact reference is unreadable.", {
+        throw new FgpmError("FGPM_ARTIFACT_REFERENCE_INVALID", "An existing artifact reference is unreadable.", {
           namespace, identity, cause: error.message,
         });
       }
-      invariant(existing.schema === "fpm.artifact-reference/1" && existing.namespace === namespace
+      invariant(existing.schema === "fgpm.artifact-reference/1" && existing.namespace === namespace
         && existing.identity === identity && existing.root?.hash === record.root.hash,
-      "FPM_ARTIFACT_REFERENCE_CONFLICT",
+      "FGPM_ARTIFACT_REFERENCE_CONFLICT",
       "One immutable artifact reference identity cannot publish two different roots.", {
         namespace,
         identity,
@@ -418,13 +452,13 @@ export class ArtifactStore {
     try {
       record = JSON.parse(await readFile(recordPath, "utf8"));
     } catch (error) {
-      throw new FpmError("FPM_ARTIFACT_REFERENCE_MISSING", "A requested artifact reference does not exist.", {
+      throw new FgpmError("FGPM_ARTIFACT_REFERENCE_MISSING", "A requested artifact reference does not exist.", {
         namespace, identity, cause: error.message,
       });
     }
-    invariant(record.schema === "fpm.artifact-reference/1" && record.namespace === namespace
+    invariant(record.schema === "fgpm.artifact-reference/1" && record.namespace === namespace
       && record.identity === identity && record.root?.kind === "tree" && await this.verifyRoot(record.root),
-    "FPM_ARTIFACT_REFERENCE_INVALID", "A requested artifact reference or its tree is invalid.", {
+    "FGPM_ARTIFACT_REFERENCE_INVALID", "A requested artifact reference or its tree is invalid.", {
       namespace, identity,
     });
     const rootHash = HASH.exec(record.root.hash)?.[1];
@@ -432,7 +466,7 @@ export class ArtifactStore {
     const files = {};
     for (const entry of manifest.entries) {
       const hash = HASH.exec(entry.hash)?.[1];
-      invariant(hash, "FPM_TREE_MANIFEST_INVALID", "A referenced tree entry has an invalid hash.", { entry });
+      invariant(hash, "FGPM_TREE_MANIFEST_INVALID", "A referenced tree entry has an invalid hash.", { entry });
       files[entry.path] = await readFile(this.objectPath(hash), "utf8");
     }
     return { record, files };
@@ -441,7 +475,7 @@ export class ArtifactStore {
   async commitBlob(action, declaration, reported, stagingDirectory) {
     invariant(reported?.kind === "blob" && reported.type === declaration.type
       && reported.relativePath === declaration.fileName && Number.isInteger(reported.size)
-      && typeof reported.hash === "string", "FPM_HANDLER_RESPONSE_INVALID",
+      && typeof reported.hash === "string", "FGPM_HANDLER_RESPONSE_INVALID",
     "An artifact action returned a malformed blob output manifest.", {
       action: action.id,
       output: declaration.name,
@@ -452,13 +486,13 @@ export class ArtifactStore {
     try {
       information = await stat(stagedPath);
     } catch (error) {
-      throw new FpmError("FPM_ARTIFACT_VERIFICATION_FAILED", "A handler did not create its declared blob.", {
+      throw new FgpmError("FGPM_ARTIFACT_VERIFICATION_FAILED", "A handler did not create its declared blob.", {
         action: action.id,
         output: declaration.name,
         cause: error.message,
       });
     }
-    invariant(information.isFile() && information.size === reported.size, "FPM_ARTIFACT_VERIFICATION_FAILED",
+    invariant(information.isFile() && information.size === reported.size, "FGPM_ARTIFACT_VERIFICATION_FAILED",
       "A staged blob size does not match the handler claim.", {
         action: action.id,
         output: declaration.name,
@@ -477,7 +511,7 @@ export class ArtifactStore {
 
   async commitTree(action, declaration, reported, stagingDirectory) {
     invariant(reported?.kind === "tree" && reported.type === declaration.type
-      && reported.relativePath === declaration.fileName, "FPM_HANDLER_RESPONSE_INVALID",
+      && reported.relativePath === declaration.fileName, "FGPM_HANDLER_RESPONSE_INVALID",
     "An artifact action returned a malformed tree output manifest.", {
       action: action.id,
       output: declaration.name,
@@ -488,33 +522,33 @@ export class ArtifactStore {
     try {
       information = await stat(treeDirectory);
     } catch (error) {
-      throw new FpmError("FPM_ARTIFACT_VERIFICATION_FAILED", "A handler did not create its declared tree.", {
+      throw new FgpmError("FGPM_ARTIFACT_VERIFICATION_FAILED", "A handler did not create its declared tree.", {
         action: action.id,
         output: declaration.name,
         cause: error.message,
       });
     }
-    invariant(information.isDirectory(), "FPM_ARTIFACT_VERIFICATION_FAILED",
+    invariant(information.isDirectory(), "FGPM_ARTIFACT_VERIFICATION_FAILED",
       "A declared tree artifact is not a directory.", { action: action.id, output: declaration.name });
 
     const entries = [];
     for (const filePath of await listFiles(treeDirectory)) {
       const relative = path.relative(treeDirectory, filePath).replaceAll("\\", "/");
       invariant(relative && !relative.startsWith("../") && !path.posix.isAbsolute(relative),
-        "FPM_TREE_PATH_INVALID", "A tree entry has an invalid relative path.", { action: action.id, relative });
+        "FGPM_TREE_PATH_INVALID", "A tree entry has an invalid relative path.", { action: action.id, relative });
       const size = (await stat(filePath)).size;
       const imported = await this.importFile(filePath);
       entries.push({ path: relative, kind: "blob", hash: imported.hash, size });
     }
-    invariant(entries.length > 0, "FPM_TREE_EMPTY", "A tree artifact must contain at least one file.", {
+    invariant(entries.length > 0, "FGPM_TREE_EMPTY", "A tree artifact must contain at least one file.", {
       action: action.id,
       output: declaration.name,
     });
     entries.sort((left, right) => left.path.localeCompare(right.path));
-    const manifestText = stableJson({ schema: "fpm.tree/1", entries });
+    const manifestText = stableJson({ schema: "fgpm.tree/1", entries });
     const importedRoot = await this.importContent(manifestText, stagingDirectory);
     if (reported.hash) {
-      invariant(reported.hash === importedRoot.hash, "FPM_ARTIFACT_VERIFICATION_FAILED",
+      invariant(reported.hash === importedRoot.hash, "FGPM_ARTIFACT_VERIFICATION_FAILED",
         "A staged tree root hash does not match the handler claim.", {
           action: action.id,
           output: declaration.name,
@@ -535,7 +569,7 @@ export class ArtifactStore {
 
   async publishActionRecord(buildKey, action, roots, execution = null) {
     const record = {
-      schema: "fpm.action-cache/2",
+      schema: "fgpm.action-cache/2",
       buildKey: `sha256:${buildKey}`,
       action: action.id,
       execution,
@@ -549,14 +583,14 @@ export class ArtifactStore {
     try {
       existing = JSON.parse(await readFile(recordPath, "utf8"));
     } catch (error) {
-      throw new FpmError("FPM_ACTION_RECORD_INVALID", "An existing action record is unreadable.", {
+      throw new FgpmError("FGPM_ACTION_RECORD_INVALID", "An existing action record is unreadable.", {
         action: action.id,
         buildKey: `sha256:${buildKey}`,
         cause: error.message,
       });
     }
-    invariant(existing.schema === "fpm.action-cache/2" && existing.buildKey === `sha256:${buildKey}`
-      && existing.action === action.id && Array.isArray(existing.outputs), "FPM_ACTION_RECORD_INVALID",
+    invariant(existing.schema === "fgpm.action-cache/2" && existing.buildKey === `sha256:${buildKey}`
+      && existing.action === action.id && Array.isArray(existing.outputs), "FGPM_ACTION_RECORD_INVALID",
     "An existing action record does not match its immutable build-key identity.", {
       action: action.id,
       buildKey: `sha256:${buildKey}`,
@@ -564,7 +598,7 @@ export class ArtifactStore {
     });
     const existingRoots = (existing.outputs ?? []).map((root) => ({ name: root.name, hash: root.hash })).sort((a, b) => a.name.localeCompare(b.name));
     const proposedRoots = record.outputs.map((root) => ({ name: root.name, hash: root.hash })).sort((a, b) => a.name.localeCompare(b.name));
-    invariant(stableJson(existingRoots) === stableJson(proposedRoots), "FPM_ACTION_NONDETERMINISTIC",
+    invariant(stableJson(existingRoots) === stableJson(proposedRoots), "FGPM_ACTION_NONDETERMINISTIC",
       "Two executions produced different roots for the same build key.", {
         action: action.id,
         buildKey: `sha256:${buildKey}`,
@@ -591,7 +625,7 @@ export class ArtifactStore {
       }
       lease = await this.tryAcquireLease(buildKey, action.id);
       if (!lease) {
-        invariant(Date.now() - started < this.leaseTimeoutMs, "FPM_BUILD_LEASE_TIMEOUT",
+        invariant(Date.now() - started < this.leaseTimeoutMs, "FGPM_BUILD_LEASE_TIMEOUT",
           "Timed out waiting for another builder's build-key lease.", {
             action: action.id,
             buildKey: `sha256:${buildKey}`,
@@ -619,7 +653,7 @@ export class ArtifactStore {
     await this.renewLease(lease, transactionId);
     try {
       const response = invokeHandler(handler, {
-        protocol: "fpm.handler-request/1",
+        protocol: "fgpm.handler-request/1",
         action: "materialize",
         transaction: {
           id: transactionId,
@@ -648,7 +682,7 @@ export class ArtifactStore {
         },
       });
       const reportedOutputs = response.outputs ?? (response.output ? [{ name: "primary", kind: "blob", ...response.output }] : []);
-      invariant(reportedOutputs.length === outputs.length, "FPM_HANDLER_RESPONSE_INVALID",
+      invariant(reportedOutputs.length === outputs.length, "FGPM_HANDLER_RESPONSE_INVALID",
         "An artifact action did not report every declared output root.", {
           action: action.id,
           declared: outputs.map((output) => output.name),
@@ -662,7 +696,7 @@ export class ArtifactStore {
           : await this.commitBlob(action, declaration, reported, stagingDirectory));
       }
       if (this.interruptAfterImportAction === action.id) {
-        throw new FpmError("FPM_SIMULATED_INTERRUPTION",
+        throw new FgpmError("FGPM_SIMULATED_INTERRUPTION",
           "The test fixture interrupted the build after object import and before action-record publication.", {
             action: action.id,
             buildKey: `sha256:${buildKey}`,
@@ -678,7 +712,7 @@ export class ArtifactStore {
         execution: response.managerExecution,
       };
     } catch (error) {
-      if (error instanceof FpmError) {
+      if (error instanceof FgpmError) {
         error.details = { ...error.details, action: action.id, buildKey: `sha256:${buildKey}` };
       }
       throw error;
@@ -694,7 +728,7 @@ export class ArtifactStore {
       await copyFile(artifact.storePath, destination);
       return;
     }
-    invariant(artifact.kind === "tree", "FPM_ARTIFACT_KIND_UNSUPPORTED",
+    invariant(artifact.kind === "tree", "FGPM_ARTIFACT_KIND_UNSUPPORTED",
       "Cannot export an unsupported artifact root kind.", { artifact: artifact.id, kind: artifact.kind });
     const manifest = JSON.parse(await readFile(artifact.storePath, "utf8"));
     await rm(destination, { recursive: true, force: true });
@@ -703,7 +737,7 @@ export class ArtifactStore {
       const target = resolveInside(destination, entry.path, "tree export entry");
       await mkdir(path.dirname(target), { recursive: true });
       const hash = HASH.exec(entry.hash)?.[1];
-      invariant(hash, "FPM_TREE_MANIFEST_INVALID", "A tree manifest entry has an invalid hash.", { entry });
+      invariant(hash, "FGPM_TREE_MANIFEST_INVALID", "A tree manifest entry has an invalid hash.", { entry });
       await copyFile(this.objectPath(hash), target);
     }
   }
@@ -718,7 +752,7 @@ export class ArtifactStore {
         if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
         try {
           const record = JSON.parse(await readFile(path.join(actionsDirectory, entry.name), "utf8"));
-          if (record.schema !== "fpm.action-cache/2" || !Array.isArray(record.outputs)) throw new Error("unsupported record");
+          if (record.schema !== "fgpm.action-cache/2" || !Array.isArray(record.outputs)) throw new Error("unsupported record");
           for (const output of record.outputs) {
             const hash = HASH.exec(output.hash ?? "")?.[1];
             if (hash) roots.add(hash);
@@ -738,7 +772,7 @@ export class ArtifactStore {
           try {
             const record = JSON.parse(await readFile(path.join(referencesDirectory, namespace.name, entry.name), "utf8"));
             const hash = HASH.exec(record.root?.hash ?? "")?.[1];
-            if (record.schema !== "fpm.artifact-reference/1" || record.namespace !== namespace.name || !hash) {
+            if (record.schema !== "fgpm.artifact-reference/1" || record.namespace !== namespace.name || !hash) {
               throw new Error("unsupported reference");
             }
             roots.add(hash);
@@ -759,7 +793,7 @@ export class ArtifactStore {
       if (!await exists(objectPath)) continue;
       try {
         const manifest = JSON.parse(await readFile(objectPath, "utf8"));
-        if (manifest.schema === "fpm.tree/1" && Array.isArray(manifest.entries)) {
+        if (manifest.schema === "fgpm.tree/1" && Array.isArray(manifest.entries)) {
           for (const entry of manifest.entries) {
             const child = HASH.exec(entry.hash ?? "")?.[1];
             if (child) queue.push(child);
@@ -783,7 +817,7 @@ export class ArtifactStore {
     objects.sort();
     const orphaned = objects.filter((hash) => !reachable.has(hash));
     return {
-      schema: "fpm.reachability-report/1",
+      schema: "fgpm.reachability-report/1",
       store: this.directory,
       roots: [...roots].sort().map((hash) => `sha256:${hash}`),
       objectCount: objects.length,
@@ -800,12 +834,12 @@ export async function executeArtifactGraph(actions, handlers, store) {
   const actionById = new Map();
   const producerByArtifact = new Map();
   for (const action of actions) {
-    invariant(!actionById.has(action.id), "FPM_ACTION_ID_DUPLICATE", "Two artifact actions share an identity.", {
+    invariant(!actionById.has(action.id), "FGPM_ACTION_ID_DUPLICATE", "Two artifact actions share an identity.", {
       action: action.id,
     });
     actionById.set(action.id, action);
     for (const output of normalizedOutputs(action)) {
-      invariant(!producerByArtifact.has(output.id), "FPM_ARTIFACT_ID_DUPLICATE",
+      invariant(!producerByArtifact.has(output.id), "FGPM_ARTIFACT_ID_DUPLICATE",
         "Two artifact actions produce the same artifact identity.", { artifact: output.id });
       producerByArtifact.set(output.id, action);
     }
@@ -819,7 +853,7 @@ export async function executeArtifactGraph(actions, handlers, store) {
     if (current === "done") return;
     if (current === "visiting") {
       const start = stack.indexOf(action.id);
-      throw new FpmError("FPM_ARTIFACT_CYCLE", "Artifact actions contain a dependency cycle.", {
+      throw new FgpmError("FGPM_ARTIFACT_CYCLE", "Artifact actions contain a dependency cycle.", {
         cycle: [...stack.slice(start), action.id],
       });
     }
@@ -827,7 +861,7 @@ export async function executeArtifactGraph(actions, handlers, store) {
     stack.push(action.id);
     for (const input of action.inputs ?? []) {
       const producer = producerByArtifact.get(input.artifact);
-      invariant(producer, "FPM_ARTIFACT_INPUT_MISSING", "An artifact action input has no producer.", {
+      invariant(producer, "FGPM_ARTIFACT_INPUT_MISSING", "An artifact action input has no producer.", {
         action: action.id,
         input: input.name,
         artifact: input.artifact,
@@ -846,7 +880,7 @@ export async function executeArtifactGraph(actions, handlers, store) {
   let cacheMisses = 0;
   for (const action of ordered) {
     const handler = handlers.get(action.handler);
-    invariant(handler, "FPM_ACTION_HANDLER_MISSING", "An artifact action names an unavailable handler.", {
+    invariant(handler, "FGPM_ACTION_HANDLER_MISSING", "An artifact action names an unavailable handler.", {
       action: action.id,
       handler: action.handler,
     });

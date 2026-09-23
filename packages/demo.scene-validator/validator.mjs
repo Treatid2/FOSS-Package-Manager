@@ -6,7 +6,7 @@ const request = JSON.parse(input);
 const objects = request.subject?.proposal?.parameters?.objects;
 const passes = Array.isArray(objects) && objects.length > 0;
 process.stdout.write(`${JSON.stringify({
-  protocol: "fpm.handler-response/1",
+  protocol: "fgpm.handler-response/1",
   ok: true,
   findings: [{
     id: "finding:demo.scene/nonempty",

@@ -1,0 +1,41 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "fgpm.scene-integration-generator",
+  "version": "0.9.0",
+  "license": "Apache-2.0",
+  "provides": [
+    {
+      "capability": "fgpm.generator.scene-integration",
+      "version": "1.0.0"
+    }
+  ],
+  "handlers": [
+    {
+      "id": "handler:fgpm.scene-integration-generator/1",
+      "protocol": "fgpm.handler-stdio/1",
+      "handles": [],
+      "builds": [
+        "fgpm.generated-scene-integration/1"
+      ],
+      "adapts": [],
+      "validates": [],
+      "buildEnvironment": {
+        "schema": "fgpm.build-environment/1",
+        "dimensions": []
+      },
+      "execution": {
+        "form": "external-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "write-manager-staging"
+        ]
+      },
+      "command": [
+        "node",
+        "./generator.mjs"
+      ]
+    }
+  ],
+  "runtimeServices": []
+}

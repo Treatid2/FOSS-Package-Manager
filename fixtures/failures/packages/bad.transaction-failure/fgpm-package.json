@@ -1,0 +1,32 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "bad.transaction-failure",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.character",
+      "range": "^0.1.0"
+    }
+  ],
+  "requires": [
+    {
+      "capability": "fgpm.handler.texture",
+      "range": "^1.0.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:bad.transaction-failure/texture/head",
+      "manifestType": "fgpm.demo.transaction-fail/1",
+      "manifest": "fail.json"
+    }
+  ],
+  "replacements": [
+    {
+      "target": "pkg:demo.character/appearance/head/base-colour",
+      "with": "pkg:bad.transaction-failure/texture/head"
+    }
+  ]
+}

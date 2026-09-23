@@ -1,0 +1,66 @@
+{
+  "format": "fgpm.package/2",
+  "namespace": "d30a646c-df66-4ff1-955e-2813f4c4fb9a",
+  "name": "example.external-pulse-v2",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "fgpm.runtime-task-contracts",
+      "range": "^2.0.0"
+    },
+    {
+      "package": "fgpm.transform-task-contracts",
+      "range": "^1.0.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:example.external-pulse-v2/1",
+      "protocol": "fgpm.runtime-service/2",
+      "provides": [
+        {
+          "capability": "runtime.task",
+          "version": "2.0.0",
+          "cardinality": "collection",
+          "member": "task:example.external-pulse-v2/add-y/1",
+          "binding": "runtime.task.example-external-pulse-v2/1",
+          "memberDependencies": [],
+          "metadata": {
+            "schema": "fgpm.runtime-task-member/2",
+            "vocabulary": "fgpm.runtime-task-vocabulary/2",
+            "participation": "optional",
+            "failurePolicy": "drop-task",
+            "affinity": "any-worker",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fgpm.transform-snapshot/1",
+                "vocabulary": "fgpm.transform-task-vocabulary/1"
+              }
+            ],
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "vocabulary": "fgpm.transform-task-vocabulary/1",
+                "stage": "add-axis",
+                "law": "deterministic-sum-per-target"
+              }
+            ]
+          }
+        }
+      ],
+      "requires": [],
+      "artifactAccess": "none",
+      "artifactStoreAccess": "none",
+      "hostGrants": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": []
+      },
+      "module": "service.mjs",
+      "activationContract": "activation.json"
+    }
+  ]
+}

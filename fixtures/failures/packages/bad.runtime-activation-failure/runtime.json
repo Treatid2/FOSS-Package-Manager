@@ -1,9 +1,9 @@
 {
-  "schema": "fpm.demo.runtime/1",
+  "schema": "fgpm.demo.runtime/1",
   "activation": {
     "id": "runtime:bad.runtime-activation-failure/failure",
-    "protocol": "fpm.runtime-activation/1",
-    "accepts": ["fpm.render-bundle/1"],
+    "protocol": "fgpm.runtime-activation/1",
+    "accepts": ["fgpm.render-bundle/1"],
     "requires": [
       { "capability": "runtime.fixture.activation-failure", "range": "^1.0.0" }
     ],

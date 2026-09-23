@@ -6,7 +6,10 @@ All formats are provisional and use exact versioned identifiers. Phase 7 preserv
 
 ## Core package envelope
 
-Every package contains `fpm-package.json` with `schema: "fpm.package/1"`. The manager understands only:
+Every package contains exactly one UTF-8 `fgpm-package.json` with
+`format: "fgpm.package/1"` (or the strict `fgpm.package/2` slice), a publisher
+`namespace` UUID, and immutable local `name`. See
+[package entrypoint and identity](package-entrypoint-and-identity.md). The manager understands only:
 
 - package identity, semantic version, and SPDX licence identifier or expression;
 - package dependencies and provided/required capabilities;
@@ -37,7 +40,7 @@ The portable alternative declares `form: "portable-wasm"`, `securityBoundary: "w
 
 ## Layered profiles
 
-`fpm.profile/2` keeps four authorities distinct inside one physical document:
+`fgpm.profile/2` keeps four authorities distinct inside one physical document:
 
 - `distribution` — roots, entry point, requested artifact/builder, and activation default;
 - `target` — declared build target facts;
@@ -46,11 +49,11 @@ The portable alternative declares `form: "portable-wasm"`, `securityBoundary: "w
 
 The effective package roots are the union of distribution and user roots. User replacement selections override a hook default only when a selected package actually proposes that replacement. Policy never silently ranks ambiguous handlers or adapters.
 
-The reference manager still reads `fpm.profile/1` as a compatibility input and maps its flat fields into these conceptual layers. New examples use version 2.
+The reference manager still reads `fgpm.profile/1` as a compatibility input and maps its flat fields into these conceptual layers. New examples use version 2.
 
 ## Handler protocol
 
-For native handlers, the manager starts a command without a shell and writes one `fpm.handler-request/1` JSON document to stdin. The handler writes one `fpm.handler-response/1` JSON document to stdout. For `portable-wasm`, a manager-owned runner preserves that action contract while exposing only a small byte-capability import ABI to the package module.
+For native handlers, the manager starts a command without a shell and writes one `fgpm.handler-request/1` JSON document to stdin. The handler writes one `fgpm.handler-response/1` JSON document to stdout. For `portable-wasm`, a manager-owned runner preserves that action contract while exposing only a small byte-capability import ABI to the package module.
 
 The protocol currently implements four actions:
 
@@ -107,7 +110,7 @@ texture.solid-colour/1
 texture.runtime.rgba8-srgb/1
 ```
 
-Arbitrary multi-hop search, structural subtyping, and negotiated compatibility are not implemented. Two equal adapter routes fail with `FPM_ADAPTER_AMBIGUOUS` unless the policy layer selects one by exact hook/requirement identity or governed semantic-relation identity. The selected route is recorded on the hook binding and as its own action.
+Arbitrary multi-hop search, structural subtyping, and negotiated compatibility are not implemented. Two equal adapter routes fail with `FGPM_ADAPTER_AMBIGUOUS` unless the policy layer selects one by exact hook/requirement identity or governed semantic-relation identity. The selected route is recorded on the hook binding and as its own action.
 
 ## Generic action and artifact DAG
 
@@ -155,7 +158,7 @@ Absolute package and staging paths are transport context, not key inputs. A cach
 Every action produces one or more named artifact roots. A root has kind `blob` or `tree`.
 
 - A blob root addresses the exact bytes of one file.
-- A tree root addresses a canonical `fpm.tree/1` manifest. Its entries have normalized slash-separated paths, stable lexical order, explicit `blob` kinds, hashes, and byte sizes.
+- A tree root addresses a canonical `fgpm.tree/1` manifest. Its entries have normalized slash-separated paths, stable lexical order, explicit `blob` kinds, hashes, and byte sizes.
 
 The manager imports every child blob before importing the tree manifest. It publishes one immutable action record only after every named root verifies. Objects imported before an interrupted publication remain valid but unreferenced; their presence alone never represents a successful action.
 
@@ -163,7 +166,7 @@ The manager imports every child blob before importing the tree manifest. It publ
 
 A build-key lease is acquired through atomic directory creation and records owner, action, timestamps, expiry, heartbeat, and current transaction. Other builders verify the action cache while waiting. Expired leases are atomically quarantined and removed before recovery.
 
-Leases reduce duplicate work but do not establish correctness. Immutable object hashes and create-if-absent action-record publication do. If racing executions publish different roots for the same key, the manager emits `FPM_ACTION_NONDETERMINISTIC`; it does not apply first-writer or last-writer policy.
+Leases reduce duplicate work but do not establish correctness. Immutable object hashes and create-if-absent action-record publication do. If racing executions publish different roots for the same key, the manager emits `FGPM_ACTION_NONDETERMINISTIC`; it does not apply first-writer or last-writer policy.
 
 `store-report` performs a non-destructive mark-and-report traversal from retained version-2 action records through tree manifests. It reports invalid records and orphaned objects without deleting them.
 
@@ -175,7 +178,7 @@ All findings coexist. The implemented validation policy requires named validator
 
 ## Phase 3A: build environment contracts
 
-Each handler declares build-affecting dimensions in `fpm.build-environment/1`. The manager selects those values from normalized runtime, host, and target facts. Policy may monotonically widen the dimension set but cannot remove a handler declaration.
+Each handler declares build-affecting dimensions in `fgpm.build-environment/1`. The manager selects those values from normalized runtime, host, and target facts. Policy may monotonically widen the dimension set but cannot remove a handler declaration.
 
 The declaration, widening, values, and artifact transaction protocol are included in the action key and action record. Undeclared facts may remain observational provenance and do not alter that action's key.
 
@@ -185,7 +188,7 @@ A package may steward a semantic relation with identity, version, exact source a
 
 ## Phase 3A: profile authority records
 
-The reference `fpm.profile/2` schema assigns field-level authority and merge rules rather than applying a recursive merge:
+The reference `fgpm.profile/2` schema assigns field-level authority and merge rules rather than applying a recursive merge:
 
 - distribution roots and user roots use typed set union;
 - entry point and artifact requirement are fixed distribution statements;
@@ -210,7 +213,7 @@ The deliberate violation module first reads three declared bytes and writes four
 
 ## Phase 4: runtime services and activation
 
-A package runtime service uses `fpm.runtime-service/1` and declares:
+A package runtime service uses `fgpm.runtime-service/1` and declares:
 
 - stable service identity;
 - one or more versioned exclusive capabilities;
@@ -219,11 +222,11 @@ A package runtime service uses `fpm.runtime-service/1` and declares:
 - explicit `native-in-process` execution with no containment claim;
 - a package-relative lifecycle module.
 
-A domain activation report uses `fpm.runtime-activation/1` to name accepted artifact types, root runtime capability requirements, and a deterministic initial tick count. The manager resolves one provider for every requirement. Multiple compatible exclusive providers fail with `FPM_RUNTIME_PROVIDER_AMBIGUOUS` unless profile policy selects a provider package or exact service.
+A domain activation report uses `fgpm.runtime-activation/1` to name accepted artifact types, root runtime capability requirements, and a deterministic initial tick count. The manager resolves one provider for every requirement. Multiple compatible exclusive providers fail with `FGPM_RUNTIME_PROVIDER_AMBIGUOUS` unless profile policy selects a provider package or exact service.
 
-`fpm.runtime-plan/2` records artifact identity, provider selections and reasons, service implementation hashes and execution declarations, dependencies, capability collections, and activation order. Dependencies activate first. A service context exposes the immutable activation artifact only when declared and resolves only capabilities listed in that service's requirements. An undeclared request fails with `FPM_RUNTIME_AUTHORITY_DENIED`.
+`fgpm.runtime-plan/2` records artifact identity, provider selections and reasons, service implementation hashes and execution declarations, dependencies, capability collections, and activation order. Dependencies activate first. A service context exposes the immutable activation artifact only when declared and resolves only capabilities listed in that service's requirements. An undeclared request fails with `FGPM_RUNTIME_AUTHORITY_DENIED`.
 
-`fpm.runtime-lifecycle/1` is committed only after complete activation. It records deterministic activate/tick/deactivate events. Activation failure deactivates the completed prefix in reverse order and leaves no lifecycle file. A provider cannot stop while an active dependent requires it; normal shutdown follows exact reverse activation order.
+`fgpm.runtime-lifecycle/1` is committed only after complete activation. It records deterministic activate/tick/deactivate events. Activation failure deactivates the completed prefix in reverse order and leaves no lifecycle file. A provider cannot stop while an active dependent requires it; normal shutdown follows exact reverse activation order.
 
 ## Phase 4: live identity and state
 
@@ -231,8 +234,8 @@ The reference runtime fixtures distinguish these contracts:
 
 - definition identity — the built package/world definition;
 - persistent instance identity — the world object's semantic identity;
-- `fpm.runtime-handle/1` — a slot and generation naming one live materialisation;
-- `fpm.materialisation-lease/1` — strong access keeping that materialisation live;
+- `fgpm.runtime-handle/1` — a slot and generation naming one live materialisation;
+- `fgpm.materialisation-lease/1` — strong access keeping that materialisation live;
 - mutation authority — a separately selected write capability.
 
 Releasing the final lease may reclaim the materialised slot but does not destroy persistent identity. Explicit destruction removes the persistent instance. Slot reuse increments its generation, so an old handle cannot resolve to a new occupant.
@@ -254,11 +257,11 @@ Policy may select by binding identity. The plan records the provider instance on
 
 ## Phase 5: durable state fragments and save trees
 
-A state-owning service exposes `fpm.state-owner/1` as an attributed member of `runtime.state.owner`. Its contract declares a semantic schema identity and integer version, required/optional status, governing capability, provider, state-owner dependencies, capture, quiesce-before-restore, and restore operations.
+A state-owning service exposes `fgpm.state-owner/1` as an attributed member of `runtime.state.owner`. Its contract declares a semantic schema identity and integer version, required/optional status, governing capability, provider, state-owner dependencies, capture, quiesce-before-restore, and restore operations.
 
-Capture produces a deeply immutable `fpm.state-fragment/1` at a coordinator-supplied `fpm.runtime-tick/1` checkpoint. Domain revision is recorded separately from the shared checkpoint. The coordinator validates that every fragment names the same checkpoint but does not interpret owner payloads.
+Capture produces a deeply immutable `fgpm.state-fragment/1` at a coordinator-supplied `fgpm.runtime-tick/1` checkpoint. Domain revision is recorded separately from the shared checkpoint. The coordinator validates that every fragment names the same checkpoint but does not interpret owner payloads.
 
-`fpm.world-save/1` is stored as an ordinary canonical `fpm.tree/1` containing `save-manifest.json` plus one JSON fragment blob per owner. The manifest records:
+`fgpm.world-save/1` is stored as an ordinary canonical `fgpm.tree/1` containing `save-manifest.json` plus one JSON fragment blob per owner. The manifest records:
 
 - immutable save identity and format version;
 - shared checkpoint;
@@ -267,15 +270,15 @@ Capture produces a deeply immutable `fpm.state-fragment/1` at a coordinator-supp
 - exact fragment blob root, owner revision, declared dependencies, and definition references;
 - migration history.
 
-Objects and the tree root are imported before one create-only `fpm.artifact-reference/1` is published. That reference is the semantic commit point. An interruption before it leaves reportable orphan objects and cannot replace an earlier valid save. Save identities are immutable rather than mutable slots.
+Objects and the tree root are imported before one create-only `fgpm.artifact-reference/1` is published. That reference is the semantic commit point. An interruption before it leaves reportable orphan objects and cannot replace an earlier valid save. Save identities are immutable rather than mutable slots.
 
 ## Phase 5: compatibility, restore, and migration
 
 Restore reads the manifest first and builds a compatibility report before invoking state owners. Missing optional owners leave their fragment roots recorded as `retained-uninterpreted`; their payload is not parsed. A missing required owner fails activation with its schema, capability, last provider, available migration evidence, and reason. No runtime lifecycle or session record is committed.
 
-Selected owners prepare for restore in reverse dependency order, then restore in dependency order. Ordinary motion, extraction, and rendering services require the coordinator's ready capability, so they activate only after restore succeeds. The coordinator publishes `fpm.runtime-session/1` only from the runtime host's post-activation commit hook.
+Selected owners prepare for restore in reverse dependency order, then restore in dependency order. Ordinary motion, extraction, and rendering services require the coordinator's ready capability, so they activate only after restore succeeds. The coordinator publishes `fgpm.runtime-session/1` only from the runtime host's post-activation commit hook.
 
-Migration is one step and explicit. `fpm.state-migration/1` declares one exact schema/version input and output. Two compatible implementations fail as ambiguous unless profile policy selects one. A successful migration publishes a separate immutable derived fragment tree and records the package, implementation hash, input/output roots, and selection policy; the original save remains untouched.
+Migration is one step and explicit. `fgpm.state-migration/1` declares one exact schema/version input and output. Two compatible implementations fail as ambiguous unless profile policy selects one. A successful migration publishes a separate immutable derived fragment tree and records the package, implementation hash, input/output roots, and selection policy; the original save remains untouched.
 
 ## Phase 5: live browser updates
 
@@ -285,7 +288,7 @@ The loopback renderer still consumes only immutable scene snapshots. Its initial
 
 A runtime requirement with `cardinality: "collection"` selects every compatible contribution in the already-resolved package graph. Every provided member declares a stable identity, provider-instance binding, dependency identities, and opaque attributed metadata. The manager validates these generic relations; it does not interpret the metadata.
 
-`fpm.capability-collection-plan/1` records the deterministic member order, package and implementation hashes, provider bindings, metadata roots, requesters, and explicit exclusions. `fpm.capability-collection/1` presents that fixed plan plus each activated member value as a deeply immutable capability view. Duplicate member identities fail with contributor attribution. Missing dependencies and dependency cycles fail before activation.
+`fgpm.capability-collection-plan/1` records the deterministic member order, package and implementation hashes, provider bindings, metadata roots, requesters, and explicit exclusions. `fgpm.capability-collection/1` presents that fixed plan plus each activated member value as a deeply immutable capability view. Duplicate member identities fail with contributor attribution. Missing dependencies and dependency cycles fail before activation.
 
 Collection policy is subtractive and explicit. A `collectionPolicy` entry names its policy identity and exact excluded members. The plan records the responsible policy and excluded provider. There is no ambient self-registration, implicit priority, or discovery-order tie-break.
 
@@ -295,7 +298,7 @@ Membership means all compatible contributions from selected packages, not every 
 
 ## Phase 7: runtime-task declarations
 
-Runtime tasks are ordinary members of the generic `runtime.task` collection. Manager core records their member identity, provider binding, implementation hash, dependencies, and opaque metadata without interpreting task semantics. The selected Scheduler validates `fpm.runtime-task/1` values against metadata declaring:
+Runtime tasks are ordinary members of the generic `runtime.task` collection. Manager core records their member identity, provider binding, implementation hash, dependencies, and opaque metadata without interpreting task semantics. The selected Scheduler validates `fgpm.runtime-task/1` values against metadata declaring:
 
 - simulation phase and required/optional participation;
 - immutable snapshot capabilities;
@@ -309,21 +312,21 @@ One service still publishes one member of a collection. `demo.motion` and `demo.
 
 ## Phase 7: snapshot, worker, and barrier protocol
 
-At each tick the clock publishes `fpm.runtime-tick/1`, Transform Authority freezes `fpm.transform-snapshot/1`, and the Scheduler grants each task only the snapshots and output channels named by that member. `any-worker` tasks execute in actual Node.js worker threads. A `main-thread` task executes through a separately declared main-thread implementation.
+At each tick the clock publishes `fgpm.runtime-tick/1`, Transform Authority freezes `fgpm.transform-snapshot/1`, and the Scheduler grants each task only the snapshots and output channels named by that member. `any-worker` tasks execute in actual Node.js worker threads. A `main-thread` task executes through a separately declared main-thread implementation.
 
 On a restored session, the Scheduler resumes the clock from the save's world checkpoint before accepting new work. Host tick count remains a generation-local lifecycle observation; task records continue the persisted world-checkpoint sequence.
 
-Workers cannot obtain runtime service capabilities through their task context. Undeclared snapshot access fails with `FPM_TASK_SNAPSHOT_AUTHORITY_DENIED`; direct mutable capability access fails with `FPM_TASK_DIRECT_AUTHORITY_DENIED`. These are architectural checks for trusted native code, not hostile-code containment.
+Workers cannot obtain runtime service capabilities through their task context. Undeclared snapshot access fails with `FGPM_TASK_SNAPSHOT_AUTHORITY_DENIED`; direct mutable capability access fails with `FGPM_TASK_DIRECT_AUTHORITY_DENIED`. These are architectural checks for trusted native code, not hostile-code containment.
 
-Each successful worker returns staged commands. The Scheduler constructs immutable `fpm.runtime-command-buffer/1` values tagged with task, channel, checkpoint, and content root. No task receives Transform Authority's write capability.
+Each successful worker returns staged commands. The Scheduler constructs immutable `fgpm.runtime-command-buffer/1` values tagged with task, channel, checkpoint, and content root. No task receives Transform Authority's write capability.
 
-The first channel is `runtime.transforms.commands` with an `ordered` composition law. All producers must have a complete declared commit order. Missing ordering fails scheduler planning before runtime commitment. Transform Authority validates the checkpoint, expected revision, buffer roots, order, and every opaque-to-the-scheduler transform operation against a cloned state map. Only after all validation succeeds does it publish one `fpm.transform-batch-commit/1` and increment the transform revision once.
+The first channel is `runtime.transforms.commands` with an `ordered` composition law. All producers must have a complete declared commit order. Missing ordering fails scheduler planning before runtime commitment. Transform Authority validates the checkpoint, expected revision, buffer roots, order, and every opaque-to-the-scheduler transform operation against a cloned state map. Only after all validation succeeds does it publish one `fgpm.transform-batch-commit/1` and increment the transform revision once.
 
 The current scheduler also validates `single-producer`; other named forms are reserved but deliberately fail as unimplemented. Cross-owner atomic commit is outside this phase.
 
 ## Phase 7: deterministic and observational records
 
-`fpm.deterministic-tick/1` records only deterministic facts:
+`fgpm.deterministic-tick/1` records only deterministic facts:
 
 - checkpoint and selected task member/provider/implementation/metadata roots;
 - attributed task-policy exclusions and deterministic task outcomes;
@@ -332,13 +335,13 @@ The current scheduler also validates `single-producer`; other named forms are re
 - channel composition law and declared commit order;
 - authoritative resulting revision and state root.
 
-`fpm.deterministic-tick-log/1` contains successful records. A required task failure or timeout publishes no successful tick record and leaves Transform Authority unchanged. Stale expected revisions or checkpoints are rejected.
+`fgpm.deterministic-tick-log/1` contains successful records. A required task failure or timeout publishes no successful tick record and leaves Transform Authority unchanged. Stale expected revisions or checkpoints are rejected.
 
-`fpm.runtime-tick-trace/1` is separate observational evidence. It may contain worker count, actual completion order, thread affinity, and thread IDs. None enters deterministic tick identity, save state, or rendering. Tests reverse completion order and vary the worker count while asserting byte-identical tick logs, state snapshots, and SVG output.
+`fgpm.runtime-tick-trace/1` is separate observational evidence. It may contain worker count, actual completion order, thread affinity, and thread IDs. None enters deterministic tick identity, save state, or rendering. Tests reverse completion order and vary the worker count while asserting byte-identical tick logs, state snapshots, and SVG output.
 
 ## Lockfile and provenance
 
-`fpm.lock/3` records:
+`fgpm.lock/3` records:
 
 - manager identity and source-content hash;
 - profile hash and all four input layers;
@@ -353,4 +356,4 @@ It additionally records root kinds, named action outputs, per-action environment
 
 Each action also records execution separately from semantic action/adapter identity: form, boundary and runner, requested powers, actual grants, ambient powers denied by construction, and applied resource limits.
 
-`fpm.provenance/3` is optimized for explanation. It links the original contribution and handler finding to the source production, governed relation and selected adapter when present, validation decision, final scene input, and render-bundle tree root. `explain` returns this action path for a public export or hook.
+`fgpm.provenance/3` is optimized for explanation. It links the original contribution and handler finding to the source production, governed relation and selected adapter when present, validation decision, final scene input, and render-bundle tree root. `explain` returns this action path for a public export or hook.

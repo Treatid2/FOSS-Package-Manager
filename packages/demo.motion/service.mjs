@@ -4,10 +4,10 @@ export function createService() {
   return {
     async activate() {
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: {
           "runtime.task": Object.freeze({
-            protocol: "fpm.runtime-task/1",
+            protocol: "fgpm.runtime-task/1",
             provider: "service:demo.motion/1",
             workerModule: new URL("./task.mjs", import.meta.url).href,
           }),

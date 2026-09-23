@@ -1,0 +1,27 @@
+{
+  "schema": "fpm.phase-9-gate-summary/1",
+  "baseline": {
+    "commit": "cf2a0c45ba8d41459c9771f873f2cc993897bc50",
+    "contracts": "pass",
+    "tests": { "pass": 83, "fail": 0 }
+  },
+  "phase9A": {
+    "gateA": "demonstrated",
+    "gateB": "demonstrated",
+    "gateC": "demonstrated",
+    "gateD": "demonstrated"
+  },
+  "phase9B": {
+    "gateE": "demonstrated",
+    "gateX": "demonstrated",
+    "gateF": "demonstrated-through-1000",
+    "exploratory10000": "deferred-as-permitted"
+  },
+  "regression": {
+    "contracts": "pass",
+    "tests": { "pass": 96, "fail": 0 },
+    "phase8AuthoringKit": "pass"
+  },
+  "publication": "none",
+  "nonClaimsPreserved": true
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "fgpm.demo.runtime/1",
+  "activation": {
+    "id": "runtime:fgpm.grid-dungeon-integration/dungeon-v04",
+    "protocol": "fgpm.runtime-activation/1",
+    "accepts": ["fgpm.render-bundle/1"],
+    "requires": [
+      { "capability": "fgdungeon.reference-runtime", "range": "0.1.0" },
+      { "capability": "runtime.scheduler.barrier", "range": "^2.0.0", "binding": "runtime.scheduler/2" },
+      { "capability": "runtime.renderer.window", "range": "^1.0.0" },
+      { "capability": "runtime.persistence.world", "range": "^1.0.0", "binding": "runtime.persistence/1" }
+    ],
+    "ticks": 18
+  }
+}

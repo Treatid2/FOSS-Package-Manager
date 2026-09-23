@@ -4,7 +4,7 @@ let input = "";
 for await (const chunk of process.stdin) input += chunk;
 const request = JSON.parse(input);
 process.stdout.write(`${JSON.stringify({
-  protocol: "fpm.handler-response/1",
+  protocol: "fgpm.handler-response/1",
   ok: true,
   findings: [{
     id: "finding:bad.scene/contradict-nonempty",

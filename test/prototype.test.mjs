@@ -18,7 +18,7 @@ const baseProfile = path.join(repository, "profiles", "base.json");
 const greenProfile = path.join(repository, "profiles", "green-head.json");
 
 async function temporaryDirectory(name) {
-  return mkdtemp(path.join(tmpdir(), `fpm-${name}-`));
+  return mkdtemp(path.join(tmpdir(), `fgpm-${name}-`));
 }
 
 async function json(filePath) {
@@ -27,7 +27,7 @@ async function json(filePath) {
 
 function storeFor(directory, options = {}) {
   return new ArtifactStore(directory, {
-    protocol: "fpm.artifact-transaction/2",
+    protocol: "fgpm.artifact-transaction/2",
     facts: { runtime: { node: process.version }, host: {}, target: {} },
     widenedDimensions: [],
   }, options);
@@ -68,13 +68,13 @@ test("base and Green Head profiles build through the same package graph", async 
   const baseScene = await json(base.artifactPath);
   const greenScene = await json(green.artifactPath);
 
-  assert.equal(baseScene.schema, "fpm.render-scene/1");
+  assert.equal(baseScene.schema, "fgpm.render-scene/1");
   assert.equal(baseScene.objects.length, 3);
-  assert.equal(base.lockfile.schema, "fpm.lock/3");
+  assert.equal(base.lockfile.schema, "fgpm.lock/3");
   assert.equal(base.lockfile.artifact.kind, "tree");
   assert.equal(base.lockfile.artifact.entry, "scene.json");
   const bundleIndex = await json(path.join(path.dirname(base.artifactPath), "asset-index.json"));
-  assert.equal(bundleIndex.schema, "fpm.render-bundle-index/1");
+  assert.equal(bundleIndex.schema, "fgpm.render-bundle-index/1");
   assert.equal(bundleIndex.objects.length, 3);
   assert.ok(base.lockfile.packages.every((entry) => entry.license === "Apache-2.0"));
   assert.deepEqual(baseScene.objects.find((entry) => entry.part === "head").colour, [217, 146, 91]);
@@ -151,7 +151,7 @@ test("an interruption after tree import leaves reportable orphans and no success
     storeOptions: { interruptAfterImportAction: "action:profile/green-head/render-bundle" },
   }), (error) => {
     failure = error;
-    assert.equal(error.code, "FPM_SIMULATED_INTERRUPTION");
+    assert.equal(error.code, "FGPM_SIMULATED_INTERRUPTION");
     return true;
   });
   const record = path.join(storeDirectory, "actions", `${failure.details.buildKey.replace("sha256:", "")}.json`);
@@ -172,7 +172,7 @@ test("stale build-key leases are recovered without treating them as valid output
   const leaseDirectory = path.join(root, "leases", buildKey);
   await mkdir(leaseDirectory, { recursive: true });
   await writeFile(path.join(leaseDirectory, "lease.json"), JSON.stringify({
-    schema: "fpm.build-lease/1",
+    schema: "fgpm.build-lease/1",
     buildKey: `sha256:${buildKey}`,
     action: "action:stale",
     owner: "dead-owner",
@@ -197,7 +197,7 @@ test("immutable action-record publication rejects divergent roots for one build 
   const rootB = [{ ...rootA[0], hash: `sha256:${"2".repeat(64)}` }];
   await store.publishActionRecord(buildKey, action, rootA);
   await assert.rejects(() => store.publishActionRecord(buildKey, action, rootB), (error) => {
-    assert.equal(error.code, "FPM_ACTION_NONDETERMINISTIC");
+    assert.equal(error.code, "FGPM_ACTION_NONDETERMINISTIC");
     return true;
   });
 });
@@ -212,12 +212,12 @@ test("two manager processes converge through one concurrent-safe store", async (
   ]);
   assert.equal(first.code, 0, first.stderr);
   assert.equal(second.code, 0, second.stderr);
-  assert.deepEqual(await json(path.join(root, "first", "fpm.lock.json")),
-    await json(path.join(root, "second", "fpm.lock.json")));
-  const actions = await readdir(path.join(root, ".fpm-store", "actions"));
-  const lockfile = await json(path.join(root, "first", "fpm.lock.json"));
+  assert.deepEqual(await json(path.join(root, "first", "fgpm.lock.json")),
+    await json(path.join(root, "second", "fgpm.lock.json")));
+  const actions = await readdir(path.join(root, ".fgpm-store", "actions"));
+  const lockfile = await json(path.join(root, "first", "fgpm.lock.json"));
   assert.equal(actions.filter((entry) => entry.endsWith(".json")).length, lockfile.actions.length);
-  assert.deepEqual(await readdir(path.join(root, ".fpm-store", "leases")), []);
+  assert.deepEqual(await readdir(path.join(root, ".fgpm-store", "leases")), []);
 });
 
 test("declared and manager-widened environment dimensions control action keys", async (context) => {
@@ -248,7 +248,7 @@ test("conflicting validator findings coexist and policy explicitly waives or rej
   context.after(() => rm(root, { recursive: true, force: true }));
   const conflict = path.join(repository, "fixtures", "failures", "profiles", "validator-conflict.json");
   await assert.rejects(() => buildProfile(conflict, path.join(root, "rejected")), (error) => {
-    assert.equal(error.code, "FPM_VALIDATION_REJECTED");
+    assert.equal(error.code, "FGPM_VALIDATION_REJECTED");
     assert.deepEqual(error.details.findings.map((entry) => entry.verdict).sort(), ["fail", "pass"]);
     assert.equal(error.details.decision.accepted, false);
     return true;
@@ -294,7 +294,7 @@ test("a failed materialization rolls back its staging output and action record",
   let failure;
   await assert.rejects(() => buildProfile(profile, path.join(root, "out"), { storeDirectory }), (error) => {
     failure = error;
-    assert.equal(error.code, "FPM_HANDLER_MATERIALIZATION_FAILED");
+    assert.equal(error.code, "FGPM_HANDLER_MATERIALIZATION_FAILED");
     assert.match(error.details.action, /bad\.transaction-failure/);
     return true;
   });
@@ -312,7 +312,7 @@ test("portable capability violations preserve evidence and publish no root", asy
   let failure;
   await assert.rejects(() => buildProfile(profile, path.join(root, "out"), { storeDirectory }), (error) => {
     failure = error;
-    assert.equal(error.code, "FPM_SANDBOX_VIOLATION_CONFIRMED");
+    assert.equal(error.code, "FGPM_SANDBOX_VIOLATION_CONFIRMED");
     assert.equal(error.details.execution.boundary, "wasm-capability-imports");
     assert.equal(error.details.evidence.allowedInputReads, 3);
     assert.equal(error.details.evidence.allowedOutputWrites, 4);
@@ -324,7 +324,7 @@ test("portable capability violations preserve evidence and publish no root", asy
   });
   const actionRecord = path.join(storeDirectory, "actions", `${failure.details.buildKey.replace("sha256:", "")}.json`);
   await assert.rejects(() => access(actionRecord));
-  await assert.rejects(() => access(path.join(root, "out", "fpm.lock.json")));
+  await assert.rejects(() => access(path.join(root, "out", "fgpm.lock.json")));
   assert.deepEqual(await readdir(path.join(storeDirectory, "staging")), []);
   assert.deepEqual((await storeFor(storeDirectory).reachabilityReport()).orphaned, []);
 });
@@ -348,7 +348,7 @@ test("runtime services move an instance, extract an immutable scene, and shut do
   assert.equal(Object.isFrozen(liveScene), true);
   assert.equal(Object.isFrozen(liveScene.objects[0]), true);
   await assert.rejects(() => host.deactivateService("service:demo.runtime-instance-store/1"), (error) => {
-    assert.equal(error.code, "FPM_RUNTIME_DEPENDENTS_ACTIVE");
+    assert.equal(error.code, "FGPM_RUNTIME_DEPENDENTS_ACTIVE");
     assert.ok(error.details.dependents.includes("service:demo.transform-authority/1"));
     return true;
   });
@@ -368,13 +368,22 @@ test("runtime services move an instance, extract an immutable scene, and shut do
 
 test("generational handles distinguish release from explicit destruction", async () => {
   const controller = createInstanceStoreService();
+  const world = {
+    schema: "fgpm.render-scene/1",
+    profile: "unit-test",
+    entryPoint: "world:test/character",
+    camera: { position: [0, 0, 0], target: [0, 0, 1], fieldOfViewDegrees: 60 },
+    objects: [
+      { id: "character/body", instance: "world:test/character", definition: "definition:character" },
+      { id: "field", instance: "world:test/field", definition: "definition:field" },
+    ],
+  };
   const activation = await controller.activate({
     artifact: {
-      schema: "fpm.render-scene/1",
-      objects: [
-        { id: "character/body", instance: "world:test/character", definition: "definition:character" },
-        { id: "field", instance: "world:test/field", definition: "definition:field" },
-      ],
+      reference: { schema: "fgpm.typed-artifact-reference/1", id: "artifact:unit/world",
+        semanticType: "fgpm.render-bundle/1", root: { kind: "tree", hash: `sha256:${"0".repeat(64)}`,
+          size: 0, totalSize: 0 }, entry: "scene.json", provenance: {} },
+      readEntry: async () => Buffer.from(JSON.stringify(world)),
     },
   });
   const read = activation.capabilities["runtime.instances.read"];
@@ -392,7 +401,7 @@ test("generational handles distinguish release from explicit destruction", async
   const replacement = materialise.acquire("world:test/field", "test-reuse");
   assert.equal(replacement.handle.slot, rematerialised.handle.slot);
   assert.notEqual(replacement.handle.generation, rematerialised.handle.generation);
-  assert.throws(() => read.resolve(rematerialised.handle), (error) => error.code === "FPM_RUNTIME_HANDLE_STALE");
+  assert.throws(() => read.resolve(rematerialised.handle), (error) => error.code === "FGPM_RUNTIME_HANDLE_STALE");
   await controller.deactivate();
 });
 
@@ -404,7 +413,7 @@ test("releasing the final materialisation lease retains authoritative transform 
   const transforms = host.capability("runtime.transforms.write");
   const instances = host.capability("runtime.instances.read");
   transforms.submit({
-    schema: "fpm.transform-command/1",
+    schema: "fgpm.transform-command/1",
     instanceId: "world:demo/character-1",
     translation: [1.25, 0, 0],
   });
@@ -424,7 +433,7 @@ test("an observer cannot acquire undeclared transform-write authority", async (c
   const profile = path.join(repository, "fixtures", "failures", "profiles", "runtime-authority-violation.json");
   const result = await buildProfile(profile, path.join(root, "out"));
   await assert.rejects(() => startRuntime(result), (error) => {
-    assert.equal(error.code, "FPM_RUNTIME_AUTHORITY_DENIED");
+    assert.equal(error.code, "FGPM_RUNTIME_AUTHORITY_DENIED");
     assert.equal(error.details.capability, "runtime.transforms.write");
     assert.equal(error.details.lifecycle.committed, false);
     assert.ok(error.details.lifecycle.activated.includes("service:demo.transform-authority/1"));
@@ -439,7 +448,7 @@ test("ambiguous exclusive runtime providers require explicit policy", async (con
   const ambiguousProfile = path.join(repository, "fixtures", "failures", "profiles", "ambiguous-runtime-provider.json");
   const ambiguous = await buildProfile(ambiguousProfile, path.join(root, "ambiguous"));
   assert.throws(() => resolveRuntimePlan(ambiguous), (error) => {
-    assert.equal(error.code, "FPM_RUNTIME_PROVIDER_AMBIGUOUS");
+    assert.equal(error.code, "FGPM_RUNTIME_PROVIDER_AMBIGUOUS");
     assert.equal(error.details.capability, "runtime.state.owner");
     assert.equal(error.details.binding, "runtime.transforms/1");
     assert.equal(error.details.candidates.length, 2);
@@ -461,7 +470,7 @@ test("activation failure rolls back active dependencies and commits no lifecycle
   const profile = path.join(repository, "fixtures", "failures", "profiles", "runtime-activation-failure.json");
   const result = await buildProfile(profile, path.join(root, "out"));
   await assert.rejects(() => startRuntime(result), (error) => {
-    assert.equal(error.code, "FPM_RUNTIME_ACTIVATION_FAILED");
+    assert.equal(error.code, "FGPM_RUNTIME_ACTIVATION_FAILED");
     assert.equal(error.details.lifecycle.committed, false);
     assert.ok(error.details.lifecycle.activated.includes("service:demo.simple-runtime/browser-svg/1"));
     assert.deepEqual(error.details.lifecycle.rolledBack, [...error.details.lifecycle.activated].reverse());
@@ -471,17 +480,17 @@ test("activation failure rolls back active dependencies and commits no lifecycle
 });
 
 const failures = [
-  ["missing dependency", "missing-dependency.json", "FPM_DEPENDENCY_MISSING"],
-  ["missing handler", "no-handler.json", "FPM_HANDLER_MISSING"],
-  ["duplicate public identity", "duplicate-public.json", "FPM_PUBLIC_ID_DUPLICATE"],
-  ["unresolved semantic artifact route", "incompatible-semantic.json", "FPM_ARTIFACT_ROUTE_MISSING"],
-  ["ambiguous compatible replacements", "ambiguous-replacement.json", "FPM_REPLACEMENT_AMBIGUOUS"],
-  ["missing adapter", "missing-adapter.json", "FPM_ARTIFACT_ROUTE_MISSING"],
-  ["ambiguous adapters", "ambiguous-adapter.json", "FPM_ADAPTER_AMBIGUOUS"],
-  ["cyclic dependencies", "cyclic-dependency.json", "FPM_DEPENDENCY_CYCLE"],
-  ["malformed domain manifest", "malformed-domain.json", "FPM_DOMAIN_MANIFEST_MALFORMED"],
-  ["handler analysis failure", "handler-failure.json", "FPM_HANDLER_ANALYSIS_FAILED"],
-  ["profile authority violation", "authority-violation.json", "FPM_PROFILE_AUTHORITY_UNRESOLVED"],
+  ["missing dependency", "missing-dependency.json", "FGPM_DEPENDENCY_MISSING"],
+  ["missing handler", "no-handler.json", "FGPM_HANDLER_MISSING"],
+  ["duplicate public identity", "duplicate-public.json", "FGPM_PUBLIC_ID_DUPLICATE"],
+  ["unresolved semantic artifact route", "incompatible-semantic.json", "FGPM_ARTIFACT_ROUTE_MISSING"],
+  ["ambiguous compatible replacements", "ambiguous-replacement.json", "FGPM_REPLACEMENT_AMBIGUOUS"],
+  ["missing adapter", "missing-adapter.json", "FGPM_ARTIFACT_ROUTE_MISSING"],
+  ["ambiguous adapters", "ambiguous-adapter.json", "FGPM_ADAPTER_AMBIGUOUS"],
+  ["cyclic dependencies", "cyclic-dependency.json", "FGPM_DEPENDENCY_CYCLE"],
+  ["malformed domain manifest", "malformed-domain.json", "FGPM_DOMAIN_MANIFEST_MALFORMED"],
+  ["handler analysis failure", "handler-failure.json", "FGPM_HANDLER_ANALYSIS_FAILED"],
+  ["profile authority violation", "authority-violation.json", "FGPM_PROFILE_AUTHORITY_UNRESOLVED"],
 ];
 
 for (const [label, profileName, expectedCode] of failures) {
@@ -503,7 +512,7 @@ test("CLI failure output is structured and actionable", () => {
     windowsHide: true,
   });
   assert.equal(execution.status, 1);
-  assert.match(execution.stderr, /FPM_ARTIFACT_ROUTE_MISSING/);
+  assert.match(execution.stderr, /FGPM_ARTIFACT_ROUTE_MISSING/);
   assert.match(execution.stderr, /requiredSemanticType/);
   assert.match(execution.stderr, /producedTypes/);
   assert.match(execution.stderr, /pkg:demo\.character\/appearance\/head\/base-colour/);

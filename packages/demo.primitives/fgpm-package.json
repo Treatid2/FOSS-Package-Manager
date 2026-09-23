@@ -1,0 +1,49 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.primitives",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "requires": [
+    {
+      "capability": "fgpm.handler.scene",
+      "range": "^1.0.0"
+    },
+    {
+      "capability": "fgpm.handler.texture",
+      "range": "^1.0.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:demo.primitives/mesh/field",
+      "manifestType": "fgpm.demo.mesh/1",
+      "manifest": "mesh-field.json"
+    },
+    {
+      "id": "pkg:demo.primitives/mesh/body-cube",
+      "manifestType": "fgpm.demo.mesh/1",
+      "manifest": "mesh-body.json"
+    },
+    {
+      "id": "pkg:demo.primitives/mesh/head-cube",
+      "manifestType": "fgpm.demo.mesh/1",
+      "manifest": "mesh-head.json"
+    },
+    {
+      "id": "pkg:demo.primitives/texture/field",
+      "manifestType": "fgpm.demo.texture-file/1",
+      "manifest": "texture-field.json"
+    },
+    {
+      "id": "pkg:demo.primitives/texture/body",
+      "manifestType": "fgpm.demo.solid-colour/1",
+      "manifest": "texture-body.json"
+    },
+    {
+      "id": "pkg:demo.primitives/texture/head",
+      "manifestType": "fgpm.demo.solid-colour/1",
+      "manifest": "texture-head.json"
+    }
+  ]
+}

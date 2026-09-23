@@ -1,0 +1,51 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "bad.sandbox-violation-adapter",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.texture-vocabulary",
+      "range": "^0.3.0"
+    }
+  ],
+  "handlers": [
+    {
+      "id": "handler:bad.sandbox-violation-adapter/1",
+      "protocol": "fgpm.handler-stdio/1",
+      "adapts": [
+        {
+          "id": "adapter:bad.sandbox-violation/1",
+          "relation": "relation:demo.texture/base-colour-solid-to-runtime/1",
+          "from": "texture.solid-colour/1",
+          "to": "texture.runtime.rgba8-srgb/1",
+          "conversion": "lossless"
+        }
+      ],
+      "buildEnvironment": {
+        "schema": "fgpm.build-environment/1",
+        "dimensions": []
+      },
+      "execution": {
+        "form": "portable-wasm",
+        "securityBoundary": "wasm-capability-imports",
+        "requestedPowers": [
+          "read-declared-input-bytes",
+          "write-declared-output-bytes"
+        ],
+        "limits": {
+          "timeoutMs": 2000,
+          "maxModuleBytes": 65536,
+          "maxInputBytes": 1048576,
+          "maxOutputBytes": 1048576,
+          "maxResponseBytes": 1048576,
+          "maxProcessMemoryMiB": 64
+        }
+      },
+      "command": [
+        "./violation.wasm.b64"
+      ]
+    }
+  ]
+}

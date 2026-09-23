@@ -1,0 +1,25 @@
+{
+  "schema": "fgpm.reference-runtime-source/1",
+  "target": {
+    "os": "win32",
+    "architecture": "x64",
+    "executableFormat": "PE32+",
+    "machine": 34404,
+    "nodeVersion": "24.18.0"
+  },
+  "runtime": {
+    "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de"
+  },
+  "release": {
+    "archiveName": "node-v24.18.0-win-x64.zip",
+    "archiveUrl": "https://nodejs.org/download/release/v24.18.0/node-v24.18.0-win-x64.zip",
+    "archiveSha256": "0ae68406b42d7725661da979b1403ec9926da205c6770827f33aac9d8f26e821",
+    "checksumsUrl": "https://nodejs.org/download/release/v24.18.0/SHASUMS256.txt",
+    "checksumsSha256": "3927bab574a00ca0560c9583fe19655ba19603a1c5851414e4325d34ac50e469"
+  },
+  "licence": {
+    "sourceMember": "LICENSE",
+    "localPath": "LICENSES/Node.js.txt",
+    "sha256": "d9c4eeda951d6d08f4aa1316b61aafcf67e6da5f79b18f8edeb56fa6abdc038c"
+  }
+}

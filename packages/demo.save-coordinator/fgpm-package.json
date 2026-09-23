@@ -1,0 +1,74 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.save-coordinator",
+  "version": "0.7.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.runtime-clock",
+      "range": "^0.4.0"
+    },
+    {
+      "package": "demo.runtime-instance-store",
+      "range": "^0.6.0"
+    },
+    {
+      "package": "demo.transform-authority",
+      "range": "^0.7.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:demo.save-coordinator/1",
+      "protocol": "fgpm.runtime-service/1",
+      "artifactStoreAccess": "read-write",
+      "provides": [
+        {
+          "capability": "runtime.persistence.world",
+          "version": "1.0.0",
+          "exclusive": true,
+          "binding": "runtime.persistence/1"
+        },
+        {
+          "capability": "runtime.restore.ready",
+          "version": "1.0.0",
+          "exclusive": true,
+          "binding": "runtime.persistence/1"
+        }
+      ],
+      "requires": [
+        {
+          "capability": "runtime.clock.tick",
+          "range": "^1.0.0"
+        },
+        {
+          "capability": "runtime.state.owner",
+          "range": "^1.0.0",
+          "cardinality": "collection"
+        },
+        {
+          "capability": "runtime.transforms.migration",
+          "range": "^1.0.0",
+          "optional": true
+        }
+      ],
+      "hostGrants": [
+        "fgpm.host.persistence-input/1",
+        "fgpm.host.persistence-records/1",
+        "fgpm.host.persistence-conformance/1"
+      ],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority",
+          "read-content-store",
+          "write-content-store",
+          "write-session-record"
+        ]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

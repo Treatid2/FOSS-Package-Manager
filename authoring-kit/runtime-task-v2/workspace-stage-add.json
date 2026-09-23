@@ -1,0 +1,4 @@
+{
+  "type": "add",
+  "packageRoot": "sha256:<imported-package-root>"
+}

@@ -1,0 +1,4 @@
+{
+  "schema": "fgpm.runtime-service-activation/2", "service": "service:qualification.public-session/1",
+  "capabilities": { "qualification.public-session": { "protocol": "qualification.public-session/1" } }
+}

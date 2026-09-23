@@ -1,0 +1,14 @@
+{
+  "schema": "fgpm.phase-9-contract-index/1",
+  "status": "experimental-no-compatibility-promise", "license": "Apache-2.0", "unknownFieldPolicy": "closed",
+  "identityRule": "Immutable records are sha256(stable-json(identityInputs)); mutable references are explicitly identified by schema.",
+  "schemas": [
+    { "file": "curation-v1.schema.json", "steward": "fgpm.manager-core/3", "classification": "public-cross-process", "identities": ["fgpm.installed-index/1", "fgpm.installed-index/2", "fgpm.package-root/1", "fgpm.workspace-reference/1", "fgpm.workspace-revision/1"] },
+    { "file": "candidate-build-v1.schema.json", "steward": "fgpm.manager-core/3", "classification": "public-cross-process", "identities": ["fgpm.candidate/1", "fgpm.candidate-build/1", "fgpm.candidate-validation/1", "fgpm.derived-package/1", "fgpm.complete-build/1"] },
+    { "file": "generation-distribution-v1.schema.json", "steward": "fgpm.manager-core/3", "classification": "public-cross-process", "identities": ["fgpm.generation/1", "fgpm.distribution/1"] },
+    { "file": "runtime-transition-v1.schema.json", "steward": "fgpm.runtime-coordinator/1", "classification": "public-cross-process", "identities": ["fgpm.generation-transition-checkpoint/1", "fgpm.generation-transition-attempt/1", "fgpm.runtime-generation-session/1", "fgpm.active-generation-reference/1"] },
+    { "file": "control-v1.schema.json", "steward": "fgpm.manager-control/1", "classification": "public-cross-process", "identities": [] }
+  ],
+  "examples": [{ "schema": "fgpm.workspace-reference/1", "file": "examples/workspace-reference.json" }],
+  "consumes": "fgpm.public-contract-bundle/phase-8"
+}

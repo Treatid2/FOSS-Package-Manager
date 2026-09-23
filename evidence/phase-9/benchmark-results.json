@@ -1,0 +1,263 @@
+{
+  "claims": {
+    "complexityClass": "not-claimed",
+    "interpretation": "observed work is reported beside the measured affected closure",
+    "productionPerformance": "not-claimed"
+  },
+  "diagnosticLocality": {
+    "ambiguity": {
+      "candidates": [
+        "synthetic.package-00000",
+        "synthetic.package-00001"
+      ],
+      "capability": "synthetic.ambiguous",
+      "causalPath": [
+        "package:synthetic.package-00002",
+        "capability:synthetic.ambiguous"
+      ],
+      "code": "FPM_CANDIDATE_PROVIDER_AMBIGUOUS",
+      "package": "synthetic.package-00002",
+      "severity": "error"
+    },
+    "candidate": "sha256:36b257b9b0b867f896f2644df44151a8068fac3a45727ff8d30e7deb23ebe480",
+    "cycle": {
+      "causalPath": [
+        "package:synthetic.package-00997",
+        "package:synthetic.package-00999",
+        "package:synthetic.package-00998",
+        "package:synthetic.package-00997"
+      ],
+      "code": "FPM_CANDIDATE_DEPENDENCY_CYCLE",
+      "cycle": [
+        "synthetic.package-00997",
+        "synthetic.package-00999",
+        "synthetic.package-00998",
+        "synthetic.package-00997"
+      ],
+      "severity": "error"
+    },
+    "duplicate": {
+      "code": "FPM_PACKAGE_VERSION_CONFLICT",
+      "details": {
+        "existingRoot": "sha256:7ac7a62f0adaeb638cfa4a151e9bb5b5028c27f04f0d66c9d4ccf097d4b0b734",
+        "existingSources": [
+          "D:\\CodexScratch\\allocations\\20260825T221725950Z-foss-package-manager-ce3f6b9f\\work\\diagnostics\\packages\\synthetic.package-00010"
+        ],
+        "package": "synthetic.package-00010",
+        "proposedRoot": "sha256:f799fe59d67fc060c0f3e6c67efde793cbd70f0259e55c9004ff0a7ef07df220",
+        "source": "D:\\CodexScratch\\allocations\\20260825T221725950Z-foss-package-manager-ce3f6b9f\\work\\diagnostics\\duplicate-conflict",
+        "version": "1.0.0"
+      }
+    },
+    "missingDependency": {
+      "causalPath": [
+        "package:synthetic.package-00500",
+        "dependency:synthetic.missing@=1.0.0"
+      ],
+      "code": "FPM_CANDIDATE_DEPENDENCY_MISSING",
+      "dependency": "synthetic.missing",
+      "package": "synthetic.package-00500",
+      "range": "=1.0.0",
+      "severity": "error"
+    },
+    "packageCount": 1000,
+    "status": "blocked"
+  },
+  "incremental": [
+    {
+      "central": {
+        "affectedCount": 10,
+        "candidate": "sha256:3ffe5ff6f1a7b74de1397e7cf964e71aaf02bfdc9cb388c8d1b6514d94a62dc5",
+        "findings": [
+          "FPM_CANDIDATE_DEPENDENCY_VERSION_INCOMPATIBLE"
+        ],
+        "packagesVisited": 10,
+        "reusableCount": 0,
+        "status": "blocked"
+      },
+      "leaf": {
+        "affectedCount": 1,
+        "candidate": "sha256:b398464c76a49c6ed6293901a21800adf0edf0f256d31b14b39297d260696764",
+        "packagesVisited": 10,
+        "reusableCount": 9
+      },
+      "packageCount": 10
+    },
+    {
+      "central": {
+        "affectedCount": 100,
+        "candidate": "sha256:2358ef5464fbfe03bbb0e7d11f1cf9d3b42636f636a38f3db1442ee87ca332cb",
+        "findings": [
+          "FPM_CANDIDATE_DEPENDENCY_VERSION_INCOMPATIBLE"
+        ],
+        "packagesVisited": 100,
+        "reusableCount": 0,
+        "status": "blocked"
+      },
+      "leaf": {
+        "affectedCount": 1,
+        "candidate": "sha256:cc46688890af642201a9869771409c3aae17535a6b00e1664a6d36b4a0024472",
+        "packagesVisited": 100,
+        "reusableCount": 99
+      },
+      "packageCount": 100
+    },
+    {
+      "central": {
+        "affectedCount": 1000,
+        "candidate": "sha256:5afeb5ce62ce0ddcefb011ab84bf9f2abc050f4e13030bad141a03a45bd2ddaa",
+        "findings": [
+          "FPM_CANDIDATE_DEPENDENCY_VERSION_INCOMPATIBLE"
+        ],
+        "packagesVisited": 1000,
+        "reusableCount": 0,
+        "status": "blocked"
+      },
+      "leaf": {
+        "affectedCount": 1,
+        "candidate": "sha256:3ed70c75b5253dac512b59dc9a86b541235bf3cd6e5ea20474792f8b8b6840ad",
+        "packagesVisited": 1000,
+        "reusableCount": 999
+      },
+      "packageCount": 1000
+    }
+  ],
+  "scale": [
+    {
+      "deterministic": {
+        "affectedCount": 10,
+        "candidate": "sha256:03532f439d25bacb47294549c3ebaa95169703cecd9d9f8719acb86b4ab7858a",
+        "candidateStatus": "ready-to-build",
+        "family": "chain",
+        "generation": "sha256:16d06557b5ba1e4af5234143bebc2b23cda8d547f44f76bef2fd5c0e2e772902",
+        "generator": "fpm.phase-9-synthetic/1",
+        "packageCount": 10,
+        "packagesVisited": 10,
+        "reusableCount": 0,
+        "seed": 9009
+      },
+      "observational": {
+        "architecture": "x64",
+        "buildValidateCommitMs": 27.26679999999999,
+        "candidatePlanMs": 30.854600000000005,
+        "cold": true,
+        "cpu": "AMD Ryzen 7 7800X3D 8-Core Processor           ",
+        "filesystemPath": "D:\\CodexScratch\\allocations\\20260825T221725950Z-foss-package-manager-ce3f6b9f\\work\\chain-10",
+        "importIndexMs": 132.59629999999999,
+        "logicalCores": 16,
+        "memoryBytes": 67767668736,
+        "node": "v24.18.0",
+        "peakResidentBytes": 53252096,
+        "platform": "win32",
+        "stageMs": 5.414100000000019,
+        "workerCount": 1,
+        "workspaceCreateMs": 4.629199999999997
+      },
+      "schema": "fpm.phase-9-benchmark-result/1",
+      "version": 1
+    },
+    {
+      "deterministic": {
+        "affectedCount": 100,
+        "candidate": "sha256:74829d593b11e140b75c3e87303b92d38aea9df2d760790d1e01e03bc66c657d",
+        "candidateStatus": "ready-to-build",
+        "family": "chain",
+        "generation": "sha256:e380d334e0c7841d09278122ea41ec65a0081365ca9fb02f5f34db4865677547",
+        "generator": "fpm.phase-9-synthetic/1",
+        "packageCount": 100,
+        "packagesVisited": 100,
+        "reusableCount": 0,
+        "seed": 9009
+      },
+      "observational": {
+        "architecture": "x64",
+        "buildValidateCommitMs": 153.85310000000004,
+        "candidatePlanMs": 260.29420000000005,
+        "cold": true,
+        "cpu": "AMD Ryzen 7 7800X3D 8-Core Processor           ",
+        "filesystemPath": "D:\\CodexScratch\\allocations\\20260825T221725950Z-foss-package-manager-ce3f6b9f\\work\\chain-100",
+        "importIndexMs": 1186.1719,
+        "logicalCores": 16,
+        "memoryBytes": 67767668736,
+        "node": "v24.18.0",
+        "peakResidentBytes": 61390848,
+        "platform": "win32",
+        "stageMs": 5.979100000000017,
+        "workerCount": 1,
+        "workspaceCreateMs": 3.9511999999999716
+      },
+      "schema": "fpm.phase-9-benchmark-result/1",
+      "version": 1
+    },
+    {
+      "deterministic": {
+        "affectedCount": 1000,
+        "candidate": "sha256:96082c9905301c65c814cdf6d73093a1d2673e25b8da7a64a7c8f3551734593c",
+        "candidateStatus": "ready-to-build",
+        "family": "chain",
+        "generation": "sha256:e52e223b7eed66a4e23b62965a71aa3db19631665a0e7dc03e03490e08cb9c5c",
+        "generator": "fpm.phase-9-synthetic/1",
+        "packageCount": 1000,
+        "packagesVisited": 1000,
+        "reusableCount": 0,
+        "seed": 9009
+      },
+      "observational": {
+        "architecture": "x64",
+        "buildValidateCommitMs": 1340.823199999999,
+        "candidatePlanMs": 2567.050900000002,
+        "cold": true,
+        "cpu": "AMD Ryzen 7 7800X3D 8-Core Processor           ",
+        "filesystemPath": "D:\\CodexScratch\\allocations\\20260825T221725950Z-foss-package-manager-ce3f6b9f\\work\\chain-1000",
+        "importIndexMs": 12565.329600000001,
+        "logicalCores": 16,
+        "memoryBytes": 67767668736,
+        "node": "v24.18.0",
+        "peakResidentBytes": 137609216,
+        "platform": "win32",
+        "stageMs": 17.944799999999304,
+        "workerCount": 1,
+        "workspaceCreateMs": 3.8179000000000087
+      },
+      "schema": "fpm.phase-9-benchmark-result/1",
+      "version": 1
+    }
+  ],
+  "schema": "fpm.phase-9-benchmark-report/1",
+  "scope": {
+    "acceptanceSizes": [
+      10,
+      100,
+      1000
+    ],
+    "exploratory10000": "deferred: acceptance is through 1,000 packages"
+  },
+  "selectedVersusInstalled": {
+    "candidateAfter": "sha256:b271b6725b4d27bd9f76378e03cb9e358598401574499881ebc3db6f4f73ee71",
+    "candidateBefore": "sha256:b271b6725b4d27bd9f76378e03cb9e358598401574499881ebc3db6f4f73ee71",
+    "identicalCandidate": true,
+    "identicalRuntimePlan": true,
+    "installedAfter": 1000,
+    "installedBefore": 100,
+    "runtimePlanAfter": {
+      "collections": [],
+      "deterministicTickRoot": "sha256:23e383a0c27723708bf73f84c74d17b7318137067ef929ae907a5d06454a22c2",
+      "schema": "fpm.generation-runtime-plan/1",
+      "services": [],
+      "stateOwners": [],
+      "tasks": [],
+      "visibleOutputRoot": "sha256:00f86632441b1bd01361310360b8e5974b3a96b7c0e44a869fccb6eb59efdf78"
+    },
+    "runtimePlanBefore": {
+      "collections": [],
+      "deterministicTickRoot": "sha256:23e383a0c27723708bf73f84c74d17b7318137067ef929ae907a5d06454a22c2",
+      "schema": "fpm.generation-runtime-plan/1",
+      "services": [],
+      "stateOwners": [],
+      "tasks": [],
+      "visibleOutputRoot": "sha256:00f86632441b1bd01361310360b8e5974b3a96b7c0e44a869fccb6eb59efdf78"
+    },
+    "selectedPackages": 100
+  },
+  "version": 1
+}

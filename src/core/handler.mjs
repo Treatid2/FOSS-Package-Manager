@@ -2,11 +2,11 @@
 
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { FpmError, invariant } from "./errors.mjs";
+import { FgpmError, invariant } from "./errors.mjs";
 import { resolveInside, stableJson } from "./io.mjs";
 
 const PORTABLE_RUNNER = fileURLToPath(new URL("./portable-wasm-runner.mjs", import.meta.url));
-const PORTABLE_RUNNER_VERSION = "fpm.wasm-byte-transform/1";
+const PORTABLE_RUNNER_VERSION = "fgpm.wasm-byte-transform/1";
 const DEFAULT_LIMITS = Object.freeze({
   timeoutMs: 2_000,
   maxModuleBytes: 64 * 1024,
@@ -18,7 +18,7 @@ const DEFAULT_LIMITS = Object.freeze({
 
 export function resolvePackageCommand(owner, declaration) {
   invariant(Array.isArray(declaration) && declaration.length > 0 && declaration.every((entry) => typeof entry === "string"),
-    "FPM_COMMAND_INVALID", "A package command must be a non-empty string array.", { package: owner.id, command: declaration });
+    "FGPM_COMMAND_INVALID", "A package command must be a non-empty string array.", { package: owner.id, command: declaration });
   const [declaredExecutable, ...declaredArguments] = declaration;
   const executable = declaredExecutable === "node" ? process.execPath : declaredExecutable;
   const argumentsList = declaredArguments.map((argument) => {
@@ -70,15 +70,18 @@ function invocationFor(handler) {
     return resolvePackageCommand(handler.owner, handler.command);
   }
   invariant(handler.command.length === 1 && (handler.command[0].startsWith("./") || handler.command[0].startsWith(".\\")),
-    "FPM_COMMAND_INVALID", "A portable WebAssembly handler must name one package-relative module.", {
+    "FGPM_COMMAND_INVALID", "A portable WebAssembly handler must name one package-relative module.", {
       handler: handler.id,
       command: handler.command,
     });
   const modulePath = resolveInside(handler.owner.directory, handler.command[0], "portable module");
   const limits = limitsFor(handler);
+  const bundledRunner = process.env.FGPM_BUNDLED_RUNNER
+    ? JSON.parse(process.env.FGPM_BUNDLED_RUNNER) : null;
   return {
     executable: process.execPath,
-    arguments: [`--max-old-space-size=${limits.maxProcessMemoryMiB}`, PORTABLE_RUNNER, modulePath],
+    arguments: [`--max-old-space-size=${limits.maxProcessMemoryMiB}`,
+      ...(bundledRunner ?? [PORTABLE_RUNNER]), modulePath],
   };
 }
 
@@ -96,14 +99,14 @@ export function invokeHandler(handler, request) {
     maxBuffer: limits.maxResponseBytes,
     env: {
       ...process.env,
-      FPM_PACKAGE_DIR: handler.owner.directory,
-      FPM_HANDLER_ID: handler.id,
-      FPM_PORTABLE_LIMITS: stableJson(limits).trim(),
+      FGPM_PACKAGE_DIR: handler.owner.directory,
+      FGPM_HANDLER_ID: handler.id,
+      FGPM_PORTABLE_LIMITS: stableJson(limits).trim(),
     },
   });
 
   if (result.error?.code === "ETIMEDOUT") {
-    throw new FpmError("FPM_HANDLER_RESOURCE_LIMIT", "A portable handler exceeded its execution-time limit.", {
+    throw new FgpmError("FGPM_HANDLER_RESOURCE_LIMIT", "A portable handler exceeded its execution-time limit.", {
       handler: handler.id,
       package: handler.owner.id,
       execution,
@@ -111,7 +114,7 @@ export function invokeHandler(handler, request) {
     });
   }
   if (result.error || result.status !== 0) {
-    throw new FpmError("FPM_HANDLER_PROCESS_FAILED", "A package handler process failed.", {
+    throw new FgpmError("FGPM_HANDLER_PROCESS_FAILED", "A package handler process failed.", {
       handler: handler.id,
       package: handler.owner.id,
       exitCode: result.status,
@@ -125,7 +128,7 @@ export function invokeHandler(handler, request) {
   try {
     response = JSON.parse(result.stdout);
   } catch (error) {
-    throw new FpmError("FPM_HANDLER_RESPONSE_INVALID", "A handler did not return one valid JSON response.", {
+    throw new FgpmError("FGPM_HANDLER_RESPONSE_INVALID", "A handler did not return one valid JSON response.", {
       handler: handler.id,
       cause: error.message,
       stdout: result.stdout.slice(0, 1000),
@@ -134,11 +137,11 @@ export function invokeHandler(handler, request) {
     });
   }
 
-  invariant(response?.protocol === "fpm.handler-response/1", "FPM_HANDLER_RESPONSE_INVALID",
+  invariant(response?.protocol === "fgpm.handler-response/1", "FGPM_HANDLER_RESPONSE_INVALID",
     "A handler returned an unsupported response protocol.", { handler: handler.id, protocol: response?.protocol });
   if (!response.ok) {
     const diagnostic = response.diagnostic ?? {};
-    throw new FpmError(diagnostic.code ?? "FPM_HANDLER_ANALYSIS_FAILED",
+    throw new FgpmError(diagnostic.code ?? "FGPM_HANDLER_ANALYSIS_FAILED",
       diagnostic.message ?? "A handler rejected its input.", {
         handler: handler.id,
         package: handler.owner.id,

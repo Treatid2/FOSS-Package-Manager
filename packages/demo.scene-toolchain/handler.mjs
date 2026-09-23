@@ -8,13 +8,13 @@ function response(value) {
 }
 
 function fail(code, message, details = {}) {
-  response({ protocol: "fpm.handler-response/1", ok: false, diagnostic: { code, message, details } });
+  response({ protocol: "fgpm.handler-response/1", ok: false, diagnostic: { code, message, details } });
 }
 
 function requireCondition(condition, message, details = {}) {
   if (!condition) {
     const error = new Error(message);
-    error.code = "FPM_DOMAIN_MANIFEST_INVALID";
+    error.code = "FGPM_DOMAIN_MANIFEST_INVALID";
     error.details = details;
     throw error;
   }
@@ -47,7 +47,7 @@ async function analyze(request) {
   try {
     manifest = JSON.parse(await readFile(request.contribution.manifestPath, "utf8"));
   } catch (error) {
-    fail("FPM_DOMAIN_MANIFEST_MALFORMED", "A domain manifest could not be parsed.", {
+    fail("FGPM_DOMAIN_MANIFEST_MALFORMED", "A domain manifest could not be parsed.", {
       contribution: request.contribution.id,
       path: request.contribution.manifestPath,
       cause: error.message,
@@ -59,15 +59,15 @@ async function analyze(request) {
       declared: request.contribution.manifestType,
       actual: manifest.schema,
     });
-  if (manifest.schema === "fpm.demo.fail/1") {
-    fail("FPM_HANDLER_ANALYSIS_FAILED", manifest.message ?? "The failure fixture requested a handler failure.", {
+  if (manifest.schema === "fgpm.demo.fail/1") {
+    fail("FGPM_HANDLER_ANALYSIS_FAILED", manifest.message ?? "The failure fixture requested a handler failure.", {
       contribution: request.contribution.id,
     });
     return;
   }
-  if (manifest.schema === "fpm.demo.runtime/1") {
+  if (manifest.schema === "fgpm.demo.runtime/1") {
     requireCondition(typeof manifest.activation?.id === "string"
-      && manifest.activation.protocol === "fpm.runtime-activation/1"
+      && manifest.activation.protocol === "fgpm.runtime-activation/1"
       && Array.isArray(manifest.activation.accepts)
       && Array.isArray(manifest.activation.requires)
       && manifest.activation.requires.every((entry) => typeof entry?.capability === "string"
@@ -75,7 +75,7 @@ async function analyze(request) {
       && Number.isInteger(manifest.activation.ticks) && manifest.activation.ticks > 0,
     "Runtime activation declaration is malformed.");
     response({
-      protocol: "fpm.handler-response/1",
+      protocol: "fgpm.handler-response/1",
       ok: true,
       analysis: { exports: [], hooks: [], activations: [manifest.activation], productions: [] },
     });
@@ -88,14 +88,14 @@ async function analyze(request) {
   let payload;
   let hooks = [];
   switch (manifest.schema) {
-    case "fpm.demo.mesh/1":
+    case "fgpm.demo.mesh/1":
       requireCondition(exported.shape === "box", "The prototype mesh handler only accepts box primitives.", {
         shape: exported.shape,
       });
       validateVector(exported.size, 3, "export.size");
       payload = { shape: exported.shape, size: exported.size };
       break;
-    case "fpm.demo.visual-assembly/1":
+    case "fgpm.demo.visual-assembly/1":
       requireCondition(Array.isArray(exported.parts) && exported.parts.length > 0,
         "A visual assembly must contain at least one part.");
       for (const part of exported.parts) {
@@ -112,7 +112,7 @@ async function analyze(request) {
       }));
       payload = { parts: exported.parts };
       break;
-    case "fpm.demo.camera/1":
+    case "fgpm.demo.camera/1":
       validateVector(exported.position, 3, "export.position");
       validateVector(exported.target, 3, "export.target");
       requireCondition(Number.isFinite(exported.fieldOfViewDegrees), "Camera field of view must be numeric.");
@@ -122,7 +122,7 @@ async function analyze(request) {
         fieldOfViewDegrees: exported.fieldOfViewDegrees,
       };
       break;
-    case "fpm.demo.worldspace/1":
+    case "fgpm.demo.worldspace/1":
       requireCondition(Array.isArray(exported.instances) && typeof exported.camera === "string",
         "A worldspace must declare instances and a camera.");
       for (const instance of exported.instances) {
@@ -134,12 +134,12 @@ async function analyze(request) {
       break;
     default:
       throw Object.assign(new Error("The scene toolchain was asked to analyze an unsupported domain schema."), {
-        code: "FPM_DOMAIN_MANIFEST_UNSUPPORTED",
+        code: "FGPM_DOMAIN_MANIFEST_UNSUPPORTED",
         details: { schema: manifest.schema },
       });
   }
   response({
-    protocol: "fpm.handler-response/1",
+    protocol: "fgpm.handler-response/1",
     ok: true,
     analysis: {
       exports: [{ id: exported.id, semanticType: exported.semanticType, payload }],
@@ -157,7 +157,7 @@ function addVectors(left, right) {
 function plan(request) {
   const exportsById = new Map();
   for (const analysis of request.analyses) {
-    requireCondition(analysis.handler === process.env.FPM_HANDLER_ID,
+    requireCondition(analysis.handler === process.env.FGPM_HANDLER_ID,
       "The scene planner received normalized analysis owned by another handler.", { handler: analysis.handler });
     for (const exported of analysis.exports) {
       exportsById.set(exported.id, {
@@ -224,7 +224,7 @@ function plan(request) {
   objects.sort((a, b) => a.id.localeCompare(b.id));
   inputs.sort((a, b) => a.name.localeCompare(b.name));
   response({
-    protocol: "fpm.handler-response/1",
+    protocol: "fgpm.handler-response/1",
     ok: true,
     plan: {
       id: `action:profile/${request.profile.name}/render-bundle`,
@@ -232,7 +232,7 @@ function plan(request) {
       inputs,
       output: {
         id: `artifact:profile/${request.profile.name}/render-bundle`,
-        type: "fpm.render-bundle/1",
+        type: "fgpm.render-bundle/1",
         kind: "tree",
         fileName: "scene-bundle",
         entry: "scene.json"
@@ -266,7 +266,7 @@ async function materialize(request) {
     objects.push({ ...object, colour: [...texture.subarray(0, 3)] });
   }
   const content = {
-    schema: "fpm.render-scene/1",
+    schema: "fgpm.render-scene/1",
     profile: request.proposal.parameters.profile,
     entryPoint: request.proposal.parameters.entryPoint,
     camera: request.proposal.parameters.camera,
@@ -278,14 +278,14 @@ async function materialize(request) {
   await mkdir(treeDirectory, { recursive: true });
   const text = stableJson(content);
   const indexText = stableJson({
-    schema: "fpm.render-bundle-index/1",
+    schema: "fgpm.render-bundle-index/1",
     scene: "scene.json",
     objects: objects.map((object) => ({ id: object.id, texture: object.sources.textureBinding.selected })),
   });
   await writeFile(path.join(treeDirectory, "scene.json"), text, "utf8");
   await writeFile(path.join(treeDirectory, "asset-index.json"), indexText, "utf8");
   response({
-    protocol: "fpm.handler-response/1",
+    protocol: "fgpm.handler-response/1",
     ok: true,
     outputs: [{
       name: output.name,
@@ -299,11 +299,11 @@ async function materialize(request) {
 
 try {
   const request = await readRequest();
-  requireCondition(request.protocol === "fpm.handler-request/1", "Unsupported handler request protocol.");
+  requireCondition(request.protocol === "fgpm.handler-request/1", "Unsupported handler request protocol.");
   if (request.action === "analyze") await analyze(request);
   else if (request.action === "plan") plan(request);
   else if (request.action === "materialize") await materialize(request);
-  else fail("FPM_HANDLER_ACTION_UNSUPPORTED", "Unsupported handler action.", { action: request.action });
+  else fail("FGPM_HANDLER_ACTION_UNSUPPORTED", "Unsupported handler action.", { action: request.action });
 } catch (error) {
-  fail(error.code ?? "FPM_HANDLER_INTERNAL", error.message, error.details ?? {});
+  fail(error.code ?? "FGPM_HANDLER_INTERNAL", error.message, error.details ?? {});
 }

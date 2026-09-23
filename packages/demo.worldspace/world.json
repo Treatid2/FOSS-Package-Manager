@@ -1,5 +1,5 @@
 {
-  "schema": "fpm.demo.worldspace/1",
+  "schema": "fgpm.demo.worldspace/1",
   "export": {
     "id": "pkg:demo.worldspace/world/demo",
     "semanticType": "worldspace.scene/1",

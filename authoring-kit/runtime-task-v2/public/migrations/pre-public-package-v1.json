@@ -1,0 +1,34 @@
+{
+  "schema": "fgpm.public-migration-contract/1",
+  "identity": "fgpm.pre-public-package-migration/1",
+  "status": "experimental-no-compatibility-promise",
+  "license": "Apache-2.0",
+  "steward": "fgpm.manager-core/3",
+  "sourceFormats": ["fpm.package/1", "fpm.package/2"],
+  "targetFormats": ["fgpm.package/1", "fgpm.package/2"],
+  "normalReaderAcceptsSourceFormats": false,
+  "operationStateSchema": "fgpm.pre-public-migration-operation/1",
+  "operationStateLocation": "<absolute-output>.fgpm-migration-operation.json",
+  "authorityBoundary": {
+    "sourceMutation": false,
+    "privateManagerIndexMutation": false,
+    "packageCodeExecution": false,
+    "automaticNetworkAccess": false,
+    "outputPublication": "atomic-directory-rename-followed-by-two stable exact-root observations"
+  },
+  "phases": ["prepared", "ready-to-commit", "unresolved", "committed"],
+  "continuations": ["build-and-publish", "rebuild-staging", "publish-or-recover", "resolve-target-and-repeat", "none"],
+  "outcomes": {
+    "missingTarget": "publish, verify twice, then record committed result",
+    "matchingTarget": "verify twice, reuse exact bytes, then recover or return committed result",
+    "differentOrIncompleteTarget": "preserve target and staging; FGPM_MIGRATION_OUTPUT_CONFLICT",
+    "inaccessibleTarget": "no success claim; FGPM_MIGRATION_OUTPUT_UNRESOLVED",
+    "changingTarget": "no success claim; FGPM_MIGRATION_OUTPUT_UNSTABLE",
+    "unsupportedSource": "reject before operation-state creation; FGPM_MIGRATION_FORMAT_UNSUPPORTED"
+  },
+  "recovery": {
+    "lostResponse": "repeat the exact request or inspect status; a committed result is verified and replayed",
+    "restartCommand": "fgpm migrate pre-public-package status --out <absolute-output>",
+    "retryRule": "repeat only the exact recorded source, source root, namespace, and output request"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.runtime-instance-store",
+  "version": "0.6.0",
+  "license": "Apache-2.0",
+  "runtimeServices": [
+    {
+      "id": "service:demo.runtime-instance-store/1",
+      "protocol": "fgpm.runtime-service/1",
+      "artifactAccess": "read",
+      "provides": [
+        {
+          "capability": "runtime.instances.read",
+          "version": "1.0.0",
+          "exclusive": true,
+          "binding": "runtime.instances/1"
+        },
+        {
+          "capability": "runtime.instances.materialize",
+          "version": "1.0.0",
+          "exclusive": true,
+          "binding": "runtime.instances/1"
+        },
+        {
+          "capability": "runtime.instances.destroy",
+          "version": "1.0.0",
+          "exclusive": true,
+          "binding": "runtime.instances/1"
+        },
+        {
+          "capability": "runtime.state.owner",
+          "version": "1.0.0",
+          "exclusive": false,
+          "cardinality": "collection",
+          "member": "state-owner:demo.instances/1",
+          "binding": "runtime.instances/1",
+          "memberDependencies": [],
+          "metadata": {
+            "semanticSchema": "fgpm.demo.instance-state",
+            "schemaVersion": 1,
+            "required": true,
+            "governingCapability": "runtime.instances.read"
+          }
+        }
+      ],
+      "requires": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority"
+        ]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

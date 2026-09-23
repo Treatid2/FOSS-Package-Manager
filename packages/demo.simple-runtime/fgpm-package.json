@@ -1,0 +1,81 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.simple-runtime",
+  "version": "0.7.0",
+  "license": "Apache-2.0",
+  "provides": [
+    {
+      "capability": "fgpm.runtime.render-scene",
+      "version": "1.0.0"
+    }
+  ],
+  "requires": [
+    {
+      "capability": "fgpm.handler.scene",
+      "range": "^1.0.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "package": "demo.motion",
+      "range": "^0.7.0"
+    },
+    {
+      "package": "demo.motion-offset",
+      "range": "^0.7.0"
+    },
+    {
+      "package": "demo.deterministic-scheduler",
+      "range": "^0.7.0"
+    },
+    {
+      "package": "demo.scene-extractor",
+      "range": "^0.7.0"
+    },
+    {
+      "package": "demo.save-coordinator",
+      "range": "^0.7.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:demo.simple-runtime/browser-svg/1",
+      "protocol": "fgpm.runtime-service/1",
+      "provides": [
+        {
+          "capability": "runtime.renderer.window",
+          "version": "1.0.0",
+          "exclusive": true
+        }
+      ],
+      "requires": [
+        {
+          "capability": "runtime.scene-snapshot",
+          "range": "^1.0.0"
+        }
+      ],
+      "hostGrants": [
+        "fgpm.host.renderer-output/1",
+        "fgpm.host.runtime-interaction/1"
+      ],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority",
+          "network-loopback",
+          "write-selected-snapshot"
+        ]
+      },
+      "module": "./runtime.mjs"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:demo.simple-runtime/runtime/browser-svg",
+      "manifestType": "fgpm.demo.runtime/1",
+      "manifest": "runtime.json"
+    }
+  ]
+}

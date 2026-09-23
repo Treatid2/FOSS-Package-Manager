@@ -1,5 +1,5 @@
 {
-  "schema": "fpm.profile/2",
+  "schema": "fgpm.profile/2",
   "name": "selected-migration",
   "packageRoots": ["../../../packages", "../packages"],
   "distribution": {
@@ -13,7 +13,7 @@
       "demo.worldspace"
     ],
     "entryPoint": "pkg:demo.worldspace/world/demo",
-    "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
+    "artifact": { "type": "fgpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
     "activation": "runtime:demo.simple-runtime/browser-svg"
   },
   "target": { "platform": "portable-demo" },

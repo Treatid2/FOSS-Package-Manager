@@ -1,0 +1,24 @@
+{
+  "schema": "fgpm.public-vocabulary/1",
+  "identity": "fgpm.runtime-task-vocabulary/2",
+  "status": "experimental-no-compatibility-promise",
+  "license": "Apache-2.0",
+  "stewardPackage": "fgpm.runtime-task-contracts",
+  "unknownTermPolicy": "reject",
+  "terms": {
+    "participation.required": "The selected member must be present and cannot be excluded by collection policy. Invocation failure is governed solely by failurePolicy.",
+    "participation.optional": "An identified profile policy may exclude the member before activation.",
+    "failurePolicy.abort-tick": "A failed invocation discards every uncommitted buffer in the tick.",
+    "failurePolicy.drop-task": "A failed optional invocation may be attributed and omitted without committing its buffer.",
+    "affinity.main-thread": "The host invokes the task on the runtime generation's main execution lane.",
+    "affinity.any-worker": "The scheduler may invoke the task on any declared worker lane.",
+    "snapshots": "The complete immutable capabilities made available to the worker for one tick.",
+    "outputs": "Vocabulary-owned channels, stages, and composition laws to which the worker may emit."
+  },
+  "relationships": [
+    "participation controls excludability",
+    "failurePolicy controls failure handling",
+    "participation and failurePolicy are independent fields",
+    "output vocabulary stewards, rather than producers or schedulers, own composition semantics"
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "format": "fgpm.package/2",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.deterministic-scheduler-v2",
+  "version": "0.8.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.runtime-clock",
+      "range": "^0.4.0"
+    },
+    {
+      "package": "demo.transform-authority",
+      "range": "^0.7.0"
+    },
+    {
+      "package": "demo.save-coordinator",
+      "range": "^0.7.0"
+    },
+    {
+      "package": "fgpm.runtime-task-contracts",
+      "range": "^2.0.0"
+    },
+    {
+      "package": "fgpm.transform-task-contracts",
+      "range": "^1.0.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:demo.deterministic-scheduler-v2/1",
+      "protocol": "fgpm.runtime-service/2",
+      "provides": [
+        {
+          "capability": "runtime.scheduler.barrier",
+          "version": "2.0.0",
+          "cardinality": "exclusive",
+          "binding": "runtime.scheduler/2"
+        },
+        {
+          "capability": "runtime.scheduler.records",
+          "version": "2.0.0",
+          "cardinality": "exclusive",
+          "binding": "runtime.scheduler/2"
+        }
+      ],
+      "requires": [
+        {
+          "capability": "runtime.clock.tick",
+          "range": "^1.0.0",
+          "cardinality": "exclusive"
+        },
+        {
+          "capability": "runtime.task",
+          "range": "^2.0.0",
+          "cardinality": "collection"
+        },
+        {
+          "capability": "runtime.transforms.read",
+          "range": "^1.0.0",
+          "cardinality": "exclusive",
+          "binding": "runtime.transforms/1"
+        },
+        {
+          "capability": "runtime.transforms.write",
+          "range": "^1.0.0",
+          "cardinality": "exclusive",
+          "binding": "runtime.transforms/1"
+        },
+        {
+          "capability": "runtime.restore.ready",
+          "range": "^1.0.0",
+          "cardinality": "exclusive",
+          "binding": "runtime.persistence/1"
+        },
+        {
+          "capability": "runtime.task-channel.transforms",
+          "range": "^1.0.0",
+          "cardinality": "exclusive"
+        }
+      ],
+      "artifactAccess": "none",
+      "artifactStoreAccess": "none",
+      "hostGrants": [
+        "fgpm.host.scheduler-records/1",
+        "fgpm.host.scheduler-conformance/1"
+      ],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "worker-threads"
+        ]
+      },
+      "module": "service.mjs",
+      "activationContract": "activation.json"
+    }
+  ]
+}

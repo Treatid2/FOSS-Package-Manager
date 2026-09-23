@@ -1,0 +1,37 @@
+{
+  "format": "fgpm.package/2",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "fgpm.transform-task-contracts",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "fgpm.runtime-task-contracts",
+      "range": "^2.0.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:fgpm.transform-task-contracts/1",
+      "protocol": "fgpm.runtime-service/2",
+      "provides": [
+        {
+          "capability": "runtime.task-channel.transforms",
+          "version": "1.0.0",
+          "cardinality": "exclusive"
+        }
+      ],
+      "requires": [],
+      "artifactAccess": "none",
+      "artifactStoreAccess": "none",
+      "hostGrants": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": []
+      },
+      "module": "service.mjs",
+      "activationContract": "activation.json"
+    }
+  ]
+}

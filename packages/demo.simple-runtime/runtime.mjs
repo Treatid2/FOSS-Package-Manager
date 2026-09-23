@@ -100,7 +100,7 @@ export function renderSvg(scene) {
 function html(scene, svg, live = true) {
   const rows = scene.objects.map((object) => `<li><strong>${escapeXml(object.id)}</strong><span>${escapeXml(object.sources.textureBinding.selected)}</span></li>`).join("");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FPM · ${escapeXml(scene.profile)}</title><style>
+  <title>FGPM · ${escapeXml(scene.profile)}</title><style>
   :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#11191e;color:#e8f0ed;font:15px/1.45 Segoe UI,sans-serif;display:grid;grid-template-columns:minmax(0,960px) 320px;min-height:100vh;align-items:start}main{padding:24px}svg{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 18px 70px #0008}aside{padding:30px 24px;border-left:1px solid #ffffff18;min-height:100vh;background:#172228}h1{font-size:19px;margin:0 0 8px}p{color:#a9bbb4;margin:0 0 26px}ul{list-style:none;padding:0;margin:0}li{padding:13px 0;border-top:1px solid #ffffff13}li strong,li span{display:block;overflow-wrap:anywhere}li span{color:#80c99a;font-size:12px;margin-top:5px}@media(max-width:900px){body{display:block}aside{min-height:auto;border-left:0}main{padding:12px}}
   </style></head><body><main><div id="scene-frame">${svg}</div></main><aside><h1>Resolved scene</h1><p>The renderer knows this immutable flat snapshot only. Package discovery, handler dispatch, replacement resolution, and authoritative transform mutation happen elsewhere.</p><ul>${rows}</ul></aside>${live ? `<script>
   const stream = new EventSource('/events');
@@ -132,7 +132,7 @@ export function createService() {
   let snapshots;
   let latestScene = null;
   let latestSvg = null;
-  let document = "<!doctype html><title>FPM runtime starting</title>";
+  let document = "<!doctype html><title>FGPM runtime starting</title>";
   let server = null;
   let runtimeUrl = null;
   let snapshotPath = null;
@@ -145,7 +145,9 @@ export function createService() {
   return {
     async activate(context) {
       snapshots = context.require("runtime.scene-snapshot");
-      snapshotPath = context.options.snapshotPath;
+      const output = context.grant("fgpm.host.renderer-output/1");
+      const interaction = context.grant("fgpm.host.runtime-interaction/1");
+      snapshotPath = output.snapshotPath;
       latestScene = snapshots.current();
       latestSvg = renderSvg(latestScene);
       document = html(latestScene, latestSvg);
@@ -153,7 +155,7 @@ export function createService() {
         await mkdir(path.dirname(snapshotPath), { recursive: true });
         await writeFile(snapshotPath, `${latestSvg}\n`, "utf8");
       }
-      if (context.options.interactive) {
+      if (interaction.interactive) {
         server = http.createServer((request, responseValue) => {
           if (request.url === "/events") {
             responseValue.writeHead(200, {
@@ -181,10 +183,10 @@ export function createService() {
         runtimeUrl = `http://127.0.0.1:${address.port}/`;
         console.log(`Runtime: ${runtimeUrl}`);
         console.log("Press Ctrl+C to stop the live runtime.");
-        if (context.options.openBrowser) openBrowser(runtimeUrl);
+        if (interaction.openBrowser) openBrowser(runtimeUrl);
       }
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: { "runtime.renderer.window": windowCapability },
       };
     },
@@ -219,7 +221,7 @@ async function directMain() {
     return;
   }
   const scene = JSON.parse(await readFile(path.resolve(sceneArgument), "utf8"));
-  if (scene.schema !== "fpm.render-scene/1") {
+  if (scene.schema !== "fgpm.render-scene/1") {
     console.error(`Unsupported scene schema: ${scene.schema}`);
     process.exitCode = 2;
     return;

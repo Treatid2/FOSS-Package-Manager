@@ -48,7 +48,7 @@ async function writeAtomic(filePath, value) {
 function validateTask(member) {
   const metadata = member.metadata;
   const value = member.value;
-  if (value?.protocol !== "fpm.runtime-task/1" || value.provider !== member.providerInstance
+  if (value?.protocol !== "fgpm.runtime-task/1" || value.provider !== member.providerInstance
     || metadata?.phase !== "simulation" || !Array.isArray(metadata.snapshots)
     || !metadata.snapshots.every((entry) => typeof entry === "string")
     || !Array.isArray(metadata.outputs) || !metadata.outputs.every((entry) => typeof entry?.channel === "string"
@@ -57,20 +57,20 @@ function validateTask(member) {
     || !["main-thread", "any-worker"].includes(metadata.affinity)
     || !["reentrant", "non-reentrant"].includes(metadata.reentrancy)
     || typeof metadata.required !== "boolean" || !["abort-tick", "drop-task"].includes(metadata.failure)) {
-    fail("FPM_RUNTIME_TASK_INVALID", "A task collection member has an invalid execution contract.", {
+    fail("FGPM_RUNTIME_TASK_INVALID", "A task collection member has an invalid execution contract.", {
       task: member.id,
       provider: member.providerInstance,
       metadata,
     });
   }
   if (metadata.affinity === "any-worker" && typeof value.workerModule !== "string") {
-    fail("FPM_TASK_AFFINITY_UNAVAILABLE", "An any-worker task has no worker module.", {
+    fail("FGPM_TASK_AFFINITY_UNAVAILABLE", "An any-worker task has no worker module.", {
       task: member.id,
       affinity: metadata.affinity,
     });
   }
   if (metadata.affinity === "main-thread" && typeof value.run !== "function") {
-    fail("FPM_TASK_AFFINITY_UNAVAILABLE", "A main-thread task has no main-thread implementation.", {
+    fail("FGPM_TASK_AFFINITY_UNAVAILABLE", "A main-thread task has no main-thread implementation.", {
       task: member.id,
       affinity: metadata.affinity,
     });
@@ -86,7 +86,7 @@ function orderedChannel(channel, producers) {
     const declaration = producer.metadata.outputs.find((entry) => entry.channel === channel);
     for (const predecessor of declaration.commitAfter) {
       if (!byId.has(predecessor)) {
-        fail("FPM_TASK_COMMIT_ORDER_MISSING", "A task commit constraint names a task outside its channel.", {
+        fail("FGPM_TASK_COMMIT_ORDER_MISSING", "A task commit constraint names a task outside its channel.", {
           channel,
           task: producer.id,
           predecessor,
@@ -106,7 +106,7 @@ function orderedChannel(channel, producers) {
       const a = producers[left].id;
       const b = producers[right].id;
       if (!reachable(a, b) && !reachable(b, a)) {
-        fail("FPM_TASK_COMMAND_COMPOSITION_AMBIGUOUS",
+        fail("FGPM_TASK_COMMAND_COMPOSITION_AMBIGUOUS",
           "Order-sensitive command producers lack a complete declared commit order.", {
             channel,
             contributors: [a, b].sort(),
@@ -121,7 +121,7 @@ function orderedChannel(channel, producers) {
     if (state.get(task) === "done") return;
     if (state.get(task) === "visiting") {
       const start = stack.indexOf(task);
-      fail("FPM_TASK_COMMIT_ORDER_CYCLE", "Task commit-order constraints contain a cycle.", {
+      fail("FGPM_TASK_COMMIT_ORDER_CYCLE", "Task commit-order constraints contain a cycle.", {
         channel,
         cycle: [...stack.slice(start), task],
       });
@@ -152,20 +152,20 @@ function planChannels(tasks) {
     const entries = declarations.get(channel);
     const forms = [...new Set(entries.map((entry) => entry.output.composition))];
     if (forms.length !== 1) {
-      fail("FPM_TASK_COMMAND_COMPOSITION_CONFLICT", "Command producers disagree about their channel composition law.", {
+      fail("FGPM_TASK_COMMAND_COMPOSITION_CONFLICT", "Command producers disagree about their channel composition law.", {
         channel,
         contributors: entries.map((entry) => ({ task: entry.task.id, composition: entry.output.composition })),
       });
     }
     const form = forms[0];
     if (form === "single-producer" && entries.length !== 1) {
-      fail("FPM_TASK_COMMAND_COMPOSITION_AMBIGUOUS", "A single-producer channel has several task producers.", {
+      fail("FGPM_TASK_COMMAND_COMPOSITION_AMBIGUOUS", "A single-producer channel has several task producers.", {
         channel,
         contributors: entries.map((entry) => entry.task.id).sort(),
       });
     }
     if (form !== "ordered" && form !== "single-producer") {
-      fail("FPM_TASK_COMPOSITION_UNIMPLEMENTED", "The prototype scheduler does not implement this declared law.", {
+      fail("FGPM_TASK_COMPOSITION_UNIMPLEMENTED", "The prototype scheduler does not implement this declared law.", {
         channel,
         composition: form,
       });
@@ -178,7 +178,7 @@ function planChannels(tasks) {
     });
   }
   if (plans.some((entry) => entry.channel !== "runtime.transforms.commands")) {
-    fail("FPM_TASK_COMMAND_CHANNEL_UNAVAILABLE", "The first concurrency prototype commits only transform commands.", {
+    fail("FGPM_TASK_COMMAND_CHANNEL_UNAVAILABLE", "The first concurrency prototype commits only transform commands.", {
       channels: plans.map((entry) => entry.channel),
     });
   }
@@ -193,7 +193,7 @@ function localContext(task, checkpoint, snapshots, emitted) {
     execution: { threadKind: "main-thread", threadId: 0 },
     snapshot: (capability) => {
       if (!Object.hasOwn(granted, capability)) {
-        fail("FPM_TASK_SNAPSHOT_AUTHORITY_DENIED", "A task requested an immutable snapshot it did not declare.", {
+        fail("FGPM_TASK_SNAPSHOT_AUTHORITY_DENIED", "A task requested an immutable snapshot it did not declare.", {
           task: task.id,
           capability,
           declared: Object.keys(granted).sort(),
@@ -203,7 +203,7 @@ function localContext(task, checkpoint, snapshots, emitted) {
     },
     emit: (channel, command) => {
       if (!channels.includes(channel)) {
-        fail("FPM_TASK_COMMAND_AUTHORITY_DENIED", "A task emitted to a command channel it did not declare.", {
+        fail("FGPM_TASK_COMMAND_AUTHORITY_DENIED", "A task emitted to a command channel it did not declare.", {
           task: task.id,
           channel,
           declared: [...channels].sort(),
@@ -211,7 +211,7 @@ function localContext(task, checkpoint, snapshots, emitted) {
       }
       emitted.push({ channel, command: structuredClone(command) });
     },
-    capability: (capability) => fail("FPM_TASK_DIRECT_AUTHORITY_DENIED",
+    capability: (capability) => fail("FGPM_TASK_DIRECT_AUTHORITY_DENIED",
       "A runtime task cannot acquire direct mutable capability authority.", {
         task: task.id,
         capability,
@@ -242,18 +242,18 @@ function workerTask(task, checkpoint, snapshots, delayMs, timeoutMs) {
     const timer = setTimeout(async () => {
       await worker.terminate();
       finish({ ok: false, task: task.id, threadId: null, error: {
-        code: "FPM_RUNTIME_TASK_TIMEOUT",
+        code: "FGPM_RUNTIME_TASK_TIMEOUT",
         message: "A runtime task exceeded its declared scheduler timeout.",
         details: { task: task.id, timeoutMs },
       } });
     }, timeoutMs);
     worker.once("message", finish);
     worker.once("error", (error) => finish({ ok: false, task: task.id, threadId: null, error: {
-      code: "FPM_RUNTIME_TASK_FAILED", message: error.message, details: { task: task.id },
+      code: "FGPM_RUNTIME_TASK_FAILED", message: error.message, details: { task: task.id },
     } }));
     worker.once("exit", (code) => {
       if (code !== 0) finish({ ok: false, task: task.id, threadId: null, error: {
-        code: "FPM_RUNTIME_TASK_FAILED", message: "A runtime task worker exited unsuccessfully.",
+        code: "FGPM_RUNTIME_TASK_FAILED", message: "A runtime task worker exited unsuccessfully.",
         details: { task: task.id, exitCode: code },
       } });
     });
@@ -290,12 +290,12 @@ export function createService() {
   const traces = [];
 
   async function persistTrace() {
-    await writeAtomic(options.tickTracePath, { schema: "fpm.runtime-tick-trace/1", observations: traces });
+    await writeAtomic(options.tickTracePath, { schema: "fgpm.runtime-tick-trace/1", observations: traces });
   }
 
   async function executeTick(next) {
     if (inFlight) {
-      fail("FPM_SCHEDULER_NON_REENTRANT", "The scheduler rejected an overlapping runtime tick.", {
+      fail("FGPM_SCHEDULER_NON_REENTRANT", "The scheduler rejected an overlapping runtime tick.", {
         tick: next,
         nonReentrantTasks: tasks.filter((entry) => entry.metadata.reentrancy === "non-reentrant")
           .map((entry) => entry.id).sort(),
@@ -308,7 +308,7 @@ export function createService() {
     let stateCommitted = false;
     try {
       if (checkpoint.tick !== previousCheckpoint.tick + 1) {
-        fail("FPM_SCHEDULER_CHECKPOINT_MISMATCH", "The scheduler clock did not advance by one world checkpoint.", {
+        fail("FGPM_SCHEDULER_CHECKPOINT_MISMATCH", "The scheduler clock did not advance by one world checkpoint.", {
           previous: previousCheckpoint,
           checkpoint,
         });
@@ -325,7 +325,7 @@ export function createService() {
         const ready = [...pending.values()].filter((task) => task.dependencies.every((dependency) => completed.has(dependency)))
           .sort((left, right) => left.id.localeCompare(right.id));
         if (ready.length === 0) {
-          fail("FPM_RUNTIME_TASK_DEPENDENCY_BLOCKED", "No task can run because its dependency wave is blocked.", {
+          fail("FGPM_RUNTIME_TASK_DEPENDENCY_BLOCKED", "No task can run because its dependency wave is blocked.", {
             pending: [...pending.keys()].sort(),
           });
         }
@@ -342,7 +342,7 @@ export function createService() {
             } catch (error) {
               completionOrder.push(task.id);
               output.push({ ok: false, task: task.id, threadId: 0, error: {
-                code: error?.code ?? "FPM_RUNTIME_TASK_FAILED", message: error?.message ?? "A task failed.",
+                code: error?.code ?? "FGPM_RUNTIME_TASK_FAILED", message: error?.message ?? "A task failed.",
                 details: error?.details ?? {},
               } });
             }
@@ -378,7 +378,7 @@ export function createService() {
           byChannel.set(emitted.channel, commands);
         }
         return [...byChannel.entries()].map(([channel, commands]) => {
-          const buffer = { schema: "fpm.runtime-command-buffer/1", task: result.task,
+          const buffer = { schema: "fgpm.runtime-command-buffer/1", task: result.task,
             checkpoint: structuredClone(checkpoint), channel, commands };
           return { ...buffer, root: root(buffer) };
         });
@@ -389,7 +389,7 @@ export function createService() {
           .map((entry) => [entry.task, entry]));
         const accepted = channel.order.filter((task) => byTask.has(task)).map((task) => byTask.get(task));
         commit = transformsWrite.commitBatch({
-          schema: "fpm.transform-command-batch/1",
+          schema: "fgpm.transform-command-batch/1",
           checkpoint: structuredClone(checkpoint),
           expectedRevision: transformSnapshot.revision,
           channel: channel.channel,
@@ -399,7 +399,7 @@ export function createService() {
         stateCommitted = true;
       }
       const baseRecord = {
-        schema: "fpm.deterministic-tick/1",
+        schema: "fgpm.deterministic-tick/1",
         checkpoint: structuredClone(checkpoint),
         tasks: tasks.map((task) => ({ member: task.id, providerInstance: task.providerInstance,
           package: task.package, implementationHash: task.packageContentHash, metadataRoot: task.metadataRoot })),
@@ -420,16 +420,16 @@ export function createService() {
       previousCheckpoint = structuredClone(checkpoint);
       traces.push({ tick: checkpoint.tick, workerCount, completionOrder, executions, committed: true });
       try {
-        await writeAtomic(options.tickRecordPath, { schema: "fpm.deterministic-tick-log/1", records });
+        await writeAtomic(options.tickRecordPath, { schema: "fgpm.deterministic-tick-log/1", records });
         await persistTrace();
       } catch (error) {
-        traces.at(-1).recordWriteError = error?.code ?? "FPM_TICK_RECORD_WRITE_FAILED";
+        traces.at(-1).recordWriteError = error?.code ?? "FGPM_TICK_RECORD_WRITE_FAILED";
       }
       return record;
     } catch (error) {
       if (!stateCommitted) clock.abort(checkpoint);
       traces.push({ tick: checkpoint.tick, workerCount: options.schedulerWorkerCount ?? tasks.length,
-        completionOrder, executions, committed: stateCommitted, error: error?.code ?? "FPM_RUNTIME_TASK_FAILED" });
+        completionOrder, executions, committed: stateCommitted, error: error?.code ?? "FGPM_RUNTIME_TASK_FAILED" });
       await persistTrace();
       throw error;
     } finally {
@@ -439,8 +439,16 @@ export function createService() {
 
   return {
     async activate(context) {
-      if (!isMainThread) fail("FPM_SCHEDULER_AFFINITY_INVALID", "The scheduler service must activate on the main thread.");
-      options = context.options;
+      if (!isMainThread) fail("FGPM_SCHEDULER_AFFINITY_INVALID", "The scheduler service must activate on the main thread.");
+      const recordGrant = context.grant("fgpm.host.scheduler-records/1");
+      const conformanceGrant = context.grant("fgpm.host.scheduler-conformance/1");
+      options = {
+        tickRecordPath: recordGrant.tickRecordPath,
+        tickTracePath: recordGrant.tickTracePath,
+        schedulerWorkerCount: conformanceGrant.workerCount,
+        schedulerDelays: conformanceGrant.memberDelays,
+        schedulerTimeoutMs: conformanceGrant.timeoutMs,
+      };
       clock = context.require("runtime.clock.tick");
       transformsRead = context.require("runtime.transforms.read");
       transformsWrite = context.require("runtime.transforms.write");
@@ -453,7 +461,7 @@ export function createService() {
         implementationHash: entry.packageContentHash, metadataRoot: entry.metadataRoot }));
       for (const exclusion of collection.exclusions) {
         if (exclusion.metadata?.required === true) {
-          fail("FPM_REQUIRED_TASK_EXCLUDED", "Policy cannot exclude a required runtime task.", {
+          fail("FGPM_REQUIRED_TASK_EXCLUDED", "Policy cannot exclude a required runtime task.", {
             task: exclusion.member,
             policy: exclusion.policy,
           });
@@ -462,7 +470,7 @@ export function createService() {
       tasks = collection.members.map(validateTask);
       channels = planChannels(tasks);
       if (typeof transformsWrite.commitBatch !== "function") {
-        fail("FPM_TRANSFORM_BATCH_AUTHORITY_MISSING", "The selected transform provider lacks atomic batch commit.");
+        fail("FGPM_TRANSFORM_BATCH_AUTHORITY_MISSING", "The selected transform provider lacks atomic batch commit.");
       }
       await rm(options.tickRecordPath, { force: true });
       await rm(options.tickTracePath, { force: true });
@@ -473,7 +481,7 @@ export function createService() {
         executeTick,
       });
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: {
           "runtime.scheduler.barrier": freeze({ latest: api.latest }),
           "runtime.scheduler.records": api,

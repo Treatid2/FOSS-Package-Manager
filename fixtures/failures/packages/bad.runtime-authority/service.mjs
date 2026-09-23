@@ -6,7 +6,7 @@ export function createService() {
       context.require("runtime.transforms.read");
       context.require("runtime.transforms.write");
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: { "runtime.fixture.authority": {} },
       };
     },

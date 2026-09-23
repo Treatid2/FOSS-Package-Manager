@@ -1,0 +1,66 @@
+{
+  "format": "fgpm.package/2",
+  "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "fresh.z-task",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "fgpm.runtime-task-contracts",
+      "range": "^2.0.0"
+    },
+    {
+      "package": "fgpm.transform-task-contracts",
+      "range": "^1.0.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:fresh.z-task/1",
+      "protocol": "fgpm.runtime-service/2",
+      "provides": [
+        {
+          "capability": "runtime.task",
+          "version": "2.0.0",
+          "cardinality": "collection",
+          "member": "task:fresh.z-task/add-z/1",
+          "binding": "runtime.task.fresh-z-task/1",
+          "memberDependencies": [],
+          "metadata": {
+            "schema": "fgpm.runtime-task-member/2",
+            "vocabulary": "fgpm.runtime-task-vocabulary/2",
+            "participation": "optional",
+            "failurePolicy": "drop-task",
+            "affinity": "any-worker",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fgpm.transform-snapshot/1",
+                "vocabulary": "fgpm.transform-task-vocabulary/1"
+              }
+            ],
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "vocabulary": "fgpm.transform-task-vocabulary/1",
+                "stage": "set-axis",
+                "law": "exclusive-per-target"
+              }
+            ]
+          }
+        }
+      ],
+      "requires": [],
+      "artifactAccess": "none",
+      "artifactStoreAccess": "none",
+      "hostGrants": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": []
+      },
+      "module": "service.mjs",
+      "activationContract": "activation.json"
+    }
+  ]
+}

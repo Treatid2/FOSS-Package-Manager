@@ -1,0 +1,9 @@
+{
+  "schema": "fgpm.workspace-reference/1",
+  "version": 1,
+  "name": "northern-realms-next",
+  "workspaceIdentity": "workspace:example-northern-realms-next",
+  "revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "baseGeneration": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "updatedAt": "2026-08-25T00:00:00.000Z"
+}

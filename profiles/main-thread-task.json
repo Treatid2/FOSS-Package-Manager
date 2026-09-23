@@ -1,11 +1,11 @@
 {
-  "schema": "fpm.profile/2",
+  "schema": "fgpm.profile/2",
   "name": "main-thread-task",
   "packageRoots": ["../packages"],
   "distribution": {
     "roots": ["demo.simple-runtime", "demo.scene-validator", "demo.solid-colour-adapter", "demo.worldspace"],
     "entryPoint": "pkg:demo.worldspace/world/demo",
-    "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
+    "artifact": { "type": "fgpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
     "activation": "runtime:demo.simple-runtime/browser-svg"
   },
   "target": { "platform": "portable-demo", "textureFormat": "rgba8-srgb" },

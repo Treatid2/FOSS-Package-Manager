@@ -1,0 +1,25 @@
+{
+  "schema": "fgpm.profile/3",
+  "name": "task-v2-ambiguous",
+  "packageRoots": ["../../../packages", "../packages"],
+  "distribution": {
+    "roots": [
+      "bad.task-base-v2", "demo.runtime-task-v2-distribution", "demo.scene-validator",
+      "demo.solid-colour-adapter", "demo.worldspace"
+    ],
+    "entryPoint": "pkg:demo.worldspace/world/demo",
+    "artifact": { "type": "fgpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
+    "activation": "runtime:demo.runtime-task-v2/browser-svg"
+  },
+  "target": { "platform": "portable-demo" },
+  "policy": {
+    "providers": { "runtime.scene-snapshot": "demo.scene-extractor-v2" },
+    "handlerSelections": {}, "adapterSelections": {}, "collectionPolicy": {},
+    "validation": {
+      "id": "policy:demo.require-scene-validator/1",
+      "requiredValidators": ["validator:demo.scene-proposal/1"], "waivers": []
+    },
+    "environmentKey": { "widen": [] }
+  },
+  "user": { "roots": [], "replacements": {} }
+}

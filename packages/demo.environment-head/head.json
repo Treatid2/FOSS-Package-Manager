@@ -1,5 +1,5 @@
 {
-  "schema": "fpm.demo.environment-colour/1",
+  "schema": "fgpm.demo.environment-colour/1",
   "export": {
     "id": "pkg:demo.environment-head/texture/head",
     "semanticType": "texture.runtime.rgba8-srgb/1",

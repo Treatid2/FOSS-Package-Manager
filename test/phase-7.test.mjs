@@ -18,7 +18,7 @@ const setTask = "task:demo.motion/set-x/1";
 const addTask = "task:demo.motion-offset/add-x/1";
 
 async function temporaryDirectory(label) {
-  return mkdtemp(path.join(os.tmpdir(), `fpm-phase7-${label}-`));
+  return mkdtemp(path.join(os.tmpdir(), `fgpm-phase7-${label}-`));
 }
 
 async function jsonFile(filePath) {
@@ -26,7 +26,7 @@ async function jsonFile(filePath) {
 }
 
 async function buildShared(profile, root, name) {
-  return buildProfile(profile, path.join(root, name), { storeDirectory: path.join(root, ".fpm-store") });
+  return buildProfile(profile, path.join(root, name), { storeDirectory: path.join(root, ".fgpm-store") });
 }
 
 function characterTransform(host) {
@@ -93,7 +93,7 @@ test("ambiguous ordered producers fail during scheduler planning before runtime 
   context.after(() => rm(root, { recursive: true, force: true }));
   const built = await buildShared(path.join(failureProfiles, "task-unordered.json"), root, "out");
   await assert.rejects(() => startRuntime(built, { snapshotPath: path.join(root, "scene.svg") }), (error) => {
-    assert.equal(error.code, "FPM_TASK_COMMAND_COMPOSITION_AMBIGUOUS");
+    assert.equal(error.code, "FGPM_TASK_COMMAND_COMPOSITION_AMBIGUOUS");
     assert.equal(error.details.channel, "runtime.transforms.commands");
     assert.ok(error.details.contributors.includes("task:fixture.unordered/1"));
     assert.equal(error.details.lifecycle.committed, false);
@@ -111,7 +111,7 @@ test("a required task failure discards successful buffers and leaves checkpoint 
     schedulerWorkerCount: 3, schedulerDelays: { "task:fixture.failure/1": 30 } });
   const before = host.capability("runtime.transforms.read").snapshot();
   await assert.rejects(() => host.tick(), (error) => {
-    assert.equal(error.code, "FPM_FIXTURE_TASK_FAILED");
+    assert.equal(error.code, "FGPM_FIXTURE_TASK_FAILED");
     assert.equal(error.details.task, "task:fixture.failure/1");
     assert.ok(error.details.discardedBuffers.includes(setTask));
     return true;
@@ -130,7 +130,7 @@ test("a required task timeout aborts the barrier without publishing a tick", asy
   const built = await buildShared(baseProfile, root, "out");
   const host = await startRuntime(built, { snapshotPath: path.join(root, "scene.svg"), schedulerWorkerCount: 2,
     schedulerTimeoutMs: 10, schedulerDelays: { [setTask]: 100, [addTask]: 0 } });
-  await assert.rejects(() => host.tick(), (error) => error.code === "FPM_RUNTIME_TASK_TIMEOUT"
+  await assert.rejects(() => host.tick(), (error) => error.code === "FGPM_RUNTIME_TASK_TIMEOUT"
     && error.details.task === setTask);
   assert.equal(host.capability("runtime.transforms.read").snapshot().revision, 0);
   assert.deepEqual(host.capability("runtime.scheduler.records").list(), []);
@@ -139,8 +139,8 @@ test("a required task timeout aborts the barrier without publishing a tick", asy
 });
 
 for (const [name, profile, code] of [
-  ["undeclared immutable snapshot access", "task-snapshot-authority.json", "FPM_TASK_SNAPSHOT_AUTHORITY_DENIED"],
-  ["direct mutable authority", "task-direct-mutation.json", "FPM_TASK_DIRECT_AUTHORITY_DENIED"],
+  ["undeclared immutable snapshot access", "task-snapshot-authority.json", "FGPM_TASK_SNAPSHOT_AUTHORITY_DENIED"],
+  ["direct mutable authority", "task-direct-mutation.json", "FGPM_TASK_DIRECT_AUTHORITY_DENIED"],
 ]) {
   test(`tasks are denied ${name} without partial mutation`, async (context) => {
     const root = await temporaryDirectory(profile.replace(".json", ""));
@@ -159,7 +159,7 @@ test("task dependency cycles fail in the generic collection plan before workers 
   context.after(() => rm(root, { recursive: true, force: true }));
   const built = await buildShared(path.join(failureProfiles, "task-cycle.json"), root, "out");
   assert.throws(() => resolveRuntimePlan(built), (error) => {
-    assert.equal(error.code, "FPM_RUNTIME_COLLECTION_DEPENDENCY_CYCLE");
+    assert.equal(error.code, "FGPM_RUNTIME_COLLECTION_DEPENDENCY_CYCLE");
     assert.equal(error.details.capability, "runtime.task");
     assert.deepEqual([...new Set(error.details.cycle)].sort(), ["task:fixture.cycle-a/1", "task:fixture.cycle-b/1"]);
     return true;
@@ -185,7 +185,7 @@ test("main-thread affinity is enforced and an unavailable affinity implementatio
 
   const invalid = await buildShared(path.join(failureProfiles, "task-affinity.json"), root, "invalid");
   await assert.rejects(() => startRuntime(invalid, { snapshotPath: path.join(root, "invalid.svg") }),
-    (error) => error.code === "FPM_TASK_AFFINITY_UNAVAILABLE" && error.details.lifecycle.committed === false);
+    (error) => error.code === "FGPM_TASK_AFFINITY_UNAVAILABLE" && error.details.lifecycle.committed === false);
 });
 
 test("overlapping ticks are rejected for one runtime generation", async (context) => {
@@ -195,7 +195,7 @@ test("overlapping ticks are rejected for one runtime generation", async (context
   const host = await startRuntime(built, { snapshotPath: path.join(root, "scene.svg"), schedulerWorkerCount: 2,
     schedulerDelays: { [setTask]: 60, [addTask]: 60 } });
   const first = host.tick();
-  await assert.rejects(() => host.tick(), (error) => error.code === "FPM_RUNTIME_TICK_OVERLAP");
+  await assert.rejects(() => host.tick(), (error) => error.code === "FGPM_RUNTIME_TICK_OVERLAP");
   await first;
   assert.equal(host.ticks, 1);
   assert.equal(host.capability("runtime.scheduler.records").list().length, 1);
@@ -228,13 +228,13 @@ test("Transform Authority rejects a buffer from a stale checkpoint", async (cont
   await host.tick();
   const committed = host.capability("runtime.transforms.read").snapshot();
   assert.throws(() => host.capability("runtime.transforms.write").commitBatch({
-    schema: "fpm.transform-command-batch/1",
-    checkpoint: { schema: "fpm.runtime-tick/1", tick: 1, seconds: 0.25 },
+    schema: "fgpm.transform-command-batch/1",
+    checkpoint: { schema: "fgpm.runtime-tick/1", tick: 1, seconds: 0.25 },
     expectedRevision: 0,
     channel: "runtime.transforms.commands",
     composition: { form: "ordered", order: [] },
     buffers: [],
-  }), (error) => error.code === "FPM_TRANSFORM_BATCH_STALE");
+  }), (error) => error.code === "FGPM_TRANSFORM_BATCH_STALE");
   assert.deepEqual(host.capability("runtime.transforms.read").snapshot(), committed);
   await host.shutdown();
 });

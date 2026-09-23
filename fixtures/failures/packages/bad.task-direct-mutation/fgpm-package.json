@@ -1,0 +1,52 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "bad.task-direct-mutation",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "runtimeServices": [
+    {
+      "id": "service:bad.task-direct-mutation/1",
+      "protocol": "fgpm.runtime-service/1",
+      "provides": [
+        {
+          "capability": "runtime.task",
+          "version": "1.0.0",
+          "exclusive": false,
+          "cardinality": "collection",
+          "member": "task:fixture.direct-mutation/1",
+          "binding": "runtime.task.fixture-direct-mutation/1",
+          "memberDependencies": [],
+          "metadata": {
+            "phase": "simulation",
+            "snapshots": [
+              "runtime.transforms.read"
+            ],
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "composition": "ordered",
+                "commitAfter": [
+                  "task:demo.motion-offset/add-x/1"
+                ]
+              }
+            ],
+            "affinity": "any-worker",
+            "reentrancy": "non-reentrant",
+            "required": true,
+            "failure": "abort-tick"
+          }
+        }
+      ],
+      "requires": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority"
+        ]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

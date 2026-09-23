@@ -1,6 +1,6 @@
 {
   "name": "foss-package-manager",
-  "version": "0.7.0",
+  "version": "0.11.0-rc.6",
   "license": "MPL-2.0",
   "private": true,
   "type": "module",
@@ -9,11 +9,16 @@
     "build": "node src/cli.mjs build profiles/base.json",
     "build:green": "node src/cli.mjs build profiles/green-head.json",
     "demo": "node src/cli.mjs run profiles/green-head.json",
-    "snapshot": "node src/cli.mjs run profiles/green-head.json --snapshot build/green-head/scene.svg",
+    "snapshot": "node src/cli.mjs run profiles/green-head.json --snapshot build/green-head/scene.svg --ticks 8",
     "generate:wasm": "node tools/generate-wasm-fixtures.mjs",
     "contracts:generate": "node tools/render-architecture-snapshot.mjs",
     "contracts:check": "node tools/render-architecture-snapshot.mjs --check",
-    "test": "node --test"
+    "distribution:reference": "node tools/build-reference-distribution.mjs",
+    "publication:assets": "node tools/build-publication-assets.mjs",
+    "test": "node --test --test-concurrency=1",
+    "benchmark:phase9": "node tools/run-phase-9-benchmarks.mjs",
+    "integration:dungeon": "node tools/run-manager-hosted-dungeon-integration.mjs",
+    "workbench": "node tools/curator-workbench/server.mjs"
   },
   "engines": {
     "node": ">=22"

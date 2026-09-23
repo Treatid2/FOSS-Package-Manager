@@ -1,5 +1,5 @@
 {
-  "schema": "fpm.demo.camera/1",
+  "schema": "fgpm.demo.camera/1",
   "export": {
     "id": "pkg:demo.camera/camera/fixed",
     "semanticType": "camera.perspective/1",

@@ -1,0 +1,11 @@
+{"schema":"fgpm.control-request/1","requestId":"01-describe","operation":"control.describe","parameters":{}}
+{"schema":"fgpm.control-request/1","requestId":"02-active-before","operation":"generation.active","parameters":{}}
+{"schema":"fgpm.control-request/1","requestId":"03-activate","operation":"generation.activate","parameters":{"root":"sha256:<generation-root>"}}
+{"schema":"fgpm.control-request/1","requestId":"04-inspect-before","operation":"runtime.inspect","parameters":{}}
+{"schema":"fgpm.control-request/1","requestId":"05-tick","operation":"runtime.tick","parameters":{"count":1}}
+{"schema":"fgpm.control-request/1","requestId":"06-checkpoint-first","operation":"runtime.checkpoint","parameters":{"saveId":"save:author/<unique-checkpoint-save-id>"}}
+{"schema":"fgpm.control-request/1","requestId":"07-checkpoint-replay","operation":"runtime.checkpoint","parameters":{"saveId":"save:author/<unique-checkpoint-save-id>"}}
+{"schema":"fgpm.control-request/1","requestId":"08-rollback","operation":"generation.rollback","parameters":{"root":"sha256:<previous-generation-root>"}}
+{"schema":"fgpm.control-request/1","requestId":"09-inspect-after","operation":"runtime.inspect","parameters":{}}
+{"schema":"fgpm.control-request/1","requestId":"10-shutdown","operation":"runtime.shutdown","parameters":{}}
+{"schema":"fgpm.control-request/1","requestId":"11-stop","operation":"control.stop","parameters":{}}

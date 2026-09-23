@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-package-manager.example/schema/workbench/workspace-portable-v1.schema.json",
+  "title": "FGPM portable workspace index",
+  "x-fgpm-license": "Apache-2.0",
+  "x-fgpm-steward": "fgpm.manager-control/1",
+  "x-fgpm-status": "experimental-no-compatibility-promise",
+  "x-fgpm-classification": "public-cross-process",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "version", "name", "workspaceIdentity", "revision", "baseGeneration", "revisions"],
+  "properties": {
+    "schema": { "const": "fgpm.workspace-portable/1" },
+    "version": { "const": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "workspaceIdentity": { "type": "string", "pattern": "^workspace:[0-9a-f-]+$" },
+    "revision": { "$ref": "#/$defs/root" },
+    "baseGeneration": { "oneOf": [{ "$ref": "#/$defs/root" }, { "type": "null" }] },
+    "revisions": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["identity", "file"],
+        "properties": { "identity": { "$ref": "#/$defs/root" }, "file": { "type": "string", "minLength": 1 } }
+      }
+    }
+  },
+  "$defs": { "root": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } }
+}

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
-import { FpmError } from "./errors.mjs";
+import { FgpmError } from "./errors.mjs";
 
 export function parseVersion(value, context = "version") {
   const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?$/.exec(value ?? "");
   if (!match) {
-    throw new FpmError("FPM_VERSION_INVALID", `Invalid semantic ${context}.`, { value });
+    throw new FgpmError("FGPM_VERSION_INVALID", `Invalid semantic ${context}.`, { value });
   }
   return {
     major: Number(match[1]),
@@ -31,7 +31,7 @@ export function compareVersions(left, right) {
 function comparatorSatisfied(version, comparator) {
   const match = /^(>=|<=|>|<|=)?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/.exec(comparator);
   if (!match) {
-    throw new FpmError("FPM_VERSION_RANGE_INVALID", "Unsupported version range comparator.", { comparator });
+    throw new FgpmError("FGPM_VERSION_RANGE_INVALID", "Unsupported version range comparator.", { comparator });
   }
   const comparison = compareVersions(version, match[2]);
   switch (match[1] ?? "=") {

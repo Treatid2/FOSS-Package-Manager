@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-package-manager.example/schema/workspace-operation-v1.schema.json",
+  "title": "FGPM workspace staging operation",
+  "x-fgpm-license": "Apache-2.0",
+  "x-fgpm-steward": "fgpm.manager-core/3",
+  "x-fgpm-status": "experimental-no-compatibility-promise",
+  "x-fgpm-classification": "public-cross-process",
+  "oneOf": [
+    { "$ref": "#/$defs/add" },
+    { "$ref": "#/$defs/update" },
+    { "$ref": "#/$defs/remove" },
+    { "$ref": "#/$defs/selectProvider" },
+    { "$ref": "#/$defs/selectAdapter" },
+    { "$ref": "#/$defs/selectReplacement" },
+    { "$ref": "#/$defs/includeMember" },
+    { "$ref": "#/$defs/excludeMember" },
+    { "$ref": "#/$defs/includeSubsystem" },
+    { "$ref": "#/$defs/removeSubsystem" },
+    { "$ref": "#/$defs/acceptGenerated" },
+    { "$ref": "#/$defs/abandon" }
+  ],
+  "$defs": {
+    "root": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "text": { "type": "string", "minLength": 1 },
+    "add": { "type": "object", "additionalProperties": false, "required": ["type", "packageRoot"], "properties": { "type": { "const": "add" }, "packageRoot": { "$ref": "#/$defs/root" } } },
+    "update": { "type": "object", "additionalProperties": false, "required": ["type", "packageId", "packageRoot"], "properties": { "type": { "const": "update" }, "packageId": { "$ref": "#/$defs/text" }, "packageRoot": { "$ref": "#/$defs/root" } } },
+    "remove": { "type": "object", "additionalProperties": false, "required": ["type", "packageId"], "properties": { "type": { "const": "remove" }, "packageId": { "$ref": "#/$defs/text" } } },
+    "selectProvider": { "type": "object", "additionalProperties": false, "required": ["type", "requirement", "provider"], "properties": { "type": { "const": "select-provider" }, "requirement": { "$ref": "#/$defs/text" }, "provider": { "$ref": "#/$defs/text" } } },
+    "selectAdapter": { "type": "object", "additionalProperties": false, "required": ["type", "relation", "adapter"], "properties": { "type": { "const": "select-adapter" }, "relation": { "$ref": "#/$defs/text" }, "adapter": { "$ref": "#/$defs/text" } } },
+    "selectReplacement": { "type": "object", "additionalProperties": false, "required": ["type", "target", "replacement"], "properties": { "type": { "const": "select-replacement" }, "target": { "$ref": "#/$defs/text" }, "replacement": { "$ref": "#/$defs/text" } } },
+    "includeMember": { "type": "object", "additionalProperties": false, "required": ["type", "collection", "member"], "properties": { "type": { "const": "include-member" }, "collection": { "$ref": "#/$defs/text" }, "member": { "$ref": "#/$defs/text" } } },
+    "excludeMember": { "type": "object", "additionalProperties": false, "required": ["type", "collection", "member"], "properties": { "type": { "const": "exclude-member" }, "collection": { "$ref": "#/$defs/text" }, "member": { "$ref": "#/$defs/text" } } },
+    "includeSubsystem": { "type": "object", "additionalProperties": false, "required": ["type", "generationRoot"], "properties": { "type": { "const": "include-subsystem" }, "generationRoot": { "$ref": "#/$defs/root" } } },
+    "removeSubsystem": { "type": "object", "additionalProperties": false, "required": ["type", "generationRoot"], "properties": { "type": { "const": "remove-subsystem" }, "generationRoot": { "$ref": "#/$defs/root" } } },
+    "acceptGenerated": { "type": "object", "additionalProperties": false, "required": ["type", "request"], "properties": { "type": { "const": "accept-generated" }, "request": { "type": "object" } } },
+    "abandon": { "type": "object", "additionalProperties": false, "required": ["type", "operationId"], "properties": { "type": { "const": "abandon" }, "operationId": { "$ref": "#/$defs/text" } } }
+  }
+}

@@ -1,8 +1,8 @@
 {
-  "schema": "fpm.profile/1",
+  "schema": "fgpm.profile/1",
   "name": "failure-transaction",
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.transaction-failure", "demo.simple-runtime", "demo.solid-colour-adapter", "demo.worldspace"],
   "entryPoint": "pkg:demo.worldspace/world/demo",
-  "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" }
+  "artifact": { "type": "fgpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" }
 }

@@ -1,5 +1,5 @@
 {
-  "schema": "fpm.demo.mesh/1",
+  "schema": "fgpm.demo.mesh/1",
   "export": {
     "id": "pkg:demo.primitives/mesh/body-cube",
     "semanticType": "mesh.box/1",

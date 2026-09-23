@@ -1,0 +1,1702 @@
+{
+  "active": {
+    "artifact": {
+      "entry": "scene.json",
+      "id": "artifact:profile/runtime-task-v2/render-bundle",
+      "provenance": {
+        "lockfile": "sha256:556175d99471eb27c90e29f80b6a7bbd460eb77a0da4448c5b70a68195c04d4a"
+      },
+      "root": {
+        "hash": "sha256:5677e75bc703f379d569ef963a8ff62d24381c034b2ef1fe17381d64bbe8d0d4",
+        "kind": "tree",
+        "size": 395,
+        "totalSize": 6806
+      },
+      "schema": "fpm.typed-artifact-reference/1",
+      "semanticType": "fpm.render-bundle/1"
+    },
+    "deterministic": {
+      "composition": [
+        {
+          "channel": "runtime.transforms.commands",
+          "commitOrder": [
+            "task:demo.motion-v2/set-x/1",
+            "task:demo.external-nudge-v2/add-x/1",
+            "task:demo.motion-offset-v2/add-x/1",
+            "task:demo.wind-offset-v2/add-x/1"
+          ],
+          "rule": "fpm.transform.staged-axis-compose/1",
+          "schema": "fpm.command-channel-composition/1",
+          "stages": [
+            {
+              "contributors": [
+                "task:demo.motion-v2/set-x/1"
+              ],
+              "id": "set-axis",
+              "law": "exclusive-per-target"
+            },
+            {
+              "contributors": [
+                "task:demo.external-nudge-v2/add-x/1",
+                "task:demo.motion-offset-v2/add-x/1",
+                "task:demo.wind-offset-v2/add-x/1"
+              ],
+              "id": "add-axis",
+              "law": "deterministic-sum-per-target"
+            }
+          ],
+          "steward": "fpm.transform-task-contracts@1.0.0",
+          "vocabulary": "fpm.transform-task-vocabulary/1"
+        }
+      ],
+      "sceneRoot": "sha256:eeaf74fbc806d4a6751eb0d009e56206011c90d2bbecaedec9d916649ef00418",
+      "svgHash": "sha256:19cc824b67e43ca56b5c8541bcdaac1c0c569e32ecfd69a75e78ed705e54d6d9",
+      "taskPolicy": {
+        "exclusions": []
+      },
+      "tickIdentity": "sha256:fa2633cb48c8a68411ed975e83a9d462627a8486dd171e39b8f725e83c048f16",
+      "tickRoot": "sha256:3bb6b3546987d9aef4acfe8b49c9b618e8ee54a6294b03ccbf3388c465370368",
+      "transformRoot": "sha256:ade231589043ebbc49fe61800ec216ffb9bf718b201d77aa41b94e2f93bc873b"
+    },
+    "explanations": {
+      "channel": {
+        "channelCompositions": [
+          {
+            "channel": "runtime.transforms.commands",
+            "contributors": [
+              {
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "task": "task:demo.external-nudge-v2/add-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              },
+              {
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "task": "task:demo.motion-offset-v2/add-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              },
+              {
+                "law": "exclusive-per-target",
+                "stage": "set-axis",
+                "task": "task:demo.motion-v2/set-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              },
+              {
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "task": "task:demo.wind-offset-v2/add-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "provider": "service:fpm.transform-task-contracts/1",
+            "schema": "fpm.command-channel-plan/1",
+            "stageSet": [
+              {
+                "id": "add-axis",
+                "law": "deterministic-sum-per-target"
+              },
+              {
+                "id": "set-axis",
+                "law": "exclusive-per-target"
+              }
+            ],
+            "steward": "fpm.transform-task-contracts@1.0.0",
+            "vocabulary": [
+              "fpm.transform-task-vocabulary/1"
+            ]
+          }
+        ],
+        "collections": [],
+        "committed": true,
+        "lifecycle": [
+          {
+            "event": "tick",
+            "tick": 1
+          }
+        ],
+        "selections": [],
+        "service": null,
+        "state": "active",
+        "target": "runtime.transforms.commands"
+      },
+      "externalNudge": {
+        "channelCompositions": [
+          {
+            "channel": "runtime.transforms.commands",
+            "contributors": [
+              {
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "task": "task:demo.external-nudge-v2/add-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              },
+              {
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "task": "task:demo.motion-offset-v2/add-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              },
+              {
+                "law": "exclusive-per-target",
+                "stage": "set-axis",
+                "task": "task:demo.motion-v2/set-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              },
+              {
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "task": "task:demo.wind-offset-v2/add-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "provider": "service:fpm.transform-task-contracts/1",
+            "schema": "fpm.command-channel-plan/1",
+            "stageSet": [
+              {
+                "id": "add-axis",
+                "law": "deterministic-sum-per-target"
+              },
+              {
+                "id": "set-axis",
+                "law": "exclusive-per-target"
+              }
+            ],
+            "steward": "fpm.transform-task-contracts@1.0.0",
+            "vocabulary": [
+              "fpm.transform-task-vocabulary/1"
+            ]
+          }
+        ],
+        "collections": [
+          {
+            "capability": "runtime.task",
+            "exclusions": [],
+            "memberOrder": [
+              "task:demo.external-nudge-v2/add-x/1",
+              "task:demo.motion-offset-v2/add-x/1",
+              "task:demo.motion-v2/set-x/1",
+              "task:demo.wind-offset-v2/add-x/1"
+            ],
+            "members": [
+              {
+                "capabilityVersion": "2.0.0",
+                "dependencies": [],
+                "id": "task:demo.external-nudge-v2/add-x/1",
+                "metadata": {
+                  "affinity": "any-worker",
+                  "failurePolicy": "drop-task",
+                  "outputs": [
+                    {
+                      "channel": "runtime.transforms.commands",
+                      "law": "deterministic-sum-per-target",
+                      "stage": "add-axis",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "participation": "optional",
+                  "schema": "fpm.runtime-task-member/2",
+                  "snapshots": [
+                    {
+                      "capability": "runtime.transforms.read",
+                      "schema": "fpm.transform-snapshot/1",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "vocabulary": "fpm.runtime-task-vocabulary/2"
+                },
+                "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+                "package": "demo.external-nudge-v2",
+                "packageContentHash": "sha256:348da07d5856a1a39e280cbacdafe9e88b4f58e14f7c8c2a91d25ae11d714ba6",
+                "packageVersion": "1.0.0",
+                "providerBinding": "runtime.task.demo-external-nudge-v2/1",
+                "providerInstance": "service:demo.external-nudge-v2/1"
+              },
+              {
+                "capabilityVersion": "2.0.0",
+                "dependencies": [],
+                "id": "task:demo.motion-offset-v2/add-x/1",
+                "metadata": {
+                  "affinity": "any-worker",
+                  "failurePolicy": "drop-task",
+                  "outputs": [
+                    {
+                      "channel": "runtime.transforms.commands",
+                      "law": "deterministic-sum-per-target",
+                      "stage": "add-axis",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "participation": "optional",
+                  "schema": "fpm.runtime-task-member/2",
+                  "snapshots": [
+                    {
+                      "capability": "runtime.transforms.read",
+                      "schema": "fpm.transform-snapshot/1",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "vocabulary": "fpm.runtime-task-vocabulary/2"
+                },
+                "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+                "package": "demo.motion-offset-v2",
+                "packageContentHash": "sha256:d7b5401146cc43fc7a42f2b74cb104692de08ede7bf8887a3157cf30cfc3300f",
+                "packageVersion": "0.8.0",
+                "providerBinding": "runtime.task.demo-motion-offset-v2/1",
+                "providerInstance": "service:demo.motion-offset-v2/1"
+              },
+              {
+                "capabilityVersion": "2.0.0",
+                "dependencies": [],
+                "id": "task:demo.motion-v2/set-x/1",
+                "metadata": {
+                  "affinity": "any-worker",
+                  "failurePolicy": "abort-tick",
+                  "outputs": [
+                    {
+                      "channel": "runtime.transforms.commands",
+                      "law": "exclusive-per-target",
+                      "stage": "set-axis",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "participation": "required",
+                  "schema": "fpm.runtime-task-member/2",
+                  "snapshots": [
+                    {
+                      "capability": "runtime.transforms.read",
+                      "schema": "fpm.transform-snapshot/1",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "vocabulary": "fpm.runtime-task-vocabulary/2"
+                },
+                "metadataRoot": "sha256:3b46ea134ef387a459d407423890934a7a8f7a62daf367c938de10b0c1eb499a",
+                "package": "demo.motion-v2",
+                "packageContentHash": "sha256:045c5458e72849fbea9f0f4e9f6478ac1632c6f5ecaef12e48415832015cc46f",
+                "packageVersion": "0.8.0",
+                "providerBinding": "runtime.task.demo-motion-v2/1",
+                "providerInstance": "service:demo.motion-v2/1"
+              },
+              {
+                "capabilityVersion": "2.0.0",
+                "dependencies": [],
+                "id": "task:demo.wind-offset-v2/add-x/1",
+                "metadata": {
+                  "affinity": "any-worker",
+                  "failurePolicy": "drop-task",
+                  "outputs": [
+                    {
+                      "channel": "runtime.transforms.commands",
+                      "law": "deterministic-sum-per-target",
+                      "stage": "add-axis",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "participation": "optional",
+                  "schema": "fpm.runtime-task-member/2",
+                  "snapshots": [
+                    {
+                      "capability": "runtime.transforms.read",
+                      "schema": "fpm.transform-snapshot/1",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "vocabulary": "fpm.runtime-task-vocabulary/2"
+                },
+                "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+                "package": "demo.wind-offset-v2",
+                "packageContentHash": "sha256:059791a582bfdf1ed63783198f0010098921e1e90f46c9bc8fb0b3b49a0e8c5a",
+                "packageVersion": "1.0.0",
+                "providerBinding": "runtime.task.demo-wind-offset-v2/1",
+                "providerInstance": "service:demo.wind-offset-v2/1"
+              }
+            ],
+            "requests": [
+              {
+                "requestedBy": "service:demo.deterministic-scheduler-v2/1",
+                "required": "^2.0.0"
+              }
+            ],
+            "schema": "fpm.capability-collection-plan/1"
+          }
+        ],
+        "committed": true,
+        "lifecycle": [
+          {
+            "event": "activate",
+            "service": "service:demo.external-nudge-v2/1"
+          },
+          {
+            "event": "activate",
+            "service": "service:demo.motion-offset-v2/1"
+          },
+          {
+            "event": "activate",
+            "service": "service:demo.motion-v2/1"
+          },
+          {
+            "event": "activate",
+            "service": "service:demo.wind-offset-v2/1"
+          },
+          {
+            "event": "activate",
+            "service": "service:demo.deterministic-scheduler-v2/1"
+          },
+          {
+            "event": "tick",
+            "tick": 1
+          }
+        ],
+        "selections": [],
+        "service": null,
+        "state": "active",
+        "target": "task:demo.external-nudge-v2/add-x/1"
+      }
+    },
+    "hostGrants": [
+      {
+        "classification": "conformance",
+        "grant": "fpm.host.scheduler-conformance/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.deterministic-scheduler-v2/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.scheduler-records/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.deterministic-scheduler-v2/1",
+        "status": "granted"
+      },
+      {
+        "classification": "conformance",
+        "grant": "fpm.host.persistence-conformance/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.save-coordinator/1",
+        "status": "granted"
+      },
+      {
+        "classification": "deterministic",
+        "grant": "fpm.host.persistence-input/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.save-coordinator/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.persistence-records/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.save-coordinator/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.renderer-output/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.simple-runtime/browser-svg/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.runtime-interaction/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.simple-runtime/browser-svg/1",
+        "status": "granted"
+      }
+    ],
+    "observational": {
+      "committed": true,
+      "completionOrder": [
+        "task:demo.external-nudge-v2/add-x/1",
+        "task:demo.motion-offset-v2/add-x/1",
+        "task:demo.motion-v2/set-x/1",
+        "task:demo.wind-offset-v2/add-x/1"
+      ],
+      "executions": [
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.external-nudge-v2/add-x/1",
+          "threadId": 4,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.motion-offset-v2/add-x/1",
+          "threadId": 5,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.motion-v2/set-x/1",
+          "threadId": 6,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.wind-offset-v2/add-x/1",
+          "threadId": 7,
+          "threadKind": "worker"
+        }
+      ],
+      "tick": 1,
+      "workerCount": 3
+    },
+    "profile": "runtime-task-v2.json",
+    "selectedPackages": [
+      "demo.camera",
+      "demo.character",
+      "demo.deterministic-scheduler",
+      "demo.deterministic-scheduler-v2",
+      "demo.external-nudge-v2",
+      "demo.field",
+      "demo.motion",
+      "demo.motion-offset",
+      "demo.motion-offset-v2",
+      "demo.motion-v2",
+      "demo.primitives",
+      "demo.runtime-clock",
+      "demo.runtime-instance-store",
+      "demo.runtime-task-v2-distribution",
+      "demo.save-coordinator",
+      "demo.scene-extractor",
+      "demo.scene-extractor-v2",
+      "demo.scene-toolchain",
+      "demo.scene-validator",
+      "demo.simple-runtime",
+      "demo.solid-colour-adapter",
+      "demo.texture-toolchain",
+      "demo.texture-vocabulary",
+      "demo.transform-authority",
+      "demo.wind-offset-v2",
+      "demo.worldspace",
+      "fpm.runtime-task-contracts",
+      "fpm.transform-task-contracts"
+    ],
+    "taskCollection": {
+      "capability": "runtime.task",
+      "exclusions": [],
+      "memberOrder": [
+        "task:demo.external-nudge-v2/add-x/1",
+        "task:demo.motion-offset-v2/add-x/1",
+        "task:demo.motion-v2/set-x/1",
+        "task:demo.wind-offset-v2/add-x/1"
+      ],
+      "members": [
+        {
+          "capabilityVersion": "2.0.0",
+          "dependencies": [],
+          "id": "task:demo.external-nudge-v2/add-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "drop-task",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "optional",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+          "package": "demo.external-nudge-v2",
+          "packageContentHash": "sha256:348da07d5856a1a39e280cbacdafe9e88b4f58e14f7c8c2a91d25ae11d714ba6",
+          "packageVersion": "1.0.0",
+          "providerBinding": "runtime.task.demo-external-nudge-v2/1",
+          "providerInstance": "service:demo.external-nudge-v2/1"
+        },
+        {
+          "capabilityVersion": "2.0.0",
+          "dependencies": [],
+          "id": "task:demo.motion-offset-v2/add-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "drop-task",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "optional",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+          "package": "demo.motion-offset-v2",
+          "packageContentHash": "sha256:d7b5401146cc43fc7a42f2b74cb104692de08ede7bf8887a3157cf30cfc3300f",
+          "packageVersion": "0.8.0",
+          "providerBinding": "runtime.task.demo-motion-offset-v2/1",
+          "providerInstance": "service:demo.motion-offset-v2/1"
+        },
+        {
+          "capabilityVersion": "2.0.0",
+          "dependencies": [],
+          "id": "task:demo.motion-v2/set-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "abort-tick",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "exclusive-per-target",
+                "stage": "set-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "required",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3b46ea134ef387a459d407423890934a7a8f7a62daf367c938de10b0c1eb499a",
+          "package": "demo.motion-v2",
+          "packageContentHash": "sha256:045c5458e72849fbea9f0f4e9f6478ac1632c6f5ecaef12e48415832015cc46f",
+          "packageVersion": "0.8.0",
+          "providerBinding": "runtime.task.demo-motion-v2/1",
+          "providerInstance": "service:demo.motion-v2/1"
+        },
+        {
+          "capabilityVersion": "2.0.0",
+          "dependencies": [],
+          "id": "task:demo.wind-offset-v2/add-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "drop-task",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "optional",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+          "package": "demo.wind-offset-v2",
+          "packageContentHash": "sha256:059791a582bfdf1ed63783198f0010098921e1e90f46c9bc8fb0b3b49a0e8c5a",
+          "packageVersion": "1.0.0",
+          "providerBinding": "runtime.task.demo-wind-offset-v2/1",
+          "providerInstance": "service:demo.wind-offset-v2/1"
+        }
+      ],
+      "requests": [
+        {
+          "requestedBy": "service:demo.deterministic-scheduler-v2/1",
+          "required": "^2.0.0"
+        }
+      ],
+      "schema": "fpm.capability-collection-plan/1"
+    }
+  },
+  "ambiguityFailure": {
+    "afterRoot": "sha256:64e11600a75de5dcbca78ebdcd8a57273d363ff9e8e54664d1c6e886869e35ee",
+    "beforeRoot": "sha256:64e11600a75de5dcbca78ebdcd8a57273d363ff9e8e54664d1c6e886869e35ee",
+    "failure": {
+      "code": "FPM_TASK_COMMAND_COMPOSITION_AMBIGUOUS",
+      "details": {
+        "axis": "x",
+        "channel": "runtime.transforms.commands",
+        "contributors": [
+          "task:bad.task-base-v2/set-x/1",
+          "task:demo.motion-v2/set-x/1"
+        ],
+        "instanceId": "world:demo/character-1",
+        "law": "exclusive-per-target",
+        "mutationCommitted": false,
+        "stage": "set-axis",
+        "steward": "fpm.transform-task-contracts@1.0.0",
+        "vocabulary": "fpm.transform-task-vocabulary/1"
+      },
+      "message": "The exclusive base stage has several contributors for one transform target."
+    },
+    "trace": {
+      "committed": false,
+      "completionOrder": [
+        "task:bad.task-base-v2/set-x/1",
+        "task:demo.motion-v2/set-x/1",
+        "task:demo.motion-offset-v2/add-x/1",
+        "task:demo.external-nudge-v2/add-x/1",
+        "task:demo.wind-offset-v2/add-x/1"
+      ],
+      "error": "FPM_TASK_COMMAND_COMPOSITION_AMBIGUOUS",
+      "executions": [
+        {
+          "affinity": "any-worker",
+          "task": "task:bad.task-base-v2/set-x/1",
+          "threadId": 11,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.motion-v2/set-x/1",
+          "threadId": 14,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.motion-offset-v2/add-x/1",
+          "threadId": 13,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.external-nudge-v2/add-x/1",
+          "threadId": 12,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.wind-offset-v2/add-x/1",
+          "threadId": 15,
+          "threadKind": "worker"
+        }
+      ],
+      "tick": 1,
+      "workerCount": 4
+    },
+    "unchanged": true
+  },
+  "baseline": {
+    "artifact": {
+      "entry": "scene.json",
+      "id": "artifact:profile/runtime-task-v2-nudge-equivalence/render-bundle",
+      "provenance": {
+        "lockfile": "sha256:73a4f0bc4871b25c9acc816af11ecd57f2cd43e84202a894dfe9f765e2dc9356"
+      },
+      "root": {
+        "hash": "sha256:a0c71c7ad83b0355b83e7edc4c81f151af6794867290ba0a98c9dc5f85f7ead5",
+        "kind": "tree",
+        "size": 395,
+        "totalSize": 6824
+      },
+      "schema": "fpm.typed-artifact-reference/1",
+      "semanticType": "fpm.render-bundle/1"
+    },
+    "deterministic": {
+      "composition": [
+        {
+          "channel": "runtime.transforms.commands",
+          "commitOrder": [
+            "task:demo.motion-v2/set-x/1",
+            "task:demo.motion-offset-v2/add-x/1",
+            "task:demo.wind-offset-v2/add-x/1"
+          ],
+          "rule": "fpm.transform.staged-axis-compose/1",
+          "schema": "fpm.command-channel-composition/1",
+          "stages": [
+            {
+              "contributors": [
+                "task:demo.motion-v2/set-x/1"
+              ],
+              "id": "set-axis",
+              "law": "exclusive-per-target"
+            },
+            {
+              "contributors": [
+                "task:demo.motion-offset-v2/add-x/1",
+                "task:demo.wind-offset-v2/add-x/1"
+              ],
+              "id": "add-axis",
+              "law": "deterministic-sum-per-target"
+            }
+          ],
+          "steward": "fpm.transform-task-contracts@1.0.0",
+          "vocabulary": "fpm.transform-task-vocabulary/1"
+        }
+      ],
+      "sceneRoot": "sha256:b839b3250537b8f0c3392778c808f3db3c6bc009bafbd128739b8ea0da418e19",
+      "svgHash": "sha256:8945811fd1b673e2e341e0664e752974f8e79ef8a03498efe28d22a0b95d9fbe",
+      "taskPolicy": {
+        "exclusions": []
+      },
+      "tickIdentity": "sha256:a0dcabce9124bec5091a0dad497c6627df43eadc192f908dcdf1f58d92499eca",
+      "tickRoot": "sha256:d9236c771b7c2b043d0d474f9001fc5432e0b43fca391b112b6425485136173f",
+      "transformRoot": "sha256:324f25473da7d6e48e18563125323f5db7d21244e582ce89d6c6ea8670f78aca"
+    },
+    "explanations": {
+      "channel": {
+        "channelCompositions": [
+          {
+            "channel": "runtime.transforms.commands",
+            "contributors": [
+              {
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "task": "task:demo.motion-offset-v2/add-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              },
+              {
+                "law": "exclusive-per-target",
+                "stage": "set-axis",
+                "task": "task:demo.motion-v2/set-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              },
+              {
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "task": "task:demo.wind-offset-v2/add-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "provider": "service:fpm.transform-task-contracts/1",
+            "schema": "fpm.command-channel-plan/1",
+            "stageSet": [
+              {
+                "id": "add-axis",
+                "law": "deterministic-sum-per-target"
+              },
+              {
+                "id": "set-axis",
+                "law": "exclusive-per-target"
+              }
+            ],
+            "steward": "fpm.transform-task-contracts@1.0.0",
+            "vocabulary": [
+              "fpm.transform-task-vocabulary/1"
+            ]
+          }
+        ],
+        "collections": [],
+        "committed": true,
+        "lifecycle": [
+          {
+            "event": "tick",
+            "tick": 1
+          }
+        ],
+        "selections": [],
+        "service": null,
+        "state": "active",
+        "target": "runtime.transforms.commands"
+      },
+      "externalNudge": null
+    },
+    "hostGrants": [
+      {
+        "classification": "conformance",
+        "grant": "fpm.host.scheduler-conformance/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.deterministic-scheduler-v2/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.scheduler-records/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.deterministic-scheduler-v2/1",
+        "status": "granted"
+      },
+      {
+        "classification": "conformance",
+        "grant": "fpm.host.persistence-conformance/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.save-coordinator/1",
+        "status": "granted"
+      },
+      {
+        "classification": "deterministic",
+        "grant": "fpm.host.persistence-input/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.save-coordinator/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.persistence-records/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.save-coordinator/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.renderer-output/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.simple-runtime/browser-svg/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.runtime-interaction/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.simple-runtime/browser-svg/1",
+        "status": "granted"
+      }
+    ],
+    "observational": {
+      "committed": true,
+      "completionOrder": [
+        "task:demo.wind-offset-v2/add-x/1",
+        "task:demo.motion-v2/set-x/1",
+        "task:demo.motion-offset-v2/add-x/1"
+      ],
+      "executions": [
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.wind-offset-v2/add-x/1",
+          "threadId": 3,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.motion-v2/set-x/1",
+          "threadId": 2,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.motion-offset-v2/add-x/1",
+          "threadId": 1,
+          "threadKind": "worker"
+        }
+      ],
+      "tick": 1,
+      "workerCount": 3
+    },
+    "profile": "runtime-task-v2-baseline.json",
+    "selectedPackages": [
+      "demo.camera",
+      "demo.character",
+      "demo.deterministic-scheduler",
+      "demo.deterministic-scheduler-v2",
+      "demo.field",
+      "demo.motion",
+      "demo.motion-offset",
+      "demo.motion-offset-v2",
+      "demo.motion-v2",
+      "demo.primitives",
+      "demo.runtime-clock",
+      "demo.runtime-instance-store",
+      "demo.runtime-task-v2-baseline-distribution",
+      "demo.save-coordinator",
+      "demo.scene-extractor",
+      "demo.scene-extractor-v2",
+      "demo.scene-toolchain",
+      "demo.scene-validator",
+      "demo.simple-runtime",
+      "demo.solid-colour-adapter",
+      "demo.texture-toolchain",
+      "demo.texture-vocabulary",
+      "demo.transform-authority",
+      "demo.wind-offset-v2",
+      "demo.worldspace",
+      "fpm.runtime-task-contracts",
+      "fpm.transform-task-contracts"
+    ],
+    "taskCollection": {
+      "capability": "runtime.task",
+      "exclusions": [],
+      "memberOrder": [
+        "task:demo.motion-offset-v2/add-x/1",
+        "task:demo.motion-v2/set-x/1",
+        "task:demo.wind-offset-v2/add-x/1"
+      ],
+      "members": [
+        {
+          "capabilityVersion": "2.0.0",
+          "dependencies": [],
+          "id": "task:demo.motion-offset-v2/add-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "drop-task",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "optional",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+          "package": "demo.motion-offset-v2",
+          "packageContentHash": "sha256:d7b5401146cc43fc7a42f2b74cb104692de08ede7bf8887a3157cf30cfc3300f",
+          "packageVersion": "0.8.0",
+          "providerBinding": "runtime.task.demo-motion-offset-v2/1",
+          "providerInstance": "service:demo.motion-offset-v2/1"
+        },
+        {
+          "capabilityVersion": "2.0.0",
+          "dependencies": [],
+          "id": "task:demo.motion-v2/set-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "abort-tick",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "exclusive-per-target",
+                "stage": "set-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "required",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3b46ea134ef387a459d407423890934a7a8f7a62daf367c938de10b0c1eb499a",
+          "package": "demo.motion-v2",
+          "packageContentHash": "sha256:045c5458e72849fbea9f0f4e9f6478ac1632c6f5ecaef12e48415832015cc46f",
+          "packageVersion": "0.8.0",
+          "providerBinding": "runtime.task.demo-motion-v2/1",
+          "providerInstance": "service:demo.motion-v2/1"
+        },
+        {
+          "capabilityVersion": "2.0.0",
+          "dependencies": [],
+          "id": "task:demo.wind-offset-v2/add-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "drop-task",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "optional",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+          "package": "demo.wind-offset-v2",
+          "packageContentHash": "sha256:059791a582bfdf1ed63783198f0010098921e1e90f46c9bc8fb0b3b49a0e8c5a",
+          "packageVersion": "1.0.0",
+          "providerBinding": "runtime.task.demo-wind-offset-v2/1",
+          "providerInstance": "service:demo.wind-offset-v2/1"
+        }
+      ],
+      "requests": [
+        {
+          "requestedBy": "service:demo.deterministic-scheduler-v2/1",
+          "required": "^2.0.0"
+        }
+      ],
+      "schema": "fpm.capability-collection-plan/1"
+    }
+  },
+  "evidenceLabels": {
+    "compatibility": "experimental-no-promise",
+    "nativeContainment": "limited-not-claimed",
+    "runtimeTaskPath": "demonstrated"
+  },
+  "excluded": {
+    "artifact": {
+      "entry": "scene.json",
+      "id": "artifact:profile/runtime-task-v2-nudge-equivalence/render-bundle",
+      "provenance": {
+        "lockfile": "sha256:3bf7882f03522cbdf4d366652d4d77b4d33396a9e8fe619e327c02dc35f7d9ba"
+      },
+      "root": {
+        "hash": "sha256:a0c71c7ad83b0355b83e7edc4c81f151af6794867290ba0a98c9dc5f85f7ead5",
+        "kind": "tree",
+        "size": 395,
+        "totalSize": 6824
+      },
+      "schema": "fpm.typed-artifact-reference/1",
+      "semanticType": "fpm.render-bundle/1"
+    },
+    "deterministic": {
+      "composition": [
+        {
+          "channel": "runtime.transforms.commands",
+          "commitOrder": [
+            "task:demo.motion-v2/set-x/1",
+            "task:demo.motion-offset-v2/add-x/1",
+            "task:demo.wind-offset-v2/add-x/1"
+          ],
+          "rule": "fpm.transform.staged-axis-compose/1",
+          "schema": "fpm.command-channel-composition/1",
+          "stages": [
+            {
+              "contributors": [
+                "task:demo.motion-v2/set-x/1"
+              ],
+              "id": "set-axis",
+              "law": "exclusive-per-target"
+            },
+            {
+              "contributors": [
+                "task:demo.motion-offset-v2/add-x/1",
+                "task:demo.wind-offset-v2/add-x/1"
+              ],
+              "id": "add-axis",
+              "law": "deterministic-sum-per-target"
+            }
+          ],
+          "steward": "fpm.transform-task-contracts@1.0.0",
+          "vocabulary": "fpm.transform-task-vocabulary/1"
+        }
+      ],
+      "sceneRoot": "sha256:b839b3250537b8f0c3392778c808f3db3c6bc009bafbd128739b8ea0da418e19",
+      "svgHash": "sha256:8945811fd1b673e2e341e0664e752974f8e79ef8a03498efe28d22a0b95d9fbe",
+      "taskPolicy": {
+        "exclusions": [
+          {
+            "member": "task:demo.external-nudge-v2/add-x/1",
+            "participation": "optional",
+            "policy": "policy:demo.exclude-external-nudge-v2/1",
+            "reason": "profile-policy-exclusion"
+          }
+        ]
+      },
+      "tickIdentity": "sha256:b7e00f85113c38c73ccae9ce6ac01924022f5e23d86472575fca18cc5b8c04ec",
+      "tickRoot": "sha256:30fcbf9c004ed25fb4ecabe46bcf8fd3ee24969a341b3fb087876bb222c42dbe",
+      "transformRoot": "sha256:324f25473da7d6e48e18563125323f5db7d21244e582ce89d6c6ea8670f78aca"
+    },
+    "explanations": {
+      "channel": {
+        "channelCompositions": [
+          {
+            "channel": "runtime.transforms.commands",
+            "contributors": [
+              {
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "task": "task:demo.motion-offset-v2/add-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              },
+              {
+                "law": "exclusive-per-target",
+                "stage": "set-axis",
+                "task": "task:demo.motion-v2/set-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              },
+              {
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "task": "task:demo.wind-offset-v2/add-x/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "provider": "service:fpm.transform-task-contracts/1",
+            "schema": "fpm.command-channel-plan/1",
+            "stageSet": [
+              {
+                "id": "add-axis",
+                "law": "deterministic-sum-per-target"
+              },
+              {
+                "id": "set-axis",
+                "law": "exclusive-per-target"
+              }
+            ],
+            "steward": "fpm.transform-task-contracts@1.0.0",
+            "vocabulary": [
+              "fpm.transform-task-vocabulary/1"
+            ]
+          }
+        ],
+        "collections": [],
+        "committed": true,
+        "lifecycle": [
+          {
+            "event": "tick",
+            "tick": 1
+          }
+        ],
+        "selections": [],
+        "service": null,
+        "state": "active",
+        "target": "runtime.transforms.commands"
+      },
+      "externalNudge": {
+        "channelCompositions": [],
+        "collections": [
+          {
+            "capability": "runtime.task",
+            "exclusions": [
+              {
+                "member": "task:demo.external-nudge-v2/add-x/1",
+                "metadata": {
+                  "affinity": "any-worker",
+                  "failurePolicy": "drop-task",
+                  "outputs": [
+                    {
+                      "channel": "runtime.transforms.commands",
+                      "law": "deterministic-sum-per-target",
+                      "stage": "add-axis",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "participation": "optional",
+                  "schema": "fpm.runtime-task-member/2",
+                  "snapshots": [
+                    {
+                      "capability": "runtime.transforms.read",
+                      "schema": "fpm.transform-snapshot/1",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "vocabulary": "fpm.runtime-task-vocabulary/2"
+                },
+                "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+                "package": "demo.external-nudge-v2",
+                "packageContentHash": "sha256:348da07d5856a1a39e280cbacdafe9e88b4f58e14f7c8c2a91d25ae11d714ba6",
+                "policy": "policy:demo.exclude-external-nudge-v2/1",
+                "providerInstance": "service:demo.external-nudge-v2/1",
+                "reason": "profile-policy-exclusion"
+              }
+            ],
+            "memberOrder": [
+              "task:demo.motion-offset-v2/add-x/1",
+              "task:demo.motion-v2/set-x/1",
+              "task:demo.wind-offset-v2/add-x/1"
+            ],
+            "members": [
+              {
+                "capabilityVersion": "2.0.0",
+                "dependencies": [],
+                "id": "task:demo.motion-offset-v2/add-x/1",
+                "metadata": {
+                  "affinity": "any-worker",
+                  "failurePolicy": "drop-task",
+                  "outputs": [
+                    {
+                      "channel": "runtime.transforms.commands",
+                      "law": "deterministic-sum-per-target",
+                      "stage": "add-axis",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "participation": "optional",
+                  "schema": "fpm.runtime-task-member/2",
+                  "snapshots": [
+                    {
+                      "capability": "runtime.transforms.read",
+                      "schema": "fpm.transform-snapshot/1",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "vocabulary": "fpm.runtime-task-vocabulary/2"
+                },
+                "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+                "package": "demo.motion-offset-v2",
+                "packageContentHash": "sha256:d7b5401146cc43fc7a42f2b74cb104692de08ede7bf8887a3157cf30cfc3300f",
+                "packageVersion": "0.8.0",
+                "providerBinding": "runtime.task.demo-motion-offset-v2/1",
+                "providerInstance": "service:demo.motion-offset-v2/1"
+              },
+              {
+                "capabilityVersion": "2.0.0",
+                "dependencies": [],
+                "id": "task:demo.motion-v2/set-x/1",
+                "metadata": {
+                  "affinity": "any-worker",
+                  "failurePolicy": "abort-tick",
+                  "outputs": [
+                    {
+                      "channel": "runtime.transforms.commands",
+                      "law": "exclusive-per-target",
+                      "stage": "set-axis",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "participation": "required",
+                  "schema": "fpm.runtime-task-member/2",
+                  "snapshots": [
+                    {
+                      "capability": "runtime.transforms.read",
+                      "schema": "fpm.transform-snapshot/1",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "vocabulary": "fpm.runtime-task-vocabulary/2"
+                },
+                "metadataRoot": "sha256:3b46ea134ef387a459d407423890934a7a8f7a62daf367c938de10b0c1eb499a",
+                "package": "demo.motion-v2",
+                "packageContentHash": "sha256:045c5458e72849fbea9f0f4e9f6478ac1632c6f5ecaef12e48415832015cc46f",
+                "packageVersion": "0.8.0",
+                "providerBinding": "runtime.task.demo-motion-v2/1",
+                "providerInstance": "service:demo.motion-v2/1"
+              },
+              {
+                "capabilityVersion": "2.0.0",
+                "dependencies": [],
+                "id": "task:demo.wind-offset-v2/add-x/1",
+                "metadata": {
+                  "affinity": "any-worker",
+                  "failurePolicy": "drop-task",
+                  "outputs": [
+                    {
+                      "channel": "runtime.transforms.commands",
+                      "law": "deterministic-sum-per-target",
+                      "stage": "add-axis",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "participation": "optional",
+                  "schema": "fpm.runtime-task-member/2",
+                  "snapshots": [
+                    {
+                      "capability": "runtime.transforms.read",
+                      "schema": "fpm.transform-snapshot/1",
+                      "vocabulary": "fpm.transform-task-vocabulary/1"
+                    }
+                  ],
+                  "vocabulary": "fpm.runtime-task-vocabulary/2"
+                },
+                "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+                "package": "demo.wind-offset-v2",
+                "packageContentHash": "sha256:059791a582bfdf1ed63783198f0010098921e1e90f46c9bc8fb0b3b49a0e8c5a",
+                "packageVersion": "1.0.0",
+                "providerBinding": "runtime.task.demo-wind-offset-v2/1",
+                "providerInstance": "service:demo.wind-offset-v2/1"
+              }
+            ],
+            "requests": [
+              {
+                "requestedBy": "service:demo.deterministic-scheduler-v2/1",
+                "required": "^2.0.0"
+              }
+            ],
+            "schema": "fpm.capability-collection-plan/1"
+          }
+        ],
+        "committed": true,
+        "lifecycle": [
+          {
+            "event": "activate",
+            "service": "service:demo.motion-offset-v2/1"
+          },
+          {
+            "event": "activate",
+            "service": "service:demo.motion-v2/1"
+          },
+          {
+            "event": "activate",
+            "service": "service:demo.wind-offset-v2/1"
+          },
+          {
+            "event": "activate",
+            "service": "service:demo.deterministic-scheduler-v2/1"
+          },
+          {
+            "event": "tick",
+            "tick": 1
+          }
+        ],
+        "selections": [],
+        "service": null,
+        "state": "active",
+        "target": "task:demo.external-nudge-v2/add-x/1"
+      }
+    },
+    "hostGrants": [
+      {
+        "classification": "conformance",
+        "grant": "fpm.host.scheduler-conformance/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.deterministic-scheduler-v2/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.scheduler-records/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.deterministic-scheduler-v2/1",
+        "status": "granted"
+      },
+      {
+        "classification": "conformance",
+        "grant": "fpm.host.persistence-conformance/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.save-coordinator/1",
+        "status": "granted"
+      },
+      {
+        "classification": "deterministic",
+        "grant": "fpm.host.persistence-input/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.save-coordinator/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.persistence-records/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.save-coordinator/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.renderer-output/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.simple-runtime/browser-svg/1",
+        "status": "granted"
+      },
+      {
+        "classification": "observational",
+        "grant": "fpm.host.runtime-interaction/1",
+        "policy": "host-user-authority",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.simple-runtime/browser-svg/1",
+        "status": "granted"
+      }
+    ],
+    "observational": {
+      "committed": true,
+      "completionOrder": [
+        "task:demo.motion-offset-v2/add-x/1",
+        "task:demo.motion-v2/set-x/1",
+        "task:demo.wind-offset-v2/add-x/1"
+      ],
+      "executions": [
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.motion-offset-v2/add-x/1",
+          "threadId": 8,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.motion-v2/set-x/1",
+          "threadId": 9,
+          "threadKind": "worker"
+        },
+        {
+          "affinity": "any-worker",
+          "task": "task:demo.wind-offset-v2/add-x/1",
+          "threadId": 10,
+          "threadKind": "worker"
+        }
+      ],
+      "tick": 1,
+      "workerCount": 3
+    },
+    "profile": "runtime-task-v2-nudge-excluded.json",
+    "selectedPackages": [
+      "demo.camera",
+      "demo.character",
+      "demo.deterministic-scheduler",
+      "demo.deterministic-scheduler-v2",
+      "demo.external-nudge-v2",
+      "demo.field",
+      "demo.motion",
+      "demo.motion-offset",
+      "demo.motion-offset-v2",
+      "demo.motion-v2",
+      "demo.primitives",
+      "demo.runtime-clock",
+      "demo.runtime-instance-store",
+      "demo.runtime-task-v2-distribution",
+      "demo.save-coordinator",
+      "demo.scene-extractor",
+      "demo.scene-extractor-v2",
+      "demo.scene-toolchain",
+      "demo.scene-validator",
+      "demo.simple-runtime",
+      "demo.solid-colour-adapter",
+      "demo.texture-toolchain",
+      "demo.texture-vocabulary",
+      "demo.transform-authority",
+      "demo.wind-offset-v2",
+      "demo.worldspace",
+      "fpm.runtime-task-contracts",
+      "fpm.transform-task-contracts"
+    ],
+    "taskCollection": {
+      "capability": "runtime.task",
+      "exclusions": [
+        {
+          "member": "task:demo.external-nudge-v2/add-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "drop-task",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "optional",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+          "package": "demo.external-nudge-v2",
+          "packageContentHash": "sha256:348da07d5856a1a39e280cbacdafe9e88b4f58e14f7c8c2a91d25ae11d714ba6",
+          "policy": "policy:demo.exclude-external-nudge-v2/1",
+          "providerInstance": "service:demo.external-nudge-v2/1",
+          "reason": "profile-policy-exclusion"
+        }
+      ],
+      "memberOrder": [
+        "task:demo.motion-offset-v2/add-x/1",
+        "task:demo.motion-v2/set-x/1",
+        "task:demo.wind-offset-v2/add-x/1"
+      ],
+      "members": [
+        {
+          "capabilityVersion": "2.0.0",
+          "dependencies": [],
+          "id": "task:demo.motion-offset-v2/add-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "drop-task",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "optional",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+          "package": "demo.motion-offset-v2",
+          "packageContentHash": "sha256:d7b5401146cc43fc7a42f2b74cb104692de08ede7bf8887a3157cf30cfc3300f",
+          "packageVersion": "0.8.0",
+          "providerBinding": "runtime.task.demo-motion-offset-v2/1",
+          "providerInstance": "service:demo.motion-offset-v2/1"
+        },
+        {
+          "capabilityVersion": "2.0.0",
+          "dependencies": [],
+          "id": "task:demo.motion-v2/set-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "abort-tick",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "exclusive-per-target",
+                "stage": "set-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "required",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3b46ea134ef387a459d407423890934a7a8f7a62daf367c938de10b0c1eb499a",
+          "package": "demo.motion-v2",
+          "packageContentHash": "sha256:045c5458e72849fbea9f0f4e9f6478ac1632c6f5ecaef12e48415832015cc46f",
+          "packageVersion": "0.8.0",
+          "providerBinding": "runtime.task.demo-motion-v2/1",
+          "providerInstance": "service:demo.motion-v2/1"
+        },
+        {
+          "capabilityVersion": "2.0.0",
+          "dependencies": [],
+          "id": "task:demo.wind-offset-v2/add-x/1",
+          "metadata": {
+            "affinity": "any-worker",
+            "failurePolicy": "drop-task",
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "law": "deterministic-sum-per-target",
+                "stage": "add-axis",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "participation": "optional",
+            "schema": "fpm.runtime-task-member/2",
+            "snapshots": [
+              {
+                "capability": "runtime.transforms.read",
+                "schema": "fpm.transform-snapshot/1",
+                "vocabulary": "fpm.transform-task-vocabulary/1"
+              }
+            ],
+            "vocabulary": "fpm.runtime-task-vocabulary/2"
+          },
+          "metadataRoot": "sha256:3d7a00d22ca5c88a55c454add03575882be4d11b15e77a2a4aa7ee2476070b5a",
+          "package": "demo.wind-offset-v2",
+          "packageContentHash": "sha256:059791a582bfdf1ed63783198f0010098921e1e90f46c9bc8fb0b3b49a0e8c5a",
+          "packageVersion": "1.0.0",
+          "providerBinding": "runtime.task.demo-wind-offset-v2/1",
+          "providerInstance": "service:demo.wind-offset-v2/1"
+        }
+      ],
+      "requests": [
+        {
+          "requestedBy": "service:demo.deterministic-scheduler-v2/1",
+          "required": "^2.0.0"
+        }
+      ],
+      "schema": "fpm.capability-collection-plan/1"
+    }
+  },
+  "exclusionEquivalence": {
+    "packageRemainsSelected": true,
+    "policy": "policy:demo.exclude-external-nudge-v2/1",
+    "sceneEqual": true,
+    "svgEqual": true,
+    "transformEqual": true
+  },
+  "generatedBy": "tools/collect-phase-8-evidence.mjs",
+  "grantFailure": {
+    "code": "FPM_HOST_GRANT_UNAVAILABLE",
+    "details": {
+      "grant": "fpm.host.scheduler-conformance/1",
+      "lifecycle": {
+        "activated": [
+          "service:demo.external-nudge-v2/1",
+          "service:demo.motion-offset-v2/1",
+          "service:demo.motion-v2/1",
+          "service:demo.runtime-clock/1",
+          "service:demo.runtime-instance-store/1",
+          "service:demo.transform-authority/1",
+          "service:demo.save-coordinator/1",
+          "service:demo.wind-offset-v2/1",
+          "service:fpm.transform-task-contracts/1"
+        ],
+        "committed": false,
+        "rolledBack": [
+          "service:fpm.transform-task-contracts/1",
+          "service:demo.wind-offset-v2/1",
+          "service:demo.save-coordinator/1",
+          "service:demo.transform-authority/1",
+          "service:demo.runtime-instance-store/1",
+          "service:demo.runtime-clock/1",
+          "service:demo.motion-v2/1",
+          "service:demo.motion-offset-v2/1",
+          "service:demo.external-nudge-v2/1"
+        ]
+      },
+      "record": {
+        "classification": "conformance",
+        "grant": "fpm.host.scheduler-conformance/1",
+        "policy": "host-user-authority:denied",
+        "provider": "fpm.manager-host/1",
+        "schema": "fpm.host-grant-record/1",
+        "service": "service:demo.deterministic-scheduler-v2/1",
+        "status": "denied"
+      },
+      "service": "service:demo.deterministic-scheduler-v2/1"
+    },
+    "message": "A declared host grant is absent or denied."
+  },
+  "schema": "fpm.phase-8-runtime-boundary-evidence/1"
+}

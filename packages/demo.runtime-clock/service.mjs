@@ -4,12 +4,12 @@ export function createService() {
   let tick = 0;
   let base = 0;
   const clock = Object.freeze({
-    now: () => Object.freeze({ schema: "fpm.runtime-tick/1", tick, seconds: tick / 4 }),
+    now: () => Object.freeze({ schema: "fgpm.runtime-tick/1", tick, seconds: tick / 4 }),
     resume: (checkpoint) => {
-      if (tick !== 0 || checkpoint?.schema !== "fpm.runtime-tick/1"
+      if (tick !== 0 || checkpoint?.schema !== "fgpm.runtime-tick/1"
         || !Number.isInteger(checkpoint.tick) || checkpoint.tick < 0) {
         throw Object.assign(new Error("The runtime clock cannot resume from this checkpoint."), {
-          code: "FPM_RUNTIME_CLOCK_RESUME_INVALID",
+          code: "FGPM_RUNTIME_CLOCK_RESUME_INVALID",
           details: { current: tick, checkpoint },
         });
       }
@@ -18,14 +18,14 @@ export function createService() {
       return clock.now();
     },
     abort: (checkpoint) => {
-      if (checkpoint?.schema === "fpm.runtime-tick/1" && checkpoint.tick === tick && tick > base) tick -= 1;
-      return Object.freeze({ schema: "fpm.runtime-tick/1", tick, seconds: tick / 4 });
+      if (checkpoint?.schema === "fgpm.runtime-tick/1" && checkpoint.tick === tick && tick > base) tick -= 1;
+      return Object.freeze({ schema: "fgpm.runtime-tick/1", tick, seconds: tick / 4 });
     },
   });
   return {
     async activate() {
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: { "runtime.clock.tick": clock },
       };
     },

@@ -1,0 +1,51 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.solid-colour-adapter",
+  "version": "0.3.1",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.texture-vocabulary",
+      "range": "^0.3.0"
+    }
+  ],
+  "handlers": [
+    {
+      "id": "handler:demo.solid-colour-adapter/1",
+      "protocol": "fgpm.handler-stdio/1",
+      "adapts": [
+        {
+          "id": "adapter:demo.solid-colour-to-rgba8-srgb/1",
+          "relation": "relation:demo.texture/base-colour-solid-to-runtime/1",
+          "from": "texture.solid-colour/1",
+          "to": "texture.runtime.rgba8-srgb/1",
+          "conversion": "lossless"
+        }
+      ],
+      "buildEnvironment": {
+        "schema": "fgpm.build-environment/1",
+        "dimensions": []
+      },
+      "execution": {
+        "form": "portable-wasm",
+        "securityBoundary": "wasm-capability-imports",
+        "requestedPowers": [
+          "read-declared-input-bytes",
+          "write-declared-output-bytes"
+        ],
+        "limits": {
+          "timeoutMs": 2000,
+          "maxModuleBytes": 65536,
+          "maxInputBytes": 1048576,
+          "maxOutputBytes": 1048576,
+          "maxResponseBytes": 1048576,
+          "maxProcessMemoryMiB": 64
+        }
+      },
+      "command": [
+        "./adapter.wasm.b64"
+      ]
+    }
+  ]
+}

@@ -5,9 +5,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ArtifactStore, executeArtifactGraph } from "./artifacts.mjs";
 import { discoverPackages } from "./discovery.mjs";
-import { FpmError, invariant } from "./errors.mjs";
+import { FgpmError, invariant } from "./errors.mjs";
 import { invokeHandler } from "./handler.mjs";
-import { hashDirectory, hashFile, sha256, writeJson } from "./io.mjs";
+import { hashFile, sha256, writeJson } from "./io.mjs";
 import { loadProfile } from "./profile.mjs";
 import { resolvePackages } from "./resolver.mjs";
 
@@ -18,7 +18,7 @@ function collectHandlers(resolution) {
   const byId = new Map();
   for (const owner of resolution.ordered) {
     for (const declaration of owner.handlers) {
-      invariant(!byId.has(declaration.id), "FPM_HANDLER_ID_DUPLICATE",
+      invariant(!byId.has(declaration.id), "FGPM_HANDLER_ID_DUPLICATE",
         "Two selected packages declare the same handler identity.", {
           handler: declaration.id,
           packages: [byId.get(declaration.id)?.owner.id, owner.id],
@@ -33,7 +33,7 @@ function collectRelations(resolution) {
   const relations = new Map();
   for (const owner of resolution.ordered) {
     for (const declaration of owner.semanticRelations ?? []) {
-      invariant(!relations.has(declaration.id), "FPM_SEMANTIC_RELATION_DUPLICATE",
+      invariant(!relations.has(declaration.id), "FGPM_SEMANTIC_RELATION_DUPLICATE",
         "Two selected packages govern the same semantic relation identity.", {
           relation: declaration.id,
           packages: [relations.get(declaration.id)?.owner.id, owner.id],
@@ -49,20 +49,20 @@ function collectAdapters(handlers, relations) {
   const ids = new Map();
   for (const handler of handlers.values()) {
     for (const declaration of handler.adapts ?? []) {
-      invariant(!ids.has(declaration.id), "FPM_ADAPTER_ID_DUPLICATE",
+      invariant(!ids.has(declaration.id), "FGPM_ADAPTER_ID_DUPLICATE",
         "Two selected handlers declare the same adapter identity.", {
           adapter: declaration.id,
           handlers: [ids.get(declaration.id), handler.id],
         });
       ids.set(declaration.id, handler.id);
       const relation = relations.get(declaration.relation);
-      invariant(relation, "FPM_SEMANTIC_RELATION_MISSING",
+      invariant(relation, "FGPM_SEMANTIC_RELATION_MISSING",
         "An adapter implements a semantic relation that is not governed by the selected package graph.", {
           adapter: declaration.id,
           relation: declaration.relation,
         });
       invariant(relation.source === declaration.from && relation.target === declaration.to,
-        "FPM_SEMANTIC_RELATION_MISMATCH",
+        "FGPM_SEMANTIC_RELATION_MISMATCH",
         "An adapter's source and target types do not match its governed semantic relation.", {
           adapter: declaration.id,
           relation: declaration.relation,
@@ -80,7 +80,7 @@ function collectValidators(handlers) {
   const ids = new Map();
   for (const handler of handlers.values()) {
     for (const declaration of handler.validates ?? []) {
-      invariant(!ids.has(declaration.id), "FPM_VALIDATOR_ID_DUPLICATE",
+      invariant(!ids.has(declaration.id), "FGPM_VALIDATOR_ID_DUPLICATE",
         "Two selected handlers declare the same validator identity.", {
           validator: declaration.id,
           handlers: [ids.get(declaration.id), handler.id],
@@ -96,11 +96,11 @@ function selectHandler(handlers, profile, manifestType) {
   let candidates = [...handlers.values()].filter((handler) => handler.handles.includes(manifestType));
   const explicit = profile.handlerSelections[manifestType];
   if (explicit) candidates = candidates.filter((handler) => handler.id === explicit);
-  invariant(candidates.length > 0, "FPM_HANDLER_MISSING", "No selected handler accepts a contribution manifest type.", {
+  invariant(candidates.length > 0, "FGPM_HANDLER_MISSING", "No selected handler accepts a contribution manifest type.", {
     manifestType,
     selectedHandler: explicit ?? null,
   });
-  invariant(candidates.length === 1, "FPM_HANDLER_AMBIGUOUS",
+  invariant(candidates.length === 1, "FGPM_HANDLER_AMBIGUOUS",
     "Several selected handlers accept a contribution manifest type; policy must select one.", {
       manifestType,
       candidates: candidates.map((handler) => handler.id).sort(),
@@ -109,25 +109,25 @@ function selectHandler(handlers, profile, manifestType) {
 }
 
 function validateAnalysis(analysis, pkg, contribution, handler) {
-  invariant(analysis && typeof analysis === "object", "FPM_HANDLER_RESPONSE_INVALID",
+  invariant(analysis && typeof analysis === "object", "FGPM_HANDLER_RESPONSE_INVALID",
     "A handler response omitted its analysis.", { handler: handler.id, contribution: contribution.id });
   for (const field of ["exports", "hooks", "activations", "productions"]) {
-    invariant(analysis[field] === undefined || Array.isArray(analysis[field]), "FPM_HANDLER_RESPONSE_INVALID",
+    invariant(analysis[field] === undefined || Array.isArray(analysis[field]), "FGPM_HANDLER_RESPONSE_INVALID",
       `Handler analysis field '${field}' must be an array.`, { handler: handler.id, contribution: contribution.id });
   }
   for (const entry of [...(analysis.exports ?? []), ...(analysis.hooks ?? [])]) {
     invariant(PUBLIC_ID.test(entry?.id ?? "") && entry.id.startsWith(`pkg:${pkg.id}/`),
-      "FPM_HANDLER_RESPONSE_INVALID", "A handler reported a public identity not owned by the contribution package.", {
+      "FGPM_HANDLER_RESPONSE_INVALID", "A handler reported a public identity not owned by the contribution package.", {
         handler: handler.id,
         package: pkg.id,
         publicId: entry?.id,
       });
-    invariant(typeof entry.semanticType === "string", "FPM_HANDLER_RESPONSE_INVALID",
+    invariant(typeof entry.semanticType === "string", "FGPM_HANDLER_RESPONSE_INVALID",
       "A handler-reported public entry omitted its semantic type.", { publicId: entry.id });
   }
   for (const hook of analysis.hooks ?? []) {
     invariant(hook.semanticRelation === undefined || (typeof hook.semanticRelation === "string"
-      && hook.semanticRelation.startsWith("relation:")), "FPM_HANDLER_RESPONSE_INVALID",
+      && hook.semanticRelation.startsWith("relation:")), "FGPM_HANDLER_RESPONSE_INVALID",
     "A handler-reported hook semantic relation is malformed.", { publicId: hook.id });
   }
   const exportIds = new Set((analysis.exports ?? []).map((entry) => entry.id));
@@ -135,7 +135,7 @@ function validateAnalysis(analysis, pkg, contribution, handler) {
     invariant(typeof production?.id === "string" && exportIds.has(production.source)
       && typeof production.action === "string" && typeof production.output?.id === "string"
       && typeof production.output.type === "string" && typeof production.output.fileName === "string",
-    "FPM_HANDLER_RESPONSE_INVALID", "A handler-reported artifact production is malformed.", {
+    "FGPM_HANDLER_RESPONSE_INVALID", "A handler-reported artifact production is malformed.", {
       handler: handler.id,
       contribution: contribution.id,
       production,
@@ -146,7 +146,7 @@ function validateAnalysis(analysis, pkg, contribution, handler) {
 function selectArtifactRoute(exported, requiredType, adapters, profile, target, relationIdentity = null) {
   const productions = exported.productions ?? [];
   const direct = productions.filter((production) => production.output.type === requiredType);
-  invariant(direct.length <= 1, "FPM_ARTIFACT_ROUTE_AMBIGUOUS",
+  invariant(direct.length <= 1, "FGPM_ARTIFACT_ROUTE_AMBIGUOUS",
     "An export has several direct productions for one required artifact type.", {
       export: exported.id,
       requiredType,
@@ -174,7 +174,7 @@ function selectArtifactRoute(exported, requiredType, adapters, profile, target, 
     ?? (relationIdentity ? profile.adapterSelections[relationIdentity] : null);
   if (explicit) candidates = candidates.filter(({ adapter }) => adapter.id === explicit);
 
-  invariant(candidates.length > 0, "FPM_ARTIFACT_ROUTE_MISSING",
+  invariant(candidates.length > 0, "FGPM_ARTIFACT_ROUTE_MISSING",
     "No direct artifact production or selected one-step adapter satisfies a required semantic type.", {
       target,
       export: exported.id,
@@ -184,7 +184,7 @@ function selectArtifactRoute(exported, requiredType, adapters, profile, target, 
       semanticRelation: relationIdentity,
       selectedAdapter: explicit ?? null,
     });
-  invariant(candidates.length === 1, "FPM_ADAPTER_AMBIGUOUS",
+  invariant(candidates.length === 1, "FGPM_ADAPTER_AMBIGUOUS",
     "Several one-step adapters satisfy an artifact requirement; policy must select one.", {
       target,
       export: exported.id,
@@ -221,7 +221,7 @@ function resolveBindings(resolution, profile, exportsById, hooksById, adapters, 
     }
   }
   for (const target of candidatesByTarget.keys()) {
-    invariant(hooksById.has(target), "FPM_REPLACEMENT_TARGET_MISSING",
+    invariant(hooksById.has(target), "FGPM_REPLACEMENT_TARGET_MISSING",
       "A replacement targets a public hook that does not exist.", { target });
   }
 
@@ -229,12 +229,12 @@ function resolveBindings(resolution, profile, exportsById, hooksById, adapters, 
   for (const hook of [...hooksById.values()].sort((a, b) => a.id.localeCompare(b.id))) {
     if (hook.semanticRelation) {
       const relation = relations.get(hook.semanticRelation);
-      invariant(relation, "FPM_SEMANTIC_RELATION_MISSING",
+      invariant(relation, "FGPM_SEMANTIC_RELATION_MISSING",
         "A public hook references an ungoverned semantic relation.", {
           target: hook.id,
           relation: hook.semanticRelation,
         });
-      invariant(relation.target === hook.semanticType, "FPM_SEMANTIC_RELATION_MISMATCH",
+      invariant(relation.target === hook.semanticType, "FGPM_SEMANTIC_RELATION_MISMATCH",
         "A hook's required type does not match its governed semantic relation target.", {
           target: hook.id,
           relation: hook.semanticRelation,
@@ -243,7 +243,7 @@ function resolveBindings(resolution, profile, exportsById, hooksById, adapters, 
         });
     }
     const defaultExport = exportsById.get(hook.default);
-    invariant(defaultExport, "FPM_HOOK_DEFAULT_MISSING", "A public hook's default export does not exist.", {
+    invariant(defaultExport, "FGPM_HOOK_DEFAULT_MISSING", "A public hook's default export does not exist.", {
       target: hook.id,
       default: hook.default,
     });
@@ -254,7 +254,7 @@ function resolveBindings(resolution, profile, exportsById, hooksById, adapters, 
     const candidateRoutes = new Map();
     for (const candidate of candidates) {
       const provided = exportsById.get(candidate.with);
-      invariant(provided, "FPM_REPLACEMENT_EXPORT_MISSING", "A replacement refers to an export that does not exist.", {
+      invariant(provided, "FGPM_REPLACEMENT_EXPORT_MISSING", "A replacement refers to an export that does not exist.", {
         target: hook.id,
         providedBy: candidate.with,
         package: candidate.package,
@@ -270,7 +270,7 @@ function resolveBindings(resolution, profile, exportsById, hooksById, adapters, 
     let route;
     if (explicit) {
       selected = candidates.find((candidate) => candidate.with === explicit);
-      invariant(selected, "FPM_REPLACEMENT_SELECTION_INVALID",
+      invariant(selected, "FGPM_REPLACEMENT_SELECTION_INVALID",
         "The user layer selects a replacement that no selected package proposes.", {
           target: hook.id,
           selection: explicit,
@@ -283,7 +283,7 @@ function resolveBindings(resolution, profile, exportsById, hooksById, adapters, 
       reason = "hook-default";
       route = defaultRoute;
     } else {
-      invariant(candidates.length === 1, "FPM_REPLACEMENT_AMBIGUOUS",
+      invariant(candidates.length === 1, "FGPM_REPLACEMENT_AMBIGUOUS",
         "Several compatible replacements target one public hook; the user layer must select one.", {
           target: hook.id,
           candidates: candidates.map((candidate) => ({ export: candidate.with, package: candidate.package })),
@@ -306,8 +306,8 @@ function resolveBindings(resolution, profile, exportsById, hooksById, adapters, 
   return bindings;
 }
 
-export async function prepareProfile(profilePath) {
-  const profile = await loadProfile(profilePath);
+export async function prepareProfile(profilePath, options = {}) {
+  const profile = await loadProfile(profilePath, options);
   const packages = await discoverPackages(profile.resolvedPackageRoots);
   const resolution = resolvePackages(packages, profile);
   const handlers = collectHandlers(resolution);
@@ -327,7 +327,7 @@ export async function prepareProfile(profilePath) {
       const handler = selectHandler(handlers, profile, contribution.manifestType);
       usedHandlers.add(handler.id);
       const response = invokeHandler(handler, {
-        protocol: "fpm.handler-request/1",
+        protocol: "fgpm.handler-request/1",
         action: "analyze",
         package: { id: pkg.id, version: pkg.version },
         contribution: {
@@ -361,7 +361,7 @@ export async function prepareProfile(profilePath) {
       analyses.push(record);
 
       for (const entry of [...record.exports, ...record.hooks]) {
-        invariant(!publicOwners.has(entry.id), "FPM_PUBLIC_ID_DUPLICATE",
+        invariant(!publicOwners.has(entry.id), "FGPM_PUBLIC_ID_DUPLICATE",
           "Two selected contributions claim the same public identity.", {
             publicId: entry.id,
             first: publicOwners.get(entry.id),
@@ -379,7 +379,7 @@ export async function prepareProfile(profilePath) {
         else hooksById.set(entry.id, enriched);
       }
       for (const production of productions) {
-        invariant(!productionOwners.has(production.id), "FPM_ACTION_ID_DUPLICATE",
+        invariant(!productionOwners.has(production.id), "FGPM_ACTION_ID_DUPLICATE",
           "Two selected contributions propose the same artifact action identity.", {
             action: production.id,
             first: productionOwners.get(production.id),
@@ -389,15 +389,15 @@ export async function prepareProfile(profilePath) {
       }
       for (const activation of record.activations) {
         invariant(typeof activation?.id === "string" && Array.isArray(activation.accepts)
-          && activation.protocol === "fpm.runtime-activation/1" && Array.isArray(activation.requires)
+          && activation.protocol === "fgpm.runtime-activation/1" && Array.isArray(activation.requires)
           && Number.isInteger(activation.ticks) && activation.ticks > 0,
-        "FPM_HANDLER_RESPONSE_INVALID",
+        "FGPM_HANDLER_RESPONSE_INVALID",
         "A handler-reported activation is malformed.", { handler: handler.id, activation });
         activations.push({ ...activation, package: pkg.id, owner: pkg });
       }
     }
   }
-  invariant(exportsById.has(profile.entryPoint), "FPM_ENTRY_POINT_MISSING",
+  invariant(exportsById.has(profile.entryPoint), "FGPM_ENTRY_POINT_MISSING",
     "The profile entry point was not exported by the selected graph.", { entryPoint: profile.entryPoint });
   const bindings = resolveBindings(resolution, profile, exportsById, hooksById, adapters, relations);
   return {
@@ -425,7 +425,7 @@ function productionAction(production) {
 
 function adapterAction(route, production, adapters) {
   const adapter = adapters.find((candidate) => candidate.id === route.adapter);
-  invariant(adapter, "FPM_ADAPTER_MISSING", "A selected adapter is unavailable.", { adapter: route.adapter });
+  invariant(adapter, "FGPM_ADAPTER_MISSING", "A selected adapter is unavailable.", { adapter: route.adapter });
   return {
     id: route.adapterAction,
     kind: "adapt",
@@ -441,7 +441,7 @@ function adapterAction(route, production, adapters) {
 
 function addInputRoute(actionsById, exported, requiredType, route, adapters) {
   const production = exported.productions.find((candidate) => candidate.id === route.sourceAction);
-  invariant(production, "FPM_ARTIFACT_ROUTE_INVALID", "An artifact route names an unavailable source production.", {
+  invariant(production, "FGPM_ARTIFACT_ROUTE_INVALID", "An artifact route names an unavailable source production.", {
     export: exported.id,
     sourceAction: route.sourceAction,
   });
@@ -451,18 +451,22 @@ function addInputRoute(actionsById, exported, requiredType, route, adapters) {
     actionsById.set(action.id, action);
     return action.output.id;
   }
-  invariant(production.output.type === requiredType, "FPM_ARTIFACT_ROUTE_INVALID",
+  invariant(production.output.type === requiredType, "FGPM_ARTIFACT_ROUTE_INVALID",
     "A direct artifact route does not satisfy its requested type.", { export: exported.id, requiredType });
   return production.output.id;
 }
 
 async function managerIdentity() {
-  const sourceHash = await hashDirectory(path.join(projectRoot, "src"));
-  const manifestHash = await hashFile(path.join(projectRoot, "manager.json"));
+  const manifestPath = path.join(projectRoot, "manager.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  invariant(/^sha256:[0-9a-f]{64}$/.test(manifest.buildIdentity), "FGPM_MANAGER_BUILD_IDENTITY_INVALID",
+    "The manager manifest must declare the reviewed build-semantic identity.", {
+      buildIdentity: manifest.buildIdentity ?? null,
+    });
   return {
     id: "org.foss-package-manager.reference",
-    version: "0.7.0",
-    contentHash: `sha256:${sha256(`${sourceHash}\0${manifestHash}`)}`,
+    version: manifest.version,
+    contentHash: manifest.buildIdentity,
   };
 }
 
@@ -473,19 +477,19 @@ async function runProposalValidation(validators, profile, plan, usedHandlers) {
   for (const validator of applicable) {
     usedHandlers.add(validator.handler.id);
     const response = invokeHandler(validator.handler, {
-      protocol: "fpm.handler-request/1",
+      protocol: "fgpm.handler-request/1",
       action: "validate",
       phase: "proposal",
       validator: validator.id,
       subject: { id: plan.id, type: plan.output.type, proposal: plan },
     });
-    invariant(Array.isArray(response.findings), "FPM_HANDLER_RESPONSE_INVALID",
+    invariant(Array.isArray(response.findings), "FGPM_HANDLER_RESPONSE_INVALID",
       "A validator response omitted its findings array.", { validator: validator.id });
     for (const finding of response.findings) {
       invariant(typeof finding?.id === "string" && validator.rules.includes(finding.rule)
         && finding.phase === "proposal" && finding.subject === plan.id
         && ["pass", "fail", "warning", "unknown", "not-applicable"].includes(finding.verdict)
-        && typeof finding.severity === "string", "FPM_HANDLER_RESPONSE_INVALID",
+        && typeof finding.severity === "string", "FGPM_HANDLER_RESPONSE_INVALID",
       "A validator returned a malformed or undeclared finding.", { validator: validator.id, finding });
       findings.push({
         ...finding,
@@ -500,10 +504,10 @@ async function runProposalValidation(validators, profile, plan, usedHandlers) {
   const policy = profile.validationPolicy;
   for (const required of policy.requiredValidators ?? []) {
     const declaration = validators.find((validator) => validator.id === required);
-    invariant(declaration, "FPM_VALIDATOR_REQUIRED_MISSING",
+    invariant(declaration, "FGPM_VALIDATOR_REQUIRED_MISSING",
       "Validation policy requires a validator that is not selected.", { policy: policy.id, validator: required });
     invariant(findings.some((finding) => finding.validator === required && finding.verdict === "pass"),
-      "FPM_VALIDATOR_REQUIRED_NO_PASS", "A required validator did not produce a passing finding.", {
+      "FGPM_VALIDATOR_REQUIRED_NO_PASS", "A required validator did not produce a passing finding.", {
         policy: policy.id,
         validator: required,
         findings: findings.filter((finding) => finding.validator === required),
@@ -519,7 +523,7 @@ async function runProposalValidation(validators, profile, plan, usedHandlers) {
     else rejected.push(finding.id);
   }
   const decision = {
-    schema: "fpm.validation-decision/1",
+    schema: "fgpm.validation-decision/1",
     policy: policy.id,
     subject: plan.id,
     phase: "proposal",
@@ -529,7 +533,7 @@ async function runProposalValidation(validators, profile, plan, usedHandlers) {
     rejected,
     accepted: rejected.length === 0,
   };
-  invariant(decision.accepted, "FPM_VALIDATION_REJECTED",
+  invariant(decision.accepted, "FGPM_VALIDATION_REJECTED",
     "Validation policy rejected an action proposal after preserving all attributed findings.", {
       policy: policy.id,
       subject: plan.id,
@@ -540,18 +544,18 @@ async function runProposalValidation(validators, profile, plan, usedHandlers) {
 }
 
 export async function buildProfile(profilePath, outputDirectory, options = {}) {
-  const prepared = await prepareProfile(profilePath);
+  const prepared = await prepareProfile(profilePath, { packageRoots: options.packageRoots ?? [] });
   const {
     profile, resolution, handlers, adapters, validators, analyses, bindings, activations, usedHandlers, exportsById,
   } = prepared;
   let builders = [...handlers.values()].filter((handler) => (handler.builds ?? []).includes(profile.artifact.type));
   const explicitBuilder = profile.artifact.builder;
   if (explicitBuilder) builders = builders.filter((handler) => handler.id === explicitBuilder);
-  invariant(builders.length > 0, "FPM_ARTIFACT_BUILDER_MISSING", "No selected handler can build the requested artifact type.", {
+  invariant(builders.length > 0, "FGPM_ARTIFACT_BUILDER_MISSING", "No selected handler can build the requested artifact type.", {
     artifactType: profile.artifact.type,
     selectedBuilder: explicitBuilder ?? null,
   });
-  invariant(builders.length === 1, "FPM_ARTIFACT_BUILDER_AMBIGUOUS",
+  invariant(builders.length === 1, "FGPM_ARTIFACT_BUILDER_AMBIGUOUS",
     "Several handlers can build the requested artifact; distribution policy must select one.", {
       artifactType: profile.artifact.type,
       candidates: builders.map((handler) => handler.id),
@@ -560,7 +564,7 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
   usedHandlers.add(builder.id);
 
   const response = invokeHandler(builder, {
-    protocol: "fpm.handler-request/1",
+    protocol: "fgpm.handler-request/1",
     action: "plan",
     artifactType: profile.artifact.type,
     entryPoint: profile.entryPoint,
@@ -572,11 +576,11 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
   invariant(plan && typeof plan.id === "string" && typeof plan.action === "string"
     && Array.isArray(plan.inputs) && plan.output?.type === profile.artifact.type
     && typeof plan.output.id === "string" && typeof plan.output.fileName === "string",
-  "FPM_HANDLER_RESPONSE_INVALID", "The artifact builder returned a malformed action plan.", { handler: builder.id });
+  "FGPM_HANDLER_RESPONSE_INVALID", "The artifact builder returned a malformed action plan.", { handler: builder.id });
   if (plan.output.kind === "tree") {
     invariant(typeof plan.output.entry === "string" && plan.output.entry.length > 0
       && !path.isAbsolute(plan.output.entry) && !plan.output.entry.startsWith(".."),
-    "FPM_HANDLER_RESPONSE_INVALID", "A tree artifact plan must declare a safe entry path.", {
+    "FGPM_HANDLER_RESPONSE_INVALID", "A tree artifact plan must declare a safe entry path.", {
       handler: builder.id,
       output: plan.output,
     });
@@ -588,13 +592,13 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
   const finalInputNames = new Set();
   for (const input of plan.inputs) {
     invariant(typeof input?.name === "string" && typeof input.sourceExport === "string"
-      && typeof input.type === "string", "FPM_HANDLER_RESPONSE_INVALID",
+      && typeof input.type === "string", "FGPM_HANDLER_RESPONSE_INVALID",
     "The artifact builder declared a malformed input requirement.", { handler: builder.id, input });
-    invariant(!finalInputNames.has(input.name), "FPM_HANDLER_RESPONSE_INVALID",
+    invariant(!finalInputNames.has(input.name), "FGPM_HANDLER_RESPONSE_INVALID",
       "The artifact builder declared the same input name more than once.", { handler: builder.id, input: input.name });
     finalInputNames.add(input.name);
     const exported = exportsById.get(input.sourceExport);
-    invariant(exported, "FPM_ARTIFACT_INPUT_EXPORT_MISSING", "A planned artifact input names an unavailable export.", {
+    invariant(exported, "FGPM_ARTIFACT_INPUT_EXPORT_MISSING", "A planned artifact input names an unavailable export.", {
       action: plan.id,
       input: input.name,
       export: input.sourceExport,
@@ -623,7 +627,7 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
       platform: process.platform,
       architecture: process.arch,
       target: profile.layers.target,
-      protocol: "fpm.artifact-transaction/2",
+      protocol: "fgpm.artifact-transaction/2",
     },
     observational: { processSecurityBoundary: "handler-declared" },
   };
@@ -637,17 +641,17 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
     widenedDimensions: profile.environmentKeyWidening,
   };
   const out = path.resolve(outputDirectory);
-  const storeDirectory = path.resolve(options.storeDirectory ?? path.join(path.dirname(out), ".fpm-store"));
+  const storeDirectory = path.resolve(options.storeDirectory ?? path.join(path.dirname(out), ".fgpm-store"));
   const store = new ArtifactStore(storeDirectory, environmentContext, options.storeOptions ?? {});
   const execution = await executeArtifactGraph([...actionsById.values()], handlers, store);
   const finalArtifact = execution.artifacts.get(plan.output.id);
-  invariant(finalArtifact, "FPM_ARTIFACT_MISSING", "The completed action graph did not produce its requested artifact.", {
+  invariant(finalArtifact, "FGPM_ARTIFACT_MISSING", "The completed action graph did not produce its requested artifact.", {
     artifact: plan.output.id,
   });
 
   const artifactRootPath = path.join(out, plan.output.fileName);
   try {
-    const previous = JSON.parse(await readFile(path.join(out, "fpm.lock.json"), "utf8"));
+    const previous = JSON.parse(await readFile(path.join(out, "fgpm.lock.json"), "utf8"));
     const previousName = previous.artifact?.file;
     if (typeof previousName === "string" && path.basename(previousName) === previousName
       && previousName !== plan.output.fileName) {
@@ -665,6 +669,12 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
     kind: finalArtifact.kind,
     fileName: plan.output.fileName,
     entry: plan.output.entry ?? null,
+    root: {
+      kind: finalArtifact.kind,
+      hash: finalArtifact.hash,
+      size: finalArtifact.size,
+      totalSize: finalArtifact.totalSize ?? null,
+    },
   };
 
   const packageLocks = resolution.ordered.map((pkg) => ({
@@ -693,7 +703,7 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
     producedBy: record.id,
   })));
   const lockfile = {
-    schema: "fpm.lock/3",
+    schema: "fgpm.lock/3",
     manager,
     profile: {
       schema: profile.schema,
@@ -733,7 +743,7 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
   };
 
   const provenance = {
-    schema: "fpm.provenance/3",
+    schema: "fgpm.provenance/3",
     profile: profile.name,
     profileHash,
     exports: analyses.flatMap((analysis) => analysis.exports.map((entry) => ({
@@ -762,13 +772,14 @@ export async function buildProfile(profilePath, outputDirectory, options = {}) {
       hash: finalArtifact.hash,
     },
   };
-  await writeJson(path.join(out, "fpm.lock.json"), lockfile);
+  await writeJson(path.join(out, "fgpm.lock.json"), lockfile);
   await writeJson(path.join(out, "provenance.json"), provenance);
 
   return {
     ...prepared,
     outputDirectory: out,
     storeDirectory,
+    artifactStoreDirectory: storeDirectory,
     artifactPath,
     artifact,
     lockfile,
@@ -782,7 +793,7 @@ export function explainProvenance(provenance, publicId) {
   const exported = provenance.exports.find((entry) => entry.id === publicId);
   const hook = provenance.hooks.find((entry) => entry.target === publicId);
   if (!exported && !hook && provenance.artifact.entryPoint !== publicId) {
-    throw new FpmError("FPM_PROVENANCE_TARGET_MISSING", "No provenance entry matches the requested identity.", { publicId });
+    throw new FgpmError("FGPM_PROVENANCE_TARGET_MISSING", "No provenance entry matches the requested identity.", { publicId });
   }
   const actionIds = new Set(exported?.productions ?? []);
   if (hook?.artifactRoute?.sourceAction) actionIds.add(hook.artifactRoute.sourceAction);

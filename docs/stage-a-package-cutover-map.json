@@ -1,0 +1,710 @@
+{
+  "schema": "fgpm.package-cutover-map/1",
+  "inventoryScope": "fgpm-owned",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "externalOwnerSuccessorsAssigned": false,
+  "packages": [
+    {
+      "name": "demo.camera",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.camera",
+        "root": "sha256:1a2d9e55d1f34c1fea54c420dc5da27ece8102d5abaa1d29c5515d184f00229a",
+        "version": "0.1.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.camera",
+        "root": "sha256:6c58993f5b86831045182247546b7ddca291ffc1b055600db2152eeaa7dca538",
+        "version": "0.1.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.character",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.character",
+        "root": "sha256:f30c5fe5293eed9cea48786b34d5859ebe9688f9ae0aab29b50e9d6a77f60287",
+        "version": "0.1.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.character",
+        "root": "sha256:de5e333d02d424482f81a616cdfbbea781b6224b90bf0aedc5bed5841194cffe",
+        "version": "0.1.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.character-journal",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.character-journal",
+        "root": "sha256:a14371ff1da78b3af14cd8825fb1546abf4ccd5a37d354dddfdbe3bfb2cd0d2c",
+        "version": "0.6.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.character-journal",
+        "root": "sha256:3b9fc90742160ad89dadaa8c22f86f4ff9b4d5e7a24af8d2ab750efc4cc14901",
+        "version": "0.6.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.character-marker",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.character-marker",
+        "root": "sha256:609547e1e6767378658de5937275a555c6d434a08acb87296d58e691a8632920",
+        "version": "0.6.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.character-marker",
+        "root": "sha256:915b21fdd07c4e89d1ae440b45b5c692b57b63f746eead928ea836697f5e680c",
+        "version": "0.6.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.deterministic-scheduler",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.deterministic-scheduler",
+        "root": "sha256:31159612b906b3f035c923361ba2511f5cb6ccbbd3d13f9d9fe30cf02c083df8",
+        "version": "0.7.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.deterministic-scheduler",
+        "root": "sha256:f30ab391d4fe3dfac2c947ea888824599ef2450ac5c53884828545f43d7c9a7a",
+        "version": "0.7.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.deterministic-scheduler-v2",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.deterministic-scheduler-v2",
+        "root": "sha256:3923c6bb68f48e0903491b4e1d85861bc2feb55c05660807feb89d062b88a591",
+        "version": "0.8.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/2"
+      },
+      "successor": {
+        "path": "packages/demo.deterministic-scheduler-v2",
+        "root": "sha256:704d62369fcde6e133bce911b20d81d62b04bc0fbd6960281ab20c63953409f4",
+        "version": "0.8.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/2"
+      }
+    },
+    {
+      "name": "demo.environment-head",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.environment-head",
+        "root": "sha256:66b4ef6f1fbc1c354684ae2387fd428f650301afc369dd38ad62f165ead4e07f",
+        "version": "0.3.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.environment-head",
+        "root": "sha256:f179f7d0bfb118313011271cc668b5040e7a15cf88d21589352b4864de886f24",
+        "version": "0.3.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.external-nudge-v2",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.external-nudge-v2",
+        "root": "sha256:348da07d5856a1a39e280cbacdafe9e88b4f58e14f7c8c2a91d25ae11d714ba6",
+        "version": "1.0.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/2"
+      },
+      "successor": {
+        "path": "packages/demo.external-nudge-v2",
+        "root": "sha256:72b5f8742235c126a40c547586f2f694d75651878401768e800f826e6e97e13f",
+        "version": "1.0.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/2"
+      }
+    },
+    {
+      "name": "demo.field",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.field",
+        "root": "sha256:403502db74727bd8862be13e3dcdf8f6a9ec19714b612135db5567153a978859",
+        "version": "0.1.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.field",
+        "root": "sha256:3ec3f1e4f350b6132ea710c1f955bcffa64fe36e2addaa384363d14cc5aaf87a",
+        "version": "0.1.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.green-head",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.green-head",
+        "root": "sha256:8af96ff15bd9c397d52874ad9fa06bce9c5b4610cf2148e5d7adee946b337970",
+        "version": "0.1.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.green-head",
+        "root": "sha256:2d1b2c4cd49ae047786c74cfa3494e948d21c5b78c7769b7e1bbb1ddfc814777",
+        "version": "0.1.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.main-thread-audit",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.main-thread-audit",
+        "root": "sha256:71ae9d2654d4f0000f4105cebfbef9bb03a063b73019a5b55d7f1973b9f37557",
+        "version": "0.7.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.main-thread-audit",
+        "root": "sha256:fb626952dca2476ec0af2d0a9f7fcf3c84348cbdc4c765a3c18cdc05e643f175",
+        "version": "0.7.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.motion",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.motion",
+        "root": "sha256:3308c8b4bdb9c960e1239338909b7ed2d7b2216bb52ddceabd717f77030550d7",
+        "version": "0.7.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.motion",
+        "root": "sha256:ee6000bdc5901ea850965a9ef4e402f1c7bf8cc8658147ea411e7ccd74ce98a8",
+        "version": "0.7.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.motion-offset",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.motion-offset",
+        "root": "sha256:e62dda064e448852faf92c22ed5d400b8ec6120553423a2bb7a1c05acdcf257e",
+        "version": "0.7.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.motion-offset",
+        "root": "sha256:db03e456f3624d54cae5059a31dd617466c69eb4ca6706e3604af34b61848716",
+        "version": "0.7.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.motion-offset-v2",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.motion-offset-v2",
+        "root": "sha256:d7b5401146cc43fc7a42f2b74cb104692de08ede7bf8887a3157cf30cfc3300f",
+        "version": "0.8.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/2"
+      },
+      "successor": {
+        "path": "packages/demo.motion-offset-v2",
+        "root": "sha256:b4f18d2b7077186348dfaf95c48fb5f2d7992c7485a5679c18185a688c19a724",
+        "version": "0.8.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/2"
+      }
+    },
+    {
+      "name": "demo.motion-v2",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.motion-v2",
+        "root": "sha256:045c5458e72849fbea9f0f4e9f6478ac1632c6f5ecaef12e48415832015cc46f",
+        "version": "0.8.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/2"
+      },
+      "successor": {
+        "path": "packages/demo.motion-v2",
+        "root": "sha256:3d7dbf7d813f36ea9259105af23871c058881c05fbbaceed50a31c8aa7d577e5",
+        "version": "0.8.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/2"
+      }
+    },
+    {
+      "name": "demo.primitives",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.primitives",
+        "root": "sha256:200c610fbc5e299cdbe9c9369cb89a7d903481d63ef6a0256f185ce19036bdc4",
+        "version": "0.1.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.primitives",
+        "root": "sha256:f9afd08ac72709a48a0c63f42f83da448fe9d91eecc027e2521dae1267fa64d2",
+        "version": "0.1.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.runtime-clock",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.runtime-clock",
+        "root": "sha256:edce80b426b10d009f5c58e0f701f5484038fedaa0ccef22eb5d08e87ad55d3b",
+        "version": "0.4.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.runtime-clock",
+        "root": "sha256:ca0fb8d9fcd79ed62c373275a0fb0b51f69da6d2d7b479a6b61a01260415d1d8",
+        "version": "0.4.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.runtime-instance-store",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.runtime-instance-store",
+        "root": "sha256:280087f725f2682bd5b6dab961f85548f21976096e7780926c4563b822b35879",
+        "version": "0.6.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.runtime-instance-store",
+        "root": "sha256:04dbc8188794dac7d32687fe04f24749002c10882e3f2ab47896828d2015fbf2",
+        "version": "0.6.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.runtime-task-v2-baseline-distribution",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.runtime-task-v2-baseline-distribution",
+        "root": "sha256:231a82d9a42bcffd36ee034d3fc0d99860538dc43cb1dbcbf0719305959c7559",
+        "version": "0.8.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.runtime-task-v2-baseline-distribution",
+        "root": "sha256:9a933b957c2a065d40a24ef9b6379fd5389e05b3d43ea70d88545a444337a28d",
+        "version": "0.8.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.runtime-task-v2-distribution",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.runtime-task-v2-distribution",
+        "root": "sha256:d081d14580b5418e11bc43cb43cc8cd357668acd3bd8bec3f55a4e8c885fb389",
+        "version": "0.8.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.runtime-task-v2-distribution",
+        "root": "sha256:aa1205c5cc5463a7ebf875c524dfe7d989ad178f9aeb049074851f7c15de2f07",
+        "version": "0.8.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.save-coordinator",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.save-coordinator",
+        "root": "sha256:368e3c3bab0ce9b25b39928975ed577a9a5c516f4ac90c3b5467a44d8b4e6044",
+        "version": "0.7.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.save-coordinator",
+        "root": "sha256:603c3cfc7f9fd02d494d883ad91b35926b6b42a989d5bc9a1f6870dc8d76ab96",
+        "version": "0.7.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.scene-extractor",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.scene-extractor",
+        "root": "sha256:966e04823db259311d1325a37bbeb21c42ccbe154673910139323ca481dd91f7",
+        "version": "0.7.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.scene-extractor",
+        "root": "sha256:08b7f3c8febd44cc3956bf534077af9b96f6b66e85458b3142f88fd8fd75c249",
+        "version": "0.7.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.scene-extractor-v2",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.scene-extractor-v2",
+        "root": "sha256:feb1b815a5afc95e921dab48fff3d7894caa6e36197ad361a116c6989663ccc2",
+        "version": "0.8.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/2"
+      },
+      "successor": {
+        "path": "packages/demo.scene-extractor-v2",
+        "root": "sha256:30351f5efe5b1c81a3302bd1ecd4040ff1fa490b33246f8cdc13f3a5e7f1a54e",
+        "version": "0.8.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/2"
+      }
+    },
+    {
+      "name": "demo.scene-toolchain",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.scene-toolchain",
+        "root": "sha256:9caf412c2dea00504975bfe60637ad5e4d0e5e7b79cf7f7073e4739e3c9bcb40",
+        "version": "0.4.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.scene-toolchain",
+        "root": "sha256:ebf59847dfcc3f0138affabaa27e149ea1899bbf164522d0d4987f4cc4e9a929",
+        "version": "0.4.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.scene-validator",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.scene-validator",
+        "root": "sha256:27046a0b0bf6b21e31c946885d296685f289e74c94b9e876af13b78cd2a64a40",
+        "version": "0.3.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.scene-validator",
+        "root": "sha256:91fdddca050811590322500bab9da5a5b29fd27e52a884e7e3cfc2cf5f718de2",
+        "version": "0.3.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.simple-runtime",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.simple-runtime",
+        "root": "sha256:eeb27ffce8626afa6259d4af7e0e3b6cbd658cfea68fe022b30ef8d9dda293fe",
+        "version": "0.7.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.simple-runtime",
+        "root": "sha256:93c187518ab58f00e8ef06e3e3871815f343d48cb5bcc1ec512576d928e1217b",
+        "version": "0.7.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.solid-colour-adapter",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.solid-colour-adapter",
+        "root": "sha256:ba70c6677b471bcbf12b2b6ead79304385a085d42778816f9eb64368a43266c1",
+        "version": "0.3.1",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.solid-colour-adapter",
+        "root": "sha256:71dfc5edc7f75734d67a239b03b9cfa318067ec2b21c6b3b3133370252174429",
+        "version": "0.3.1",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.texture-toolchain",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.texture-toolchain",
+        "root": "sha256:49190a5d974f7962da4f414088860991ab153ae64f0133c34682113270ce8a99",
+        "version": "0.3.1",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.texture-toolchain",
+        "root": "sha256:18c07076e1c7d6ce8204ee317a553799e0ddcd4a2885a435b1b9f25d83e90e81",
+        "version": "0.3.1",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.texture-vocabulary",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.texture-vocabulary",
+        "root": "sha256:4d83fdce396cdbb9e4807df4faeec4e63df2e52e51a5cf30f53d00d02967a31e",
+        "version": "0.3.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.texture-vocabulary",
+        "root": "sha256:a03cf574b7e55dcf89b24aca70fcfa84ccb3db7d1e406a7ac03b1d6373dba5fd",
+        "version": "0.3.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.transform-authority",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.transform-authority",
+        "root": "sha256:a269a4a4809ebb1b1717674ba1006a29a237cb8f54cb1f31856f905846653d46",
+        "version": "0.7.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.transform-authority",
+        "root": "sha256:24694ae4f6d67790034cc16c0755add036cc231fd12e814105e0552fce5bae03",
+        "version": "0.7.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.transform-authority-v2",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.transform-authority-v2",
+        "root": "sha256:a7b4212badb4c352d014e28aa6616708aa7f127242adc2cae60fa95facb6d97d",
+        "version": "0.7.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.transform-authority-v2",
+        "root": "sha256:9e7c5308fc1f8e2aa933486f97c4e9e949bd71deb8a382a9bea7a5cb38acf6bf",
+        "version": "0.7.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.transform-migration-v1-v2",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.transform-migration-v1-v2",
+        "root": "sha256:1857e7bd5dc0b17b76a4a4ce7bd062a4207a5f7cc4034b0a1a77beaa6b1180a0",
+        "version": "0.5.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.transform-migration-v1-v2",
+        "root": "sha256:9f0a90079ca4aa13bcbb86125d557e94b7305823870db20898ce7f958ffc611d",
+        "version": "0.5.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "demo.wind-offset-v2",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.wind-offset-v2",
+        "root": "sha256:059791a582bfdf1ed63783198f0010098921e1e90f46c9bc8fb0b3b49a0e8c5a",
+        "version": "1.0.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/2"
+      },
+      "successor": {
+        "path": "packages/demo.wind-offset-v2",
+        "root": "sha256:15d11c02cb5a34e28b88fee64b3eb596f21230fb7ea16957c54632d49f91f3c9",
+        "version": "1.0.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/2"
+      }
+    },
+    {
+      "name": "demo.worldspace",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/demo.worldspace",
+        "root": "sha256:4d306ff674b4692cd2d7bbce57ce495edd07cd3d879564cf8f71626f4a8658a8",
+        "version": "0.1.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/demo.worldspace",
+        "root": "sha256:e81d9fdf06aaa49ac878a28b5ac52c2b880ce89a17570d7f24aa769d85029165",
+        "version": "0.1.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "fgpm.grid-dungeon-integration-runtime",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "fixtures/integration/grid-dungeon-v04/packages/fgpm.grid-dungeon-integration-runtime",
+        "root": "sha256:2e0d44cdc4756a3962f133364616c7d57889f18801dc6b2cc4200e52f666f475",
+        "version": "0.1.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "fixtures/integration/grid-dungeon-v04/packages/fgpm.grid-dungeon-integration-runtime",
+        "root": "sha256:9679949b723e7067ffac0650f237afb6c40c22304e660db8f8b32aca72ba7d0a",
+        "version": "0.2.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "fgpm.grid-dungeon-integration-runtime",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "maintained-packages/fgpm.grid-dungeon-integration-runtime",
+        "root": "sha256:72f610ebfe4bb1ca4755101b0d3600314a78bf8826712fcb5c2ae1b072b85fe3",
+        "version": "0.1.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "maintained-packages/fgpm.grid-dungeon-integration-runtime",
+        "root": "sha256:df991de127867422ae60bc041b02efb503a93748cfc696af5d324c4b7d5e8090",
+        "version": "0.2.1",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "fgpm.runtime-task-contracts",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/fpm.runtime-task-contracts",
+        "root": "sha256:99bcf8ec2c28a17730fb6b030032d2d0336f650c14ac177ad1ed93c38f982397",
+        "version": "2.0.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/2"
+      },
+      "successor": {
+        "path": "packages/fgpm.runtime-task-contracts",
+        "root": "sha256:db4617f3766e39a750dcddc7ee25523ad909b0cbb93440f7a833fd92fd88a184",
+        "version": "2.0.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/2"
+      }
+    },
+    {
+      "name": "fgpm.scene-integration-generator",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/fpm.scene-integration-generator",
+        "root": "sha256:9de1dc5a18645246f68d37da8f1608131fdffb8032ab75f7882e7853b70c7435",
+        "version": "0.9.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/1"
+      },
+      "successor": {
+        "path": "packages/fgpm.scene-integration-generator",
+        "root": "sha256:6baeab22cad043c43c45506089f09c32d12546918787406306163e897a215655",
+        "version": "0.9.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/1"
+      }
+    },
+    {
+      "name": "fgpm.transform-task-contracts",
+      "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+      "predecessor": {
+        "path": "packages/fpm.transform-task-contracts",
+        "root": "sha256:d6d7de98c945c3c9e63e6f47a90c912e172cce084859ad3deba480ceb933ce7a",
+        "version": "1.0.0",
+        "entrypoint": "fpm-package.json",
+        "format": "fpm.package/2"
+      },
+      "successor": {
+        "path": "packages/fgpm.transform-task-contracts",
+        "root": "sha256:be97672e9b023b9b1e5dde279dcac435ef9817e59bcc303f9345a744a0893b05",
+        "version": "1.0.0",
+        "entrypoint": "fgpm-package.json",
+        "format": "fgpm.package/2"
+      }
+    }
+  ]
+}

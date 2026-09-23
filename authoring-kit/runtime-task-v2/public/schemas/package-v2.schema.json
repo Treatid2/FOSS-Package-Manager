@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-package-manager.example/schema/package-v2.schema.json",
+  "title": "FGPM corrected public package",
+  "x-fgpm-license": "Apache-2.0",
+  "description": "Experimental strict package slice used by the corrected runtime-task path.",
+  "x-fgpm-identity": "fgpm.package/2",
+  "x-fgpm-steward": "fgpm.manager-core/2",
+  "x-fgpm-status": "experimental-no-compatibility-promise",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "namespace", "name", "version", "license", "dependencies", "runtimeServices"],
+  "properties": {
+    "format": { "const": "fgpm.package/2" },
+    "namespace": { "type": "string", "format": "uuid", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    "name": { "type": "string", "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "license": { "type": "string", "minLength": 1 },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["package", "range"],
+        "properties": {
+          "package": { "type": "string", "pattern": "^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\/)?[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$" },
+          "range": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "runtimeServices": {
+      "type": "array",
+      "items": { "$ref": "runtime-service-v2.schema.json" }
+    }
+  }
+}

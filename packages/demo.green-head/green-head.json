@@ -1,5 +1,5 @@
 {
-  "schema": "fpm.demo.solid-colour/1",
+  "schema": "fgpm.demo.solid-colour/1",
   "export": {
     "id": "pkg:demo.green-head/texture/head-green",
     "semanticType": "texture.solid-colour/1",

@@ -1,0 +1,277 @@
+{
+  "schema": "fgpm.control-operation-catalogue/1",
+  "version": 1,
+  "status": "experimental-no-compatibility-promise",
+  "license": "Apache-2.0",
+  "steward": "fgpm.manager-control/1",
+  "transport": "fgpm.control-request/1",
+  "processRule": "generation activation, runtime operations, transition or rollback, and shutdown must use one persistent control process",
+  "transportReplay": {
+    "meaning": "an identical requestId and canonical request returns the original executed response without a second dispatch",
+    "authority": "the original operation authority record is preserved unchanged; transportReplay separately records that the later event dispatched nothing and moved no authority",
+    "checkpointDistinction": "transport replay deduplicates a request before dispatch; checkpoint idempotent-reuse is a newly dispatched checkpoint capture that finds already-published immutable content"
+  },
+  "resultSchemas": {
+    "fgpm.package-registry-inspection/1": { "type": "object", "required": ["schema", "indexSchema", "indexRoot", "objects", "audit", "retainedGenerations", "historicalObservation", "cleanup"], "properties": { "schema": { "const": "fgpm.package-registry-inspection/1" } } },
+    "fgpm.control-description/1": { "type": "object", "required": ["schema", "operations", "operationCapabilities", "operationContracts", "transportReplay"], "properties": { "schema": { "const": "fgpm.control-description/1" } } },
+    "fgpm.control-stop-result/1": { "type": "object", "required": ["schema", "active", "stop"], "properties": { "schema": { "const": "fgpm.control-stop-result/1" }, "stop": { "const": true } } },
+    "fgpm.package-import-result/1": { "type": "object", "required": ["schema", "status", "package"], "properties": { "schema": { "const": "fgpm.package-import-result/1" } } },
+    "fgpm.package-list/1": { "type": "object", "required": ["schema", "packages"], "properties": { "schema": { "const": "fgpm.package-list/1" } } },
+    "fgpm.workspace-create-result/1": { "type": "object", "required": ["reference", "revision"] },
+    "fgpm.workspace-export-result/1": { "type": "object", "required": ["schema", "directory", "workspace"], "properties": { "schema": { "const": "fgpm.workspace-export-result/1" } } },
+    "fgpm.workspace-import-result/1": { "type": "object", "required": ["schema", "status", "reference", "revision", "history"], "properties": { "schema": { "const": "fgpm.workspace-import-result/1" } } },
+    "fgpm.workspace-status/1": { "type": "object", "required": ["reference", "revision"] },
+    "fgpm.workspace-history/1": { "type": "object", "required": ["schema", "name", "revisions"], "properties": { "schema": { "const": "fgpm.workspace-history/1" } } },
+    "fgpm.workspace-stage-result/1": { "type": "object", "required": ["revision"], "anyOf": [{ "required": ["operation"] }, { "required": ["operations"] }] },
+    "fgpm.candidate/1": { "type": "object", "required": ["schema", "identity"], "properties": { "schema": { "const": "fgpm.candidate/1" } } },
+    "fgpm.candidate-explanation/1": { "type": "object", "required": ["candidate"] },
+    "fgpm.candidate-build/1": { "type": "object", "required": ["schema", "identity"], "properties": { "schema": { "const": "fgpm.candidate-build/1" } } },
+    "fgpm.candidate-validation/1": { "type": "object", "required": ["schema", "identity"], "properties": { "schema": { "const": "fgpm.candidate-validation/1" } } },
+    "fgpm.generation-commit-result/1": { "type": "object", "required": ["generation"] },
+    "fgpm.generation/1": { "type": "object", "required": ["schema", "identity"], "properties": { "schema": { "const": "fgpm.generation/1" } } },
+    "fgpm.retained-generation-list/1": { "type": "object", "required": ["schema", "generations"], "properties": { "schema": { "const": "fgpm.retained-generation-list/1" } } },
+    "fgpm.active-generation-state/1": { "type": "object", "required": ["schema", "status", "ownedByCurrentProcess", "active"], "properties": { "schema": { "const": "fgpm.active-generation-state/1" }, "status": { "enum": ["stopped", "live", "stale"] } } },
+    "fgpm.generation-transition/1": { "type": "object", "required": ["schema", "status", "from", "to", "session", "transitionClass", "active", "preflight"], "properties": { "schema": { "const": "fgpm.generation-transition/1" }, "transitionClass": { "enum": ["initial-activation", "same-generation-reactivation", "distinct-generation-transition", "distinct-generation-rollback"] } } },
+    "fgpm.stale-generation-clear-result/1": { "type": "object", "required": ["schema", "status", "generation", "session", "active"], "properties": { "schema": { "const": "fgpm.stale-generation-clear-result/1" } } },
+    "fgpm.runtime-inspection/1": { "type": "object", "required": ["schema", "active", "live", "ownership", "generation", "session", "lifecycle", "instances"], "properties": { "schema": { "const": "fgpm.runtime-inspection/1" } } },
+    "fgpm.public-runtime-session/1": { "type": "object", "required": ["schema", "handle", "generation", "runtimeSession", "capability", "protocol", "provider", "methods"], "properties": { "schema": { "const": "fgpm.public-runtime-session/1" } } },
+    "fgpm.public-runtime-session-call/1": { "type": "object", "required": ["schema", "handle", "generation", "runtimeSession", "capability", "protocol", "provider", "method", "value"], "properties": { "schema": { "const": "fgpm.public-runtime-session-call/1" } } },
+    "fgpm.public-runtime-session-close/1": { "type": "object", "required": ["schema", "handle", "generation", "runtimeSession", "closed", "value"], "properties": { "schema": { "const": "fgpm.public-runtime-session-close/1" }, "closed": { "const": true } } },
+    "fgpm.generation-runtime-checkpoint-result/1": { "type": "object", "required": ["schema", "checkpoint", "publication"], "properties": { "schema": { "const": "fgpm.generation-runtime-checkpoint-result/1" }, "publication": { "type": "object", "required": ["class", "saveId", "checkpointIdentity", "contentRoot"], "properties": { "class": { "enum": ["first-publication", "idempotent-reuse"] }, "saveId": { "type": "string" }, "checkpointIdentity": { "type": "string" }, "contentRoot": { "type": ["string", "object", "null"] } } } } },
+    "fgpm.generation-resume/1": { "type": "object", "required": ["schema", "status", "generation", "checkpoint", "session", "active"], "properties": { "schema": { "const": "fgpm.generation-resume/1" } } },
+    "fgpm.runtime-shutdown-result/1": { "type": "object", "required": ["schema", "lifecycle", "active"], "properties": { "schema": { "const": "fgpm.runtime-shutdown-result/1" } } },
+    "fgpm.distribution/1": { "type": "object", "required": ["schema", "identity", "generation", "packages", "completeBuild", "files"], "properties": { "schema": { "const": "fgpm.distribution/1" } } },
+    "fgpm.distribution-import-result/1": { "type": "object", "required": ["manifest", "generation"] },
+    "fgpm.distribution-verification/1": { "type": "object", "required": ["manifest", "generation", "completeBuild"] },
+    "fgpm.manager-reachability-report/1": { "type": "object", "required": ["schema", "destructive", "generationRoots", "retainedPackageRoots"], "properties": { "schema": { "const": "fgpm.manager-reachability-report/1" } } }
+  },
+  "operations": [
+    {
+      "operation": "control.describe", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false }, "resultSchema": "fgpm.control-description/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "describe-1", "operation": "control.describe", "parameters": {} },
+      "sessionRequirement": "none; this is the discovery starting point", "preconditions": [], "failureCodes": ["FGPM_CONTROL_REQUEST_INVALID"],
+      "mutationBoundary": "read-only"
+    },
+    {
+      "operation": "control.stop", "maturity": "guided-project-supported", "authorityCategory": "runtime-lifecycle",
+      "parameterSchema": { "type": "object", "additionalProperties": false }, "resultSchema": "fgpm.control-stop-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "stop-1", "operation": "control.stop", "parameters": {} },
+      "sessionRequirement": "same persistent control process; safe with or without a live runtime", "preconditions": [], "failureCodes": [],
+      "mutationBoundary": "owned runtime is shut down and its active reference is cleared before the process stops"
+    },
+    {
+      "operation": "package.import", "maturity": "guided-project-supported", "authorityCategory": "project-curation",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["directory"], "properties": { "directory": { "type": "string", "minLength": 1 }, "source": {} } }, "resultSchema": "fgpm.package-import-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "import-1", "operation": "package.import", "parameters": { "directory": "C:/author/package" } },
+      "sessionRequirement": "persistent control process, no live runtime required", "preconditions": ["package validates in isolation"], "failureCodes": ["FGPM_PACKAGE_TREE_INVALID", "FGPM_PACKAGE_VERSION_CONFLICT"],
+      "mutationBoundary": "default conflict checks precede publication; later failures may retain unregistered immutable content. Registry and audit commit together. No automatic variant opt-in."
+    },
+    {
+      "operation": "package.registry.inspect", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false }, "resultSchema": "fgpm.package-registry-inspection/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "registry-1", "operation": "package.registry.inspect", "parameters": {} },
+      "sessionRequirement": "no live runtime required", "preconditions": [], "failureCodes": ["FGPM_REGISTRY_AUDIT_INVALID"],
+      "mutationBoundary": "no registry/content/generation mutation; temporary lease coordinates registry inspection, not an atomic runtime snapshot"
+    },
+    {
+      "operation": "package.variant-register", "maturity": "expert-supported", "authorityCategory": "project-curation",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["directory", "expectedRoot", "registrationId", "reason", "source"], "properties": {
+        "directory": { "type": "string", "minLength": 1 }, "expectedRoot": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "expectedIndexRoot": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }, "registrationId": { "type": "string", "minLength": 1 }, "reason": { "type": "string", "minLength": 1 }, "source": {} } },
+      "resultSchema": "fgpm.package-import-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "variant-1", "operation": "package.variant-register", "parameters": { "directory": "C:/author/package", "expectedRoot": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "registrationId": "author:variant-1", "reason": "Explicit assessed candidate", "source": "author commission" } },
+      "sessionRequirement": "no live runtime required; immutable selection unchanged", "preconditions": ["exact expectedRoot, opt-in reason/provenance and durable registrationId", "optional expectedIndexRoot compare-and-swap"],
+      "failureCodes": ["FGPM_VARIANT_REGISTRATION_INVALID", "FGPM_VARIANT_IDEMPOTENCY_CONFLICT", "FGPM_REGISTRY_HEAD_CONFLICT"],
+      "mutationBoundary": "registers an exact available variant, never overwrites predecessors or selects it; records observed prior residue, migration root and registration atomically with index. Later storage failure can retain inspectable unregistered objects."
+    },
+    {
+      "operation": "package.list", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false }, "resultSchema": "fgpm.package-list/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "packages-1", "operation": "package.list", "parameters": {} },
+      "sessionRequirement": "none", "preconditions": [], "failureCodes": [], "mutationBoundary": "read-only"
+    },
+    {
+      "operation": "workspace.create", "maturity": "expert-supported", "authorityCategory": "expert/debug",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["name"], "properties": { "name": { "type": "string", "minLength": 1 }, "baseGeneration": { "type": ["string", "null"] }, "actor": { "type": "string" } } }, "resultSchema": "fgpm.workspace-create-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "workspace-1", "operation": "workspace.create", "parameters": { "name": "author-workspace" } },
+      "sessionRequirement": "persistent control process, no live runtime required", "preconditions": ["workspace name is unused"], "failureCodes": ["FGPM_WORKSPACE_NAME_INVALID", "FGPM_WORKSPACE_EXISTS"], "mutationBoundary": "workspace reference is published last"
+    },
+    {
+      "operation": "workspace.fork", "maturity": "expert-supported", "authorityCategory": "expert/debug",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["generation", "name"], "properties": { "generation": { "type": "string" }, "name": { "type": "string" }, "actor": { "type": "string" } } }, "resultSchema": "fgpm.workspace-create-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "fork-1", "operation": "workspace.fork", "parameters": { "generation": "sha256:<generation>", "name": "fork" } },
+      "sessionRequirement": "persistent control process", "preconditions": ["generation exists"], "failureCodes": ["FGPM_GENERATION_NOT_FOUND", "FGPM_WORKSPACE_EXISTS"], "mutationBoundary": "workspace reference is published last"
+    },
+    {
+      "operation": "workspace.export", "maturity": "expert-supported", "authorityCategory": "expert/debug",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["name", "directory"], "properties": { "name": { "type": "string" }, "directory": { "type": "string" } } }, "resultSchema": "fgpm.workspace-export-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "workspace-export-1", "operation": "workspace.export", "parameters": { "name": "author-workspace", "directory": "C:/out/workspace" } },
+      "sessionRequirement": "persistent control process", "preconditions": ["workspace exists", "output is empty"], "failureCodes": ["FGPM_WORKSPACE_NOT_FOUND"], "mutationBoundary": "manager authority is read-only; external export publishes last"
+    },
+    {
+      "operation": "workspace.import", "maturity": "guided-project-supported", "authorityCategory": "project-curation",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["source"], "properties": { "source": { "type": "string" } } }, "resultSchema": "fgpm.workspace-import-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "workspace-import-1", "operation": "workspace.import", "parameters": { "source": "C:/in/workspace" } },
+      "sessionRequirement": "persistent control process", "preconditions": ["portable history verifies"], "failureCodes": ["FGPM_WORKSPACE_IMPORT_INVALID"], "mutationBoundary": "complete history verifies before a mutable reference is created"
+    },
+    {
+      "operation": "workspace.status", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["name"], "properties": { "name": { "type": "string" } } }, "resultSchema": "fgpm.workspace-status/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "workspace-status-1", "operation": "workspace.status", "parameters": { "name": "author-workspace" } },
+      "sessionRequirement": "none", "preconditions": ["workspace exists"], "failureCodes": ["FGPM_WORKSPACE_NOT_FOUND"], "mutationBoundary": "read-only"
+    },
+    {
+      "operation": "workspace.history", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["name"], "properties": { "name": { "type": "string" } } }, "resultSchema": "fgpm.workspace-history/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "workspace-history-1", "operation": "workspace.history", "parameters": { "name": "author-workspace" } },
+      "sessionRequirement": "none", "preconditions": ["workspace exists"], "failureCodes": ["FGPM_WORKSPACE_NOT_FOUND"], "mutationBoundary": "read-only"
+    },
+    {
+      "operation": "workspace.stage", "maturity": "guided-project-supported", "authorityCategory": "project-curation",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["name"], "properties": { "name": { "type": "string" }, "operation": { "$ref": "workspace-operation-v1.schema.json" }, "operations": { "type": "array", "minItems": 1, "items": { "$ref": "workspace-operation-v1.schema.json" } }, "expectedHead": { "type": "string" }, "actor": { "type": "string" } }, "oneOf": [{ "required": ["operation"] }, { "required": ["operations"] }] }, "resultSchema": "fgpm.workspace-stage-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "stage-add-1", "operation": "workspace.stage", "parameters": { "name": "author-workspace", "operation": { "type": "add", "packageRoot": "sha256:<package-root>" }, "expectedHead": "sha256:<workspace-head>", "actor": "author:external" } },
+      "sessionRequirement": "persistent control process", "preconditions": ["workspace exists", "expectedHead equals current revision", "package root is already imported"], "failureCodes": ["FGPM_WORKSPACE_OPERATION_INVALID", "FGPM_WORKSPACE_OPERATION_UNKNOWN_FIELD", "FGPM_WORKSPACE_REVISION_CONFLICT"], "mutationBoundary": "compare-and-swap succeeds before the workspace reference moves",
+      "idempotence": "requestId replay is idempotent within one control process; a new request appends a new immutable revision",
+      "duplicateBehavior": "repeating an already-applied operation under a new request identity is explicit history, not silent deduplication"
+    },
+    {
+      "operation": "workspace.plan", "maturity": "guided-project-supported", "authorityCategory": "project-curation",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["name"], "properties": { "name": { "type": "string" }, "profilePath": { "type": "string" }, "buildIntent": { "type": "object" }, "runtimePlan": { "type": "object" } } }, "resultSchema": "fgpm.candidate/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "plan-1", "operation": "workspace.plan", "parameters": { "name": "author-workspace" } },
+      "sessionRequirement": "persistent control process", "preconditions": ["workspace package closure is resolvable"], "failureCodes": ["FGPM_CANDIDATE_BLOCKED"], "mutationBoundary": "candidate is immutable; workspace reference is unchanged"
+    },
+    {
+      "operation": "candidate.explain", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["root"], "properties": { "root": { "type": "string" } } }, "resultSchema": "fgpm.candidate-explanation/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "explain-1", "operation": "candidate.explain", "parameters": { "root": "sha256:<candidate>" } },
+      "sessionRequirement": "none", "preconditions": ["candidate exists"], "failureCodes": ["FGPM_CANDIDATE_NOT_FOUND"], "mutationBoundary": "read-only"
+    },
+    {
+      "operation": "candidate.build", "maturity": "guided-project-supported", "authorityCategory": "build",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["root"], "properties": { "root": { "type": "string" } } }, "resultSchema": "fgpm.candidate-build/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "build-1", "operation": "candidate.build", "parameters": { "root": "sha256:<candidate>" } },
+      "sessionRequirement": "persistent control process", "preconditions": ["candidate is ready"], "failureCodes": ["FGPM_CANDIDATE_BLOCKED"], "mutationBoundary": "outputs remain immutable and unselected"
+    },
+    {
+      "operation": "candidate.validate", "maturity": "guided-project-supported", "authorityCategory": "build",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["root"], "properties": { "root": { "type": "string" } } }, "resultSchema": "fgpm.candidate-validation/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "validate-1", "operation": "candidate.validate", "parameters": { "root": "sha256:<build>" } },
+      "sessionRequirement": "persistent control process", "preconditions": ["candidate build exists"], "failureCodes": ["FGPM_CANDIDATE_VALIDATION_FAILED"], "mutationBoundary": "validation is immutable and does not select a generation"
+    },
+    {
+      "operation": "generation.commit", "maturity": "guided-project-supported", "authorityCategory": "generation",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["validationRoot"], "properties": { "validationRoot": { "type": "string" }, "name": { "type": "string" }, "expectedGenerationRoot": { "type": "string" } } }, "resultSchema": "fgpm.generation-commit-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "commit-1", "operation": "generation.commit", "parameters": { "validationRoot": "sha256:<validation>" } },
+      "sessionRequirement": "persistent control process", "preconditions": ["validation is accepted"], "failureCodes": ["FGPM_GENERATION_ROOT_MISMATCH", "FGPM_WORKSPACE_REVISION_CONFLICT"], "mutationBoundary": "expected identities verify before the workspace base reference moves"
+    },
+    {
+      "operation": "generation.show", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["root"], "properties": { "root": { "type": "string" } } }, "resultSchema": "fgpm.generation/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "generation-show-1", "operation": "generation.show", "parameters": { "root": "sha256:<generation>" } },
+      "sessionRequirement": "none", "preconditions": ["generation exists"], "failureCodes": ["FGPM_GENERATION_NOT_FOUND"], "mutationBoundary": "read-only"
+    },
+    {
+      "operation": "generation.retained", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false }, "resultSchema": "fgpm.retained-generation-list/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "generations-1", "operation": "generation.retained", "parameters": {} },
+      "sessionRequirement": "none", "preconditions": [], "failureCodes": [], "mutationBoundary": "read-only"
+    },
+    {
+      "operation": "generation.active", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false }, "resultSchema": "fgpm.active-generation-state/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "active-1", "operation": "generation.active", "parameters": {} },
+      "sessionRequirement": "same persistent control process to distinguish live from stale ownership", "preconditions": [], "failureCodes": [], "mutationBoundary": "read-only; reports stopped, live, or stale"
+    },
+    {
+      "operation": "generation.activate", "maturity": "guided-project-supported", "authorityCategory": "generation",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["root"], "properties": { "root": { "type": "string" } } }, "resultSchema": "fgpm.generation-transition/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "activate-1", "operation": "generation.activate", "parameters": { "root": "sha256:<generation>" } },
+      "sessionRequirement": "persistent control process; standalone CLI activation is rejected; activating the current generation creates a new session classified as same-generation-reactivation", "preconditions": ["generation exists", "no stale active reference"], "failureCodes": ["FGPM_ACTIVE_RUNTIME_SESSION_STALE", "FGPM_GENERATION_TRANSITION_FAILED"], "mutationBoundary": "runtime commits before the durable active reference moves"
+    },
+    {
+      "operation": "generation.rollback", "maturity": "guided-project-supported", "authorityCategory": "generation",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["root"], "properties": { "root": { "type": "string" } } }, "resultSchema": "fgpm.generation-transition/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "rollback-1", "operation": "generation.rollback", "parameters": { "root": "sha256:<prior-generation>" } },
+      "sessionRequirement": "same persistent control process that owns the live runtime", "preconditions": ["target is a different retained generation", "current live session is owned"], "failureCodes": ["FGPM_GENERATION_ROLLBACK_SESSION_REQUIRED", "FGPM_GENERATION_ROLLBACK_TARGET_UNCHANGED", "FGPM_ACTIVE_RUNTIME_SESSION_STALE", "FGPM_GENERATION_TRANSITION_FAILED"], "mutationBoundary": "owned live-session and distinct-target preconditions pass before target construction; then the old runtime shuts down before the distinct target generation activates and a new session becomes authoritative"
+    },
+    {
+      "operation": "generation.clear-stale", "maturity": "guided-project-supported", "authorityCategory": "generation",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["session"], "properties": { "session": { "type": "string", "minLength": 1 } } }, "resultSchema": "fgpm.stale-generation-clear-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "clear-stale-1", "operation": "generation.clear-stale", "parameters": { "session": "sha256:<stale-session>" } },
+      "sessionRequirement": "new control process with no owned live runtime", "preconditions": ["generation.active reports stale", "exact stale session identity supplied"], "failureCodes": ["FGPM_RUNTIME_SESSION_ALREADY_OWNED", "FGPM_STALE_SESSION_IDENTITY_MISMATCH"], "mutationBoundary": "only the exact stale active reference is removed"
+    },
+    {
+      "operation": "runtime.inspect", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false }, "resultSchema": "fgpm.runtime-inspection/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "inspect-1", "operation": "runtime.inspect", "parameters": {} },
+      "sessionRequirement": "persistent control process; stale ownership is reported, not adopted", "preconditions": [], "failureCodes": [], "mutationBoundary": "read-only"
+    },
+    {
+      "operation": "runtime.session.open", "maturity": "expert-supported", "authorityCategory": "runtime-lifecycle",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["generation", "capability", "protocol", "provider", "methods"], "properties": { "generation": { "type": "string" }, "capability": { "type": "string" }, "protocol": { "type": "string" }, "provider": { "type": "string" }, "methods": { "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": { "type": "string" } } } }, "resultSchema": "fgpm.public-runtime-session/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "session-open-1", "operation": "runtime.session.open", "parameters": { "generation": "sha256:<generation>", "capability": "example.session", "protocol": "example/1", "provider": "service:example/1", "methods": ["start", "inspect", "stop"] } },
+      "sessionRequirement": "same persistent control process owns exact generation", "preconditions": ["live generation is owned", "published capability pins match", "explicit createSession and stop methods exist"], "failureCodes": ["FGPM_RUNTIME_SESSION_BINDING_MISMATCH", "FGPM_RUNTIME_SESSION_PROVIDER_MISMATCH", "FGPM_RUNTIME_SESSION_ARGUMENT_INVALID", "FGPM_RUNTIME_SESSION_FACTORY_UNAVAILABLE", "FGPM_RUNTIME_SESSION_LIMIT"], "mutationBoundary": "factory executes only after ownership and pin checks; package factory effects are not transactional"
+    },
+    {
+      "operation": "runtime.session.call", "maturity": "expert-supported", "authorityCategory": "runtime-lifecycle",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["generation", "handle", "method", "arguments"], "properties": { "generation": { "type": "string" }, "handle": { "type": "string" }, "method": { "type": "string" }, "arguments": { "type": "array", "maxItems": 16 } } }, "resultSchema": "fgpm.public-runtime-session-call/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "session-call-1", "operation": "runtime.session.call", "parameters": { "generation": "sha256:<generation>", "handle": "session:<returned-handle>", "method": "start", "arguments": [{ "$bytes": "AP8=" }, {}] } },
+      "sessionRequirement": "same persistent control process and runtime session that opened the handle", "preconditions": ["handle is bound to exact live generation and runtime session", "method was explicitly exposed", "arguments are JSON with optional canonical base64 byte wrappers"], "failureCodes": ["FGPM_RUNTIME_SESSION_HANDLE_UNKNOWN", "FGPM_RUNTIME_SESSION_BINDING_MISMATCH", "FGPM_RUNTIME_SESSION_METHOD_NOT_EXPOSED", "FGPM_RUNTIME_SESSION_ARGUMENT_INVALID"], "mutationBoundary": "ownership/method/argument validation precedes package call; package failure or serialization error may follow package state effects, with no generic rollback claim"
+    },
+    {
+      "operation": "runtime.session.close", "maturity": "expert-supported", "authorityCategory": "runtime-lifecycle",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["generation", "handle"], "properties": { "generation": { "type": "string" }, "handle": { "type": "string" } } }, "resultSchema": "fgpm.public-runtime-session-close/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "session-close-1", "operation": "runtime.session.close", "parameters": { "generation": "sha256:<generation>", "handle": "session:<returned-handle>" } },
+      "sessionRequirement": "same persistent control process and runtime session that opened the handle", "preconditions": ["exact live generation and runtime session"], "failureCodes": ["FGPM_RUNTIME_SESSION_HANDLE_UNKNOWN", "FGPM_RUNTIME_SESSION_BINDING_MISMATCH"], "mutationBoundary": "package stop completes before handle removal; failed stop retains the handle. Before owned runtime shutdown, all handles stop before service deactivation. Rejected transition preconditions do not close sessions."
+    },
+    {
+      "operation": "runtime.tick", "maturity": "guided-project-supported", "authorityCategory": "runtime-lifecycle",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "properties": { "count": { "type": "integer", "minimum": 1, "maximum": 10000 } } }, "resultSchema": "fgpm.runtime-inspection/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "tick-1", "operation": "runtime.tick", "parameters": { "count": 1 } },
+      "sessionRequirement": "same persistent control process that activated or resumed the runtime", "preconditions": ["live runtime is owned"], "failureCodes": ["FGPM_ACTIVE_RUNTIME_SESSION_UNAVAILABLE", "FGPM_RUNTIME_TICK_COUNT_INVALID"], "mutationBoundary": "each deterministic tick commits atomically"
+    },
+    {
+      "operation": "runtime.checkpoint", "maturity": "guided-project-supported", "authorityCategory": "runtime-lifecycle",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["saveId"], "properties": { "saveId": { "type": "string", "minLength": 1 } } }, "resultSchema": "fgpm.generation-runtime-checkpoint-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "checkpoint-1", "operation": "runtime.checkpoint", "parameters": { "saveId": "save:author/checkpoint-1" } },
+      "sessionRequirement": "same persistent control process that owns the runtime", "preconditions": ["live runtime is owned"], "failureCodes": ["FGPM_ACTIVE_RUNTIME_SESSION_UNAVAILABLE", "FGPM_RUNTIME_SAVE_ID_INVALID"], "mutationBoundary": "capture completes before immutable publication; first-publication moves manager authority, while identical content under a new request ID is idempotent-reuse and moves neither manager nor runtime authority"
+    },
+    {
+      "operation": "runtime.resume", "maturity": "guided-project-supported", "authorityCategory": "runtime-lifecycle",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["generation", "checkpoint"], "properties": { "generation": { "type": "string" }, "checkpoint": { "type": "string" } } }, "resultSchema": "fgpm.generation-resume/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "resume-1", "operation": "runtime.resume", "parameters": { "generation": "sha256:<generation>", "checkpoint": "sha256:<checkpoint>" } },
+      "sessionRequirement": "persistent control process with no currently owned runtime", "preconditions": ["durable generation and checkpoint match"], "failureCodes": ["FGPM_RUNTIME_SESSION_ALREADY_OWNED", "FGPM_RUNTIME_RESUME_GENERATION_MISMATCH", "FGPM_RUNTIME_RESUME_CHECKPOINT_MISMATCH"], "mutationBoundary": "runtime commits before the active reference is replaced"
+    },
+    {
+      "operation": "runtime.shutdown", "maturity": "guided-project-supported", "authorityCategory": "runtime-lifecycle",
+      "parameterSchema": { "type": "object", "additionalProperties": false }, "resultSchema": "fgpm.runtime-shutdown-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "shutdown-1", "operation": "runtime.shutdown", "parameters": {} },
+      "sessionRequirement": "same persistent control process that owns the runtime", "preconditions": [], "failureCodes": [], "mutationBoundary": "owned runtime shuts down before its active reference is cleared"
+    },
+    {
+      "operation": "distribution.export", "maturity": "expert-supported", "authorityCategory": "expert/debug",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["generation", "directory"], "properties": { "generation": { "type": "string" }, "directory": { "type": "string" } } }, "resultSchema": "fgpm.distribution/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "distribution-export-1", "operation": "distribution.export", "parameters": { "generation": "sha256:<generation>", "directory": "C:/out/distribution" } },
+      "sessionRequirement": "persistent control process", "preconditions": ["generation closure is complete"], "failureCodes": ["FGPM_DISTRIBUTION_INVALID"], "mutationBoundary": "manager authority is read-only; external output publishes last"
+    },
+    {
+      "operation": "distribution.import", "maturity": "guided-project-supported", "authorityCategory": "distribution",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["directory"], "properties": { "directory": { "type": "string" } } }, "resultSchema": "fgpm.distribution-import-result/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "distribution-import-1", "operation": "distribution.import", "parameters": { "directory": "C:/in/distribution" } },
+      "sessionRequirement": "persistent control process", "preconditions": ["distribution verifies"], "failureCodes": ["FGPM_DISTRIBUTION_INVALID"], "mutationBoundary": "complete distribution verifies before immutable records are accepted"
+    },
+    {
+      "operation": "distribution.verify", "maturity": "expert-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false, "required": ["directory"], "properties": { "directory": { "type": "string" } } }, "resultSchema": "fgpm.distribution-verification/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "distribution-verify-1", "operation": "distribution.verify", "parameters": { "directory": "C:/in/distribution" } },
+      "sessionRequirement": "none", "preconditions": [], "failureCodes": ["FGPM_DISTRIBUTION_INVALID"], "mutationBoundary": "read-only"
+    },
+    {
+      "operation": "manager.reachability", "maturity": "guided-project-supported", "authorityCategory": "inspection",
+      "parameterSchema": { "type": "object", "additionalProperties": false }, "resultSchema": "fgpm.manager-reachability-report/1",
+      "minimalRequest": { "schema": "fgpm.control-request/1", "requestId": "reachability-1", "operation": "manager.reachability", "parameters": {} },
+      "sessionRequirement": "none", "preconditions": [], "failureCodes": [], "mutationBoundary": "read-only"
+    }
+  ]
+}

@@ -2,7 +2,15 @@
 
 An executable language-laboratory prototype for a mod-native package system.
 
-This repository now tests six related propositions:
+Current manager prerelease: **0.11.0-rc.6**. See the
+[public release](https://github.com/Treatid2/FOSS-Package-Manager/releases/tag/v0.11.0-rc.6),
+[release notes](docs/release-notes-0.11.0-rc.6.md), the
+[package entrypoint and identity contract](docs/package-entrypoint-and-identity.md), and the
+[standalone release verification path](docs/reference-tools-readme.md). Build-to-public-source
+mapping is recorded in the
+[RC6 source-correspondence note](docs/source-correspondence-0.11.0-rc.6.md).
+
+This repository now tests seven related propositions:
 
 > Can a small manager resolve declarative packages, dispatch specialised handlers, build deterministic artifacts, and explain exactly how each artifact was produced?
 
@@ -16,11 +24,13 @@ This repository now tests six related propositions:
 
 > Can independently authored tasks run on real worker threads with variable timing while immutable snapshots, staged commands, and an authoritative barrier produce the same committed world?
 
+> Can a curator persist intent, explain one incremental package change, commit an immutable generation, reproduce it elsewhere, and transition or roll back the complete runtime without exposing a partial graph?
+
 The visible result remains deliberately tiny: a field, a two-cube character, and a fixed camera. An optional Green Head package changes the character's head colour through a public typed hook without modifying the character package. Phase 5 moves, saves, and restores the world. Phase 6 adds an open-ended Character Journal. Phase 7 replaces direct motion mutation with two independently packaged tasks: both read one immutable transform snapshot on worker threads, then Transform Authority commits their `set-x` and `add-x` buffers once in a declared order.
 
 ## Quick start
 
-Requirements: Node.js 22 or newer. There are no third-party dependencies and nothing is installed into `node_modules` or `K:\Mark\VS\extern`.
+Requirements: Node.js 22 or newer. There are no third-party dependencies, so the project does not populate `node_modules` or any workspace-level external dependency/cache location.
 
 ```powershell
 npm test
@@ -28,6 +38,7 @@ npm run build
 npm run build:green
 npm run snapshot
 npm run demo
+npm run benchmark:phase9 -- --work <temporary-fast-directory> --out <results.json>
 ```
 
 `npm run demo` builds the Green Head profile, starts the disposable local runtime, and opens it in the default browser. Press Ctrl+C in the terminal to stop the runtime.
@@ -40,6 +51,22 @@ node src/cli.mjs run profiles/green-head.json --snapshot build/restored.svg --ti
 ```
 
 Save identities are immutable in this prototype; publish a new identity for a later revision.
+`run --ticks N` is bounded and stops after those initial ticks unless `--interactive` is supplied;
+`--snapshot` selects an SVG output path and does not decide runtime liveness.
+
+Phase 9's local curation commands use an explicit manager root (default `.fgpm-manager`):
+
+```powershell
+node src/cli.mjs package import packages/demo.green-head --manager-root build/curation
+node src/cli.mjs workspace create next --manager-root build/curation
+node src/cli.mjs workspace stage next operation.json --manager-root build/curation
+node src/cli.mjs workspace plan next --manager-root build/curation
+node src/cli.mjs candidate explain sha256:<candidate> --manager-root build/curation
+```
+
+Package import is deliberately inert. Candidate build/validation, generation commit, distribution
+export/import, and generation activation are separate CLI operations. See the
+[Phase 9 implementation map](docs/phase-9-implementation-map.md) for their commit boundaries.
 
 To ask why the head has its selected colour and see its action path:
 
@@ -47,9 +74,24 @@ To ask why the head has its selected colour and see its action path:
 node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/appearance/head/base-colour
 ```
 
+## Post-Phase-7 review
+
+The preserved Phase 7 checkpoint has a non-feature architecture review in
+[docs/review/post-phase-7-architecture-review.md](docs/review/post-phase-7-architecture-review.md),
+with a concise [decision report](docs/review/decision-report.md). The review labels
+demonstrated evidence, limited support, inference, assumptions, and contradictions rather
+than treating phase findings as proof.
+
+The provisional [runtime-task authoring kit](authoring-kit/runtime-task/README.md) is the
+public handoff for a separate fresh-author evaluation. Its included example and mechanical
+self-check target this exact experimental checkpoint; they do not create a version 1
+compatibility promise.
+
 ## What is implemented
 
-- versioned JSON core manifests and layered `fpm.profile/2` inputs;
+- one permanent `fgpm-package.json` entrypoint with a format selector, publisher UUID namespace,
+  immutable local name, and exact content root;
+- versioned JSON core manifests and layered `fgpm.profile/2` inputs;
 - recursive package discovery and semantic-version dependency/capability resolution;
 - handler declarations that separate execution form from trust policy;
 - out-of-process analysis over versioned JSON/stdin/stdout;
@@ -87,6 +129,13 @@ node src/cli.mjs explain build/green-head/provenance.json pkg:demo.character/app
 - a scene builder that receives only its own normalized scene analyses during planning and its declared texture artifacts during materialisation;
 - a renderer service that consumes only immutable flat scene snapshots;
 - structured diagnostics and conformance fixtures for planned failure cases.
+- explicit content-addressed package import and installed indexing, separate from selection;
+- named persistent workspaces backed by immutable revisions and compare-and-swap heads;
+- deterministic candidates with causal impact and retained-reference indexes;
+- one-layer package-shaped derived outputs and atomic immutable generation commit;
+- self-contained local distribution verification and exact replay into an empty store;
+- full-generation checkpoint/restart/rollback with the active reference as the final commit point;
+- seeded public-package scale evidence through 1,000 packages.
 
 The manager has no texture, mesh, assembly, camera, worldspace, transform, motion, or rendering rules. Those concepts remain in independent example packages.
 
@@ -124,7 +173,7 @@ file texture action     solid-colour action
 runtime texture artifacts -> scene action
                   |
                   v
-scene-bundle tree + fpm.lock.json + provenance.json
+scene-bundle tree + fgpm.lock.json + provenance.json
                   |
                   v
 runtime task collection -> worker scheduler -> staged command buffers
@@ -152,7 +201,7 @@ Each action receives manager-supplied input paths and a private staging director
 
 | Package | Role |
 | --- | --- |
-| `demo.scene-toolchain` | Analyzes scene-domain manifests, proposes the final action, and builds a two-file `fpm.render-bundle/1` tree from declared runtime textures |
+| `demo.scene-toolchain` | Analyzes scene-domain manifests, proposes the final action, and builds a two-file `fgpm.render-bundle/1` tree from declared runtime textures |
 | `demo.texture-toolchain` | Independently analyzes file and solid-colour texture declarations and materializes source artifacts |
 | `demo.solid-colour-adapter` | Converts `texture.solid-colour/1` to `texture.runtime.rgba8-srgb/1` as a capability-contained Wasm action |
 | `demo.texture-vocabulary` | Governs the reusable base-colour solid-to-runtime semantic relation |
@@ -185,13 +234,13 @@ The two toolchains are not profile roots. Packages require their distinct capabi
 Building a profile creates:
 
 - `scene-bundle/scene.json` and `asset-index.json` — one canonical multi-file tree root, with the existing scene as its selected runtime entry;
-- `fpm.lock.json` — all resolution, authority, validation, environment, action, root, handler, and binding decisions;
+- `fgpm.lock.json` — all resolution, authority, validation, environment, action, root, handler, and binding decisions;
 - `provenance.json` — an explanation index for exports, hooks, action paths, adapters, and artifacts;
 - `runtime-lifecycle.json` after `run` — selected runtime services, reasons, activation order, ticks, rollback-safe state, and reverse shutdown;
 - `runtime-session.json` after activation — the committed fresh/load result, compatibility report, opaque retained fragments, and migrations;
 - `runtime-ticks.json` after a successful tick — deterministic task, snapshot, buffer, composition, policy, and state-root records;
 - `runtime-tick-trace.json` — explicitly observational worker counts, completion order, affinities, and thread IDs;
-- a sibling `.fpm-store/` — verified content objects, deterministic action-cache records, and immutable world-save/migration references.
+- a sibling `.fgpm-store/` — verified content objects, deterministic action-cache records, and immutable world-save/migration references.
 
 Generated outputs live under `build/` and are ignored by Git. Cache hits are deliberately observational and are not written into the lockfile, so a cold and warm build produce identical records.
 

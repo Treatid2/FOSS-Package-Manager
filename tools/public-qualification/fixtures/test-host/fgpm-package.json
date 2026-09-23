@@ -1,0 +1,9 @@
+{
+  "format": "fgpm.package/1", "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "qualification.public-session-host", "version": "0.1.0", "license": "Apache-2.0",
+  "dependencies": [
+    { "package": "demo.runtime-task-v2-distribution", "range": "0.8.0" },
+    { "package": "qualification.public-session", "range": "0.1.0" }
+  ],
+  "contributions": [{ "id": "pkg:qualification.public-session-host/runtime/test", "manifestType": "fgpm.demo.runtime/1", "manifest": "runtime.json" }]
+}

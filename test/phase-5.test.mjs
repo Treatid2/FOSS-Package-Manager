@@ -18,11 +18,11 @@ const transformV2Profile = path.join(repository, "profiles", "green-head-transfo
 const failureProfiles = path.join(repository, "fixtures", "failures", "profiles");
 
 async function temporaryDirectory(label) {
-  return mkdtemp(path.join(os.tmpdir(), `fpm-phase5-${label}-`));
+  return mkdtemp(path.join(os.tmpdir(), `fgpm-phase5-${label}-`));
 }
 
 function storeFor(directory) {
-  return new ArtifactStore(directory, { protocol: "fpm.artifact-transaction/2", facts: {}, widenedDimensions: [] });
+  return new ArtifactStore(directory, { protocol: "fgpm.artifact-transaction/2", facts: {}, widenedDimensions: [] });
 }
 
 async function jsonFile(filePath) {
@@ -30,7 +30,7 @@ async function jsonFile(filePath) {
 }
 
 async function buildShared(profile, root, name) {
-  return buildProfile(profile, path.join(root, name), { storeDirectory: path.join(root, ".fpm-store") });
+  return buildProfile(profile, path.join(root, name), { storeDirectory: path.join(root, ".fgpm-store") });
 }
 
 test("save, full shutdown, and fresh activation preserve world identity, transform, and render", async (context) => {
@@ -44,7 +44,7 @@ test("save, full shutdown, and fresh activation preserve world identity, transfo
   const expectedTransform = first.capability("runtime.transforms.read").snapshot();
   const expectedInstances = first.capability("runtime.instances.read").list().map((entry) => entry.instanceId);
   const committed = await first.capability("runtime.persistence.world").save("save:phase-5/reload");
-  assert.equal(committed.manifest.schema, "fpm.world-save/1");
+  assert.equal(committed.manifest.schema, "fgpm.world-save/1");
   assert.equal(committed.manifest.checkpoint.tick, 2);
   await first.shutdown();
   assert.equal(first.active.length, 0);
@@ -131,14 +131,14 @@ test("interrupted save leaves no committed reference and preserves the previous 
   let importedRoots;
   await assert.rejects(() => interrupted.capability("runtime.persistence.world").save("save:phase-5/interrupted"),
     (error) => {
-      assert.equal(error.code, "FPM_SIMULATED_INTERRUPTION");
+      assert.equal(error.code, "FGPM_SIMULATED_INTERRUPTION");
       importedRoots = error.details.importedRoots;
       return true;
     });
   await interrupted.shutdown();
-  const store = storeFor(path.join(root, ".fpm-store"));
+  const store = storeFor(path.join(root, ".fgpm-store"));
   await assert.rejects(() => store.readTreeReference("world-saves", "save:phase-5/interrupted"),
-    (error) => error.code === "FPM_ARTIFACT_REFERENCE_MISSING");
+    (error) => error.code === "FGPM_ARTIFACT_REFERENCE_MISSING");
   assert.equal((await store.readTreeReference("world-saves", "save:phase-5/previous")).record.identity,
     "save:phase-5/previous");
   const report = await store.reachabilityReport();
@@ -167,7 +167,7 @@ test("an attributed one-step migration restores v1 transform state through the v
   assert.equal(session.migrations.length, 1);
   assert.equal(session.migrations[0].implementation, "service:demo.transform-migration-v1-v2/1");
   assert.match(session.migrations[0].implementationHash, /^sha256:[0-9a-f]{64}$/);
-  const original = await storeFor(path.join(root, ".fpm-store"))
+  const original = await storeFor(path.join(root, ".fgpm-store"))
     .readTreeReference("world-saves", "save:phase-5/migrate");
   assert.equal(JSON.parse(original.files["save-manifest.json"]).migrationHistory.length, 0);
   await restored.shutdown();
@@ -185,9 +185,9 @@ test("optional package state remains opaque while absent and restores when the p
   const absentBuild = await buildShared(baseProfile, root, "without-marker");
   const absent = await startRuntime(absentBuild, { loadSaveId: "save:phase-5/optional-marker",
     snapshotPath: path.join(root, "absent.svg") });
-  assert.throws(() => absent.capability("runtime.marker.read"), (error) => error.code === "FPM_RUNTIME_CAPABILITY_INACTIVE");
+  assert.throws(() => absent.capability("runtime.marker.read"), (error) => error.code === "FGPM_RUNTIME_CAPABILITY_INACTIVE");
   assert.deepEqual(absent.capability("runtime.persistence.world").report().retainedOpaque
-    .map((entry) => entry.semanticSchema), ["fpm.demo.character-marker-state"]);
+    .map((entry) => entry.semanticSchema), ["fgpm.demo.character-marker-state"]);
   await absent.shutdown();
 
   const returnedBuild = await buildShared(greenProfile, root, "marker-returned");
@@ -212,8 +212,8 @@ test("missing required state owner prevents partial runtime activation", async (
   const missing = await buildShared(baseProfile, root, "missing");
   await assert.rejects(() => startRuntime(missing, { loadSaveId: "save:phase-5/required-owner",
     snapshotPath: path.join(root, "missing.svg") }), (error) => {
-    assert.equal(error.code, "FPM_STATE_OWNER_REQUIRED_MISSING");
-    assert.equal(error.details.requiredStateSchema, "fpm.demo.required-counter-state");
+    assert.equal(error.code, "FGPM_STATE_OWNER_REQUIRED_MISSING");
+    assert.equal(error.details.requiredStateSchema, "fgpm.demo.required-counter-state");
     assert.equal(error.details.requiredCollectionMember, "state-owner:fixture.required-counter/1");
     assert.equal(error.details.owningCapability, "runtime.required-counter.state");
     assert.equal(error.details.lifecycle.committed, false);
@@ -228,7 +228,7 @@ test("migration ambiguity requires exact policy and provider bindings co-select 
   context.after(() => rm(root, { recursive: true, force: true }));
   const ambiguous = await buildShared(path.join(failureProfiles, "ambiguous-migration.json"), root, "ambiguous");
   assert.throws(() => resolveRuntimePlan(ambiguous), (error) => {
-    assert.equal(error.code, "FPM_RUNTIME_PROVIDER_AMBIGUOUS");
+    assert.equal(error.code, "FGPM_RUNTIME_PROVIDER_AMBIGUOUS");
     assert.equal(error.details.capability, "runtime.transforms.migration");
     assert.equal(error.details.candidates.length, 2);
     return true;

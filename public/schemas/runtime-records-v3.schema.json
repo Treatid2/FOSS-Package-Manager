@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-package-manager.example/schema/runtime-records-v3.schema.json",
+  "title": "FGPM corrected public runtime records",
+  "x-fgpm-license": "Apache-2.0",
+  "x-fgpm-steward": "fgpm.manager-core/2",
+  "$defs": {
+    "runtimePlan": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "activation", "artifact", "selections", "providerBindings", "collections", "activationOrder", "services", "hostGrants", "channelCompositions"],
+      "properties": {
+        "schema": { "const": "fgpm.runtime-plan/3" }, "activation": { "type": "object" }, "artifact": { "type": "object" },
+        "selections": { "type": "array" }, "providerBindings": { "type": "array" }, "collections": { "type": "array" },
+        "activationOrder": { "type": "array" }, "services": { "type": "array" }, "hostGrants": { "type": "array" },
+        "channelCompositions": { "type": "array" }
+      }
+    },
+    "deterministicTick": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "checkpoint", "tasks", "taskPolicy", "taskOutcomes", "snapshots", "commandBuffers", "composition", "result", "identity"],
+      "properties": {
+        "schema": { "const": "fgpm.deterministic-tick/2" }, "checkpoint": { "type": "object" }, "tasks": { "type": "array" },
+        "taskPolicy": { "type": "object" }, "taskOutcomes": { "type": "array" }, "snapshots": { "type": "array" },
+        "commandBuffers": { "type": "array" }, "composition": { "type": "array" }, "result": { "type": ["object", "null"] },
+        "identity": { "type": "string", "pattern": "^sha256:" }
+      }
+    },
+    "observationalTrace": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "observations"],
+      "properties": { "schema": { "const": "fgpm.runtime-tick-trace/2" }, "observations": { "type": "array" } }
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.scene-extractor",
+  "version": "0.7.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.runtime-instance-store",
+      "range": "^0.6.0"
+    },
+    {
+      "package": "demo.transform-authority",
+      "range": "^0.7.0"
+    },
+    {
+      "package": "demo.save-coordinator",
+      "range": "^0.7.0"
+    },
+    {
+      "package": "demo.deterministic-scheduler",
+      "range": "^0.7.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:demo.scene-extractor/1",
+      "protocol": "fgpm.runtime-service/1",
+      "artifactAccess": "none",
+      "provides": [
+        {
+          "capability": "runtime.scene-snapshot",
+          "version": "1.0.0",
+          "exclusive": true
+        }
+      ],
+      "requires": [
+        {
+          "capability": "runtime.instances.read",
+          "range": "^1.0.0",
+          "binding": "runtime.instances/1"
+        },
+        {
+          "capability": "runtime.transforms.read",
+          "range": "^1.0.0",
+          "binding": "runtime.transforms/1"
+        },
+        {
+          "capability": "runtime.scheduler.barrier",
+          "range": "^1.0.0",
+          "binding": "runtime.scheduler/1"
+        },
+        {
+          "capability": "runtime.restore.ready",
+          "range": "^1.0.0",
+          "binding": "runtime.persistence/1"
+        }
+      ],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority"
+        ]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

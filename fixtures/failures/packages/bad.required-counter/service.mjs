@@ -13,19 +13,19 @@ export function createService() {
   return {
     async activate() {
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: {
           "runtime.state.owner": freeze({
-            protocol: "fpm.state-owner/1",
-            semanticSchema: "fpm.demo.required-counter-state",
+            protocol: "fgpm.state-owner/1",
+            semanticSchema: "fgpm.demo.required-counter-state",
             schemaVersion: 1,
             required: true,
             governingCapability: "runtime.required-counter.state",
             provider: "service:bad.required-counter/1",
             dependsOn: [],
             capture: (checkpoint) => freeze({
-              protocol: "fpm.state-fragment/1",
-              semanticSchema: "fpm.demo.required-counter-state",
+              protocol: "fgpm.state-fragment/1",
+              semanticSchema: "fgpm.demo.required-counter-state",
               schemaVersion: 1,
               checkpoint: structuredClone(checkpoint),
               stateRevision: counter,

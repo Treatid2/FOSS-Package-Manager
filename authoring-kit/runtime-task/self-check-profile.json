@@ -1,0 +1,50 @@
+{
+  "schema": "fgpm.profile/2",
+  "name": "runtime-task-kit",
+  "packageRoots": [
+    "../../packages",
+    "./example-package"
+  ],
+  "distribution": {
+    "roots": [
+      "demo.simple-runtime",
+      "demo.scene-validator",
+      "demo.solid-colour-adapter",
+      "demo.worldspace"
+    ],
+    "entryPoint": "pkg:demo.worldspace/world/demo",
+    "artifact": {
+      "type": "fgpm.render-bundle/1",
+      "builder": "handler:demo.scene-toolchain/1"
+    },
+    "activation": "runtime:demo.simple-runtime/browser-svg"
+  },
+  "target": {
+    "platform": "portable-demo",
+    "textureFormat": "rgba8-srgb"
+  },
+  "policy": {
+    "providers": {},
+    "handlerSelections": {},
+    "adapterSelections": {},
+    "validation": {
+      "id": "policy:demo.require-scene-validator/1",
+      "requiredValidators": [
+        "validator:demo.scene-proposal/1"
+      ],
+      "waivers": []
+    },
+    "environmentKey": {
+      "widen": [
+        "host.platform",
+        "host.architecture"
+      ]
+    }
+  },
+  "user": {
+    "roots": [
+      "example.runtime-task"
+    ],
+    "replacements": {}
+  }
+}

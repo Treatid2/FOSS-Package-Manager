@@ -16,7 +16,7 @@ const baseProfile = path.join(repository, "profiles", "base.json");
 const failureProfiles = path.join(repository, "fixtures", "failures", "profiles");
 
 async function temporaryDirectory(label) {
-  return mkdtemp(path.join(os.tmpdir(), `fpm-phase6-${label}-`));
+  return mkdtemp(path.join(os.tmpdir(), `fgpm-phase6-${label}-`));
 }
 
 async function jsonFile(filePath) {
@@ -24,7 +24,7 @@ async function jsonFile(filePath) {
 }
 
 async function buildShared(profile, root, name) {
-  return buildProfile(profile, path.join(root, name), { storeDirectory: path.join(root, ".fpm-store") });
+  return buildProfile(profile, path.join(root, name), { storeDirectory: path.join(root, ".fgpm-store") });
 }
 
 test("a new Journal package joins persistence through one generic collection declaration", async (context) => {
@@ -32,7 +32,7 @@ test("a new Journal package joins persistence through one generic collection dec
   context.after(() => rm(root, { recursive: true, force: true }));
   const genericSources = await Promise.all([
     readFile(path.join(repository, "src", "core", "runtime.mjs"), "utf8"),
-    readFile(path.join(repository, "packages", "demo.save-coordinator", "fpm-package.json"), "utf8"),
+    readFile(path.join(repository, "packages", "demo.save-coordinator", "fgpm-package.json"), "utf8"),
     readFile(path.join(repository, "packages", "demo.save-coordinator", "service.mjs"), "utf8"),
   ]);
   assert.ok(genericSources.every((source) => !/character-journal|runtime\.journal/.test(source)));
@@ -117,7 +117,7 @@ test("duplicate collection identities and member dependency cycles fail with att
   context.after(() => rm(root, { recursive: true, force: true }));
   const duplicate = await buildShared(path.join(failureProfiles, "collection-duplicate.json"), root, "duplicate");
   assert.throws(() => resolveRuntimePlan(duplicate), (error) => {
-    assert.equal(error.code, "FPM_RUNTIME_COLLECTION_MEMBER_DUPLICATE");
+    assert.equal(error.code, "FGPM_RUNTIME_COLLECTION_MEMBER_DUPLICATE");
     assert.equal(error.details.member, "state-owner:fixture.duplicate/1");
     assert.deepEqual(error.details.contributors.map((entry) => entry.package).sort(),
       ["bad.collection-duplicate-a", "bad.collection-duplicate-b"]);
@@ -126,7 +126,7 @@ test("duplicate collection identities and member dependency cycles fail with att
 
   const cycle = await buildShared(path.join(failureProfiles, "collection-cycle.json"), root, "cycle");
   assert.throws(() => resolveRuntimePlan(cycle), (error) => {
-    assert.equal(error.code, "FPM_RUNTIME_COLLECTION_DEPENDENCY_CYCLE");
+    assert.equal(error.code, "FGPM_RUNTIME_COLLECTION_DEPENDENCY_CYCLE");
     assert.deepEqual([...new Set(error.details.cycle)].sort(),
       ["state-owner:fixture.cycle-a/1", "state-owner:fixture.cycle-b/1"]);
     return true;
@@ -153,7 +153,7 @@ test("explicit policy exclusion and package absence retain optional state until 
   const excluded = await startRuntime(excludedBuild, { loadSaveId: "save:phase-6/retention",
     snapshotPath: path.join(root, "excluded.svg") });
   assert.throws(() => excluded.capability("runtime.journal.read"),
-    (error) => error.code === "FPM_RUNTIME_CAPABILITY_INACTIVE");
+    (error) => error.code === "FGPM_RUNTIME_CAPABILITY_INACTIVE");
   const collection = excluded.plan.record.collections.find((entry) => entry.capability === "runtime.state.owner");
   assert.deepEqual(collection.exclusions, [{
     member: "state-owner:demo.character-journal/1",

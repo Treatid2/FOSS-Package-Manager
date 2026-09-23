@@ -12,7 +12,7 @@ function freeze(value) {
   return value;
 }
 
-const stateSchema = "fpm.demo.character-marker-state";
+const stateSchema = "fgpm.demo.character-marker-state";
 const character = "world:demo/character-1";
 
 export function createService() {
@@ -24,15 +24,15 @@ export function createService() {
     async activate(context) {
       instances = context.require("runtime.instances.read");
       const state = freeze({
-        protocol: "fpm.state-owner/1",
+        protocol: "fgpm.state-owner/1",
         semanticSchema: stateSchema,
         schemaVersion: 1,
         required: false,
         governingCapability: "runtime.marker.read",
         provider: "service:demo.character-marker/1",
-        dependsOn: ["fpm.demo.instance-state"],
+        dependsOn: ["fgpm.demo.instance-state"],
         capture: (checkpoint) => freeze({
-          protocol: "fpm.state-fragment/1",
+          protocol: "fgpm.state-fragment/1",
           semanticSchema: stateSchema,
           schemaVersion: 1,
           checkpoint: structuredClone(checkpoint),
@@ -41,11 +41,11 @@ export function createService() {
         }),
         prepareRestore: () => {},
         restore: (fragment) => {
-          if (fragment?.protocol !== "fpm.state-fragment/1" || fragment.semanticSchema !== stateSchema
+          if (fragment?.protocol !== "fgpm.state-fragment/1" || fragment.semanticSchema !== stateSchema
             || fragment.schemaVersion !== 1 || fragment.payload?.instanceId !== character
             || typeof fragment.payload.label !== "string" || !Number.isInteger(fragment.payload.counter)
             || !instances.exists(character)) {
-            fail("FPM_STATE_FRAGMENT_UNSUPPORTED", "Character Marker cannot restore the supplied state fragment.", {
+            fail("FGPM_STATE_FRAGMENT_UNSUPPORTED", "Character Marker cannot restore the supplied state fragment.", {
               semanticSchema: fragment?.semanticSchema ?? null,
               schemaVersion: fragment?.schemaVersion ?? null,
             });
@@ -57,12 +57,12 @@ export function createService() {
         },
       });
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: {
           "runtime.marker.read": freeze({ current: () => freeze({ instanceId: character, label, counter, revision }) }),
           "runtime.marker.write": freeze({ set: (nextLabel, nextCounter) => {
             if (typeof nextLabel !== "string" || !Number.isInteger(nextCounter)) {
-              fail("FPM_MARKER_COMMAND_INVALID", "A marker command is malformed.", { nextLabel, nextCounter });
+              fail("FGPM_MARKER_COMMAND_INVALID", "A marker command is malformed.", { nextLabel, nextCounter });
             }
             label = nextLabel;
             counter = nextCounter;

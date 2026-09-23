@@ -1,0 +1,43 @@
+{
+  "schema": "fgpm.profile/3",
+  "name": "grid-dungeon-v04-manager-hosted-integration",
+  "packageRoots": ["../../../packages", "packages"],
+  "distribution": {
+    "roots": [
+      "fgpm.grid-dungeon-integration-runtime",
+      "demo.scene-validator",
+      "demo.solid-colour-adapter",
+      "demo.worldspace"
+    ],
+    "entryPoint": "pkg:demo.worldspace/world/demo",
+    "artifact": {
+      "type": "fgpm.render-bundle/1",
+      "builder": "handler:demo.scene-toolchain/1"
+    },
+    "activation": "runtime:fgpm.grid-dungeon-integration/dungeon-v04"
+  },
+  "target": {
+    "platform": "portable-demo",
+    "textureFormat": "rgba8-srgb"
+  },
+  "policy": {
+    "providers": {
+      "runtime.scene-snapshot": "demo.scene-extractor-v2"
+    },
+    "handlerSelections": {},
+    "adapterSelections": {},
+    "collectionPolicy": {},
+    "validation": {
+      "id": "policy:demo.require-scene-validator/1",
+      "requiredValidators": ["validator:demo.scene-proposal/1"],
+      "waivers": []
+    },
+    "environmentKey": {
+      "widen": ["host.platform", "host.architecture"]
+    }
+  },
+  "user": {
+    "roots": [],
+    "replacements": {}
+  }
+}

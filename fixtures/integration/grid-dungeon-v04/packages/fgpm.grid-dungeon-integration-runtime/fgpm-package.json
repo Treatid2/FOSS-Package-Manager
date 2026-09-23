@@ -1,0 +1,24 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "fgpm.grid-dungeon-integration-runtime",
+  "version": "0.2.0",
+  "license": "MPL-2.0",
+  "dependencies": [
+    {
+      "package": "demo.runtime-task-v2-distribution",
+      "range": "0.8.0"
+    },
+    {
+      "package": "fgdungeon.reference-runtime",
+      "range": "0.1.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:fgpm.grid-dungeon-integration-runtime/runtime/dungeon-v04",
+      "manifestType": "fgpm.demo.runtime/1",
+      "manifest": "runtime.json"
+    }
+  ]
+}

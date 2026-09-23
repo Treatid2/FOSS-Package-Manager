@@ -1,0 +1,4 @@
+{
+  "schema": "fgpm.runtime-service-activation/2", "service": "service:demo.scene-extractor-v2/1",
+  "capabilities": { "runtime.scene-snapshot": { "protocol": "fgpm.runtime-scene-snapshot/1" } }
+}

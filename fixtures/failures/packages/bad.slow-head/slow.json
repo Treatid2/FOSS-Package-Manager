@@ -1,5 +1,5 @@
 {
-  "schema": "fpm.demo.slow-colour/1",
+  "schema": "fgpm.demo.slow-colour/1",
   "export": {
     "id": "pkg:bad.slow-head/texture/head",
     "semanticType": "texture.runtime.rgba8-srgb/1",

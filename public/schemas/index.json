@@ -1,0 +1,19 @@
+{
+  "schema": "fgpm.public-schema-index/1",
+  "status": "experimental",
+  "license": "Apache-2.0",
+  "steward": "fgpm.manager-core/2",
+  "unknownFieldPolicy": "strict-unless-explicit-extension",
+  "schemas": [
+    { "identity": "fgpm.package/2", "file": "package-v2.schema.json", "steward": "fgpm.manager-core/2" },
+    { "identity": "fgpm.profile/3", "file": "profile-v3.schema.json", "steward": "fgpm.manager-core/2" },
+    { "identity": "fgpm.runtime-service/2", "file": "runtime-service-v2.schema.json", "steward": "fgpm.manager-core/2" },
+    { "identity": "fgpm.runtime-task-member/2", "file": "runtime-task-v2.schema.json", "steward": "fgpm.runtime-task-vocabulary/2" },
+    { "identity": "fgpm.transform-task-vocabulary/1", "file": "transform-task-v1.schema.json", "steward": "fgpm.transform-task-vocabulary/1" },
+    { "identity": "fgpm.runtime-plan/3", "file": "runtime-records-v3.schema.json", "steward": "fgpm.manager-core/2" },
+    { "identity": "fgpm.typed-artifact-reference/1", "file": "artifact-host-grants-v1.schema.json", "steward": "fgpm.manager-core/2" },
+    { "identity": "fgpm.workspace-operation/1", "file": "workspace-operation-v1.schema.json", "steward": "fgpm.manager-core/3" },
+    { "identity": "fgpm.control-operation-catalogue/1", "file": "control-operation-catalogue-v1.json", "steward": "fgpm.manager-control/1" },
+    { "identity": "fgpm.pre-public-migration-operation/1", "file": "pre-public-migration-operation-v1.schema.json", "steward": "fgpm.manager-core/3" }
+  ]
+}

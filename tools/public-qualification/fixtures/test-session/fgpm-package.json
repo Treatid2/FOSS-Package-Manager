@@ -1,0 +1,12 @@
+{
+  "format": "fgpm.package/2", "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "qualification.public-session", "version": "0.1.0", "license": "Apache-2.0",
+  "dependencies": [],
+  "runtimeServices": [{
+    "id": "service:qualification.public-session/1", "protocol": "fgpm.runtime-service/2",
+    "provides": [{ "capability": "qualification.public-session", "version": "1.0.0", "cardinality": "exclusive" }],
+    "requires": [], "artifactAccess": "none", "artifactStoreAccess": "none", "hostGrants": [],
+    "execution": { "form": "native-in-process", "securityBoundary": "none", "requestedPowers": [] },
+    "module": "service.mjs", "activationContract": "activation.json"
+  }]
+}

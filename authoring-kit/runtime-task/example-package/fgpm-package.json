@@ -1,0 +1,58 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "d30a646c-df66-4ff1-955e-2813f4c4fb9a",
+  "name": "example.runtime-task",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.deterministic-scheduler",
+      "range": "^0.7.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:example.runtime-task/1",
+      "protocol": "fgpm.runtime-service/1",
+      "provides": [
+        {
+          "capability": "runtime.task",
+          "version": "1.0.0",
+          "exclusive": false,
+          "cardinality": "collection",
+          "member": "task:example.runtime-task/add-y/1",
+          "binding": "runtime.task.example-runtime-task/1",
+          "memberDependencies": [],
+          "metadata": {
+            "phase": "simulation",
+            "snapshots": [
+              "runtime.transforms.read"
+            ],
+            "outputs": [
+              {
+                "channel": "runtime.transforms.commands",
+                "composition": "ordered",
+                "commitAfter": [
+                  "task:demo.motion-offset/add-x/1"
+                ]
+              }
+            ],
+            "affinity": "any-worker",
+            "reentrancy": "non-reentrant",
+            "required": false,
+            "failure": "drop-task"
+          }
+        }
+      ],
+      "requires": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority"
+        ]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "schema": "fpm.demo.visual-assembly/1",
+  "schema": "fgpm.demo.visual-assembly/1",
   "export": {
     "id": "pkg:demo.field/assembly/field",
     "semanticType": "visual.assembly/1",

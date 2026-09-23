@@ -1,0 +1,19 @@
+{
+  "schema": "fgpm.control-lifecycle-expected-responses/1",
+  "requestFile": "control-lifecycle.jsonl",
+  "responseEnvelope": "fgpm.control-response/1",
+  "responses": [
+    { "requestId": "01-describe", "operation": "control.describe", "ok": true, "resultSchema": "fgpm.control-description/1", "authorityMoved": false, "managerMoved": false, "runtimeMoved": false, "sessionExpectation": "none" },
+    { "requestId": "02-active-before", "operation": "generation.active", "ok": true, "resultSchema": "fgpm.active-generation-state/1", "authorityMoved": false, "managerMoved": false, "runtimeMoved": false, "sessionExpectation": "stopped" },
+    { "requestId": "03-activate", "operation": "generation.activate", "ok": true, "resultSchema": "fgpm.generation-transition/1", "authorityMoved": true, "managerMoved": true, "runtimeMoved": true, "sessionExpectation": "established", "transitionClass": "initial-activation" },
+    { "requestId": "04-inspect-before", "operation": "runtime.inspect", "ok": true, "resultSchema": "fgpm.runtime-inspection/1", "authorityMoved": false, "managerMoved": false, "runtimeMoved": false, "sessionExpectation": "preserved" },
+    { "requestId": "05-tick", "operation": "runtime.tick", "ok": true, "resultSchema": "fgpm.runtime-inspection/1", "authorityMoved": true, "managerMoved": false, "runtimeMoved": true, "sessionExpectation": "preserved" },
+    { "requestId": "06-checkpoint-first", "operation": "runtime.checkpoint", "ok": true, "resultSchema": "fgpm.generation-runtime-checkpoint-result/1", "authorityMoved": true, "managerMoved": true, "runtimeMoved": false, "sessionExpectation": "preserved", "publicationClass": "first-publication" },
+    { "requestId": "07-checkpoint-replay", "operation": "runtime.checkpoint", "ok": true, "resultSchema": "fgpm.generation-runtime-checkpoint-result/1", "authorityMoved": false, "managerMoved": false, "runtimeMoved": false, "sessionExpectation": "preserved", "publicationClass": "idempotent-reuse" },
+    { "requestId": "08-rollback", "operation": "generation.rollback", "ok": true, "resultSchema": "fgpm.generation-transition/1", "authorityMoved": true, "managerMoved": true, "runtimeMoved": true, "sessionExpectation": "replaced", "transitionClass": "distinct-generation-rollback" },
+    { "requestId": "09-inspect-after", "operation": "runtime.inspect", "ok": true, "resultSchema": "fgpm.runtime-inspection/1", "authorityMoved": false, "managerMoved": false, "runtimeMoved": false, "sessionExpectation": "preserved" },
+    { "requestId": "10-shutdown", "operation": "runtime.shutdown", "ok": true, "resultSchema": "fgpm.runtime-shutdown-result/1", "authorityMoved": true, "managerMoved": true, "runtimeMoved": true, "sessionExpectation": "stopped" },
+    { "requestId": "11-stop", "operation": "control.stop", "ok": true, "resultSchema": "fgpm.control-stop-result/1", "authorityMoved": false, "managerMoved": false, "runtimeMoved": false, "sessionExpectation": "stopped" }
+  ],
+  "note": "Expectations apply to the exact request file resolved against a fresh manager root, a unique checkpoint save identity, and two distinct retained generation roots. authorityMoved is the combined-manager-runtime projection; managerMoved and runtimeMoved expose its components."
+}

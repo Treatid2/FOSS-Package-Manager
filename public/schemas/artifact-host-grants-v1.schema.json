@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-package-manager.example/schema/artifact-host-grants-v1.schema.json",
+  "title": "FGPM typed activation artifacts and host grants",
+  "x-fgpm-license": "Apache-2.0",
+  "x-fgpm-steward": "fgpm.manager-core/2",
+  "$defs": {
+    "typedArtifactReference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "id", "semanticType", "root", "entry", "provenance"],
+      "properties": {
+        "schema": { "const": "fgpm.typed-artifact-reference/1" }, "id": { "type": "string" },
+        "semanticType": { "type": "string" },
+        "root": {
+          "type": "object", "additionalProperties": false, "required": ["kind", "hash", "size", "totalSize"],
+          "properties": {
+            "kind": { "enum": ["blob", "tree"] }, "hash": { "type": "string", "pattern": "^sha256:" },
+            "size": { "type": "integer", "minimum": 0 }, "totalSize": { "type": ["integer", "null"], "minimum": 0 }
+          }
+        },
+        "entry": { "type": ["string", "null"] }, "provenance": { "type": "object" }
+      }
+    },
+    "grantRequest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "service", "grant"],
+      "properties": {
+        "schema": { "const": "fgpm.host-grant-request/1" }, "service": { "type": "string", "pattern": "^service:" },
+        "grant": { "type": "string", "pattern": "^fgpm\\.host\\.[a-z0-9.-]+/1$" }
+      }
+    },
+    "grantRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "service", "grant", "status", "classification", "provider", "policy"],
+      "properties": {
+        "schema": { "const": "fgpm.host-grant-record/1" }, "service": { "type": "string" }, "grant": { "type": "string" },
+        "status": { "enum": ["granted", "absent", "denied"] }, "classification": { "enum": ["deterministic", "observational", "conformance"] },
+        "provider": { "type": "string" }, "policy": { "type": "string" }
+      }
+    }
+  }
+}

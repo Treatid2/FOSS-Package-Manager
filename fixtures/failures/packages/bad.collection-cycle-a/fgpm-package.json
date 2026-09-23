@@ -1,0 +1,41 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "bad.collection-cycle-a",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "runtimeServices": [
+    {
+      "id": "service:bad.collection-cycle-a/1",
+      "protocol": "fgpm.runtime-service/1",
+      "provides": [
+        {
+          "capability": "runtime.state.owner",
+          "version": "1.0.0",
+          "exclusive": false,
+          "cardinality": "collection",
+          "member": "state-owner:fixture.cycle-a/1",
+          "binding": "fixture.cycle-a/1",
+          "memberDependencies": [
+            "state-owner:fixture.cycle-b/1"
+          ],
+          "metadata": {
+            "semanticSchema": "fgpm.fixture.cycle-a-state",
+            "schemaVersion": 1,
+            "required": false,
+            "governingCapability": "runtime.fixture.cycle-a"
+          }
+        }
+      ],
+      "requires": [],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority"
+        ]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-package-manager.example/schema/profile-v3.schema.json",
+  "title": "FGPM corrected public profile",
+  "x-fgpm-license": "Apache-2.0",
+  "x-fgpm-identity": "fgpm.profile/3",
+  "x-fgpm-steward": "fgpm.manager-core/2",
+  "x-fgpm-status": "experimental-no-compatibility-promise",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "name", "packageRoots", "distribution", "target", "policy", "user"],
+  "properties": {
+    "schema": { "const": "fgpm.profile/3" },
+    "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "packageRoots": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["roots", "entryPoint", "artifact", "activation"],
+      "properties": {
+        "roots": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "entryPoint": { "type": "string", "minLength": 1 },
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "builder"],
+          "properties": { "type": { "type": "string", "minLength": 1 }, "builder": { "type": "string", "minLength": 1 } }
+        },
+        "activation": { "type": "string", "minLength": 1 }
+      }
+    },
+    "target": { "type": "object" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["providers", "handlerSelections", "adapterSelections", "collectionPolicy", "validation", "environmentKey"],
+      "properties": {
+        "providers": { "type": "object" },
+        "handlerSelections": { "type": "object" },
+        "adapterSelections": { "type": "object" },
+        "collectionPolicy": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "exclude"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "exclude": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+            }
+          }
+        },
+        "validation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "requiredValidators", "waivers"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "requiredValidators": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+            "waivers": { "type": "array" }
+          }
+        },
+        "environmentKey": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["widen"],
+          "properties": { "widen": { "type": "array", "uniqueItems": true, "items": { "type": "string" } } }
+        }
+      }
+    },
+    "user": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["roots", "replacements"],
+      "properties": {
+        "roots": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "replacements": { "type": "object" },
+        "activation": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -17,7 +17,7 @@ function frozen(value) {
 }
 
 const serviceId = "service:demo.runtime-instance-store/1";
-const stateSchema = "fpm.demo.instance-state";
+const stateSchema = "fgpm.demo.instance-state";
 
 export function createService() {
   const persistent = new Map();
@@ -28,10 +28,11 @@ export function createService() {
   const leases = new Map();
   let nextLease = 1;
   let stateRevision = 0;
+  let world = null;
 
   function record(instanceId) {
     const selected = persistent.get(instanceId);
-    if (!selected) fail("FPM_RUNTIME_INSTANCE_MISSING", "A persistent runtime instance does not exist.", { instanceId });
+    if (!selected) fail("FGPM_RUNTIME_INSTANCE_MISSING", "A persistent runtime instance does not exist.", { instanceId });
     return selected;
   }
 
@@ -42,13 +43,13 @@ export function createService() {
   }
 
   function resolve(handle) {
-    if (!handle || handle.schema !== "fpm.runtime-handle/1" || !Number.isInteger(handle.slot)
+    if (!handle || handle.schema !== "fgpm.runtime-handle/1" || !Number.isInteger(handle.slot)
       || !Number.isInteger(handle.generation)) {
-      fail("FPM_RUNTIME_HANDLE_INVALID", "A runtime handle is malformed.", { handle });
+      fail("FGPM_RUNTIME_HANDLE_INVALID", "A runtime handle is malformed.", { handle });
     }
     const slot = slots[handle.slot];
     if (!slot || slot.generation !== handle.generation) {
-      fail("FPM_RUNTIME_HANDLE_STALE", "A generational runtime handle no longer names a live materialisation.", {
+      fail("FGPM_RUNTIME_HANDLE_STALE", "A generational runtime handle no longer names a live materialisation.", {
         handle,
         currentGeneration: slot?.generation ?? generations[handle.slot] ?? null,
       });
@@ -64,12 +65,12 @@ export function createService() {
       const generation = (generations[slot] ?? 0) + 1;
       generations[slot] = generation;
       slots[slot] = { instanceId, generation };
-      selected.materialization = { handle: frozen({ schema: "fpm.runtime-handle/1", slot, generation }), leases: new Set() };
+      selected.materialization = { handle: frozen({ schema: "fgpm.runtime-handle/1", slot, generation }), leases: new Set() };
     }
     const leaseId = `lease:runtime/${nextLease}`;
     nextLease += 1;
     const lease = frozen({
-      schema: "fpm.materialisation-lease/1",
+      schema: "fgpm.materialisation-lease/1",
       id: leaseId,
       instanceId,
       holder,
@@ -82,7 +83,7 @@ export function createService() {
 
   function release(leaseId) {
     const lease = leases.get(leaseId);
-    if (!lease) fail("FPM_RUNTIME_LEASE_INVALID", "A materialisation lease is not live.", { lease: leaseId });
+    if (!lease) fail("FGPM_RUNTIME_LEASE_INVALID", "A materialisation lease is not live.", { lease: leaseId });
     const selected = record(lease.instanceId);
     selected.materialization.leases.delete(leaseId);
     leases.delete(leaseId);
@@ -101,12 +102,12 @@ export function createService() {
     persistent.delete(instanceId);
     destroyed.add(instanceId);
     stateRevision += 1;
-    return frozen({ schema: "fpm.runtime-destruction/1", instanceId, destroyed: true, revision: stateRevision });
+    return frozen({ schema: "fgpm.runtime-destruction/1", instanceId, destroyed: true, revision: stateRevision });
   }
 
   function capture(checkpoint) {
     return frozen({
-      protocol: "fpm.state-fragment/1",
+      protocol: "fgpm.state-fragment/1",
       semanticSchema: stateSchema,
       schemaVersion: 1,
       checkpoint: clone(checkpoint),
@@ -129,10 +130,10 @@ export function createService() {
   }
 
   function restore(fragment) {
-    if (fragment?.protocol !== "fpm.state-fragment/1" || fragment.semanticSchema !== stateSchema
+    if (fragment?.protocol !== "fgpm.state-fragment/1" || fragment.semanticSchema !== stateSchema
       || fragment.schemaVersion !== 1 || !Array.isArray(fragment.payload?.instances)
       || !Array.isArray(fragment.payload?.destroyed)) {
-      fail("FPM_STATE_FRAGMENT_UNSUPPORTED", "Instance Store cannot restore the supplied state fragment.", {
+      fail("FGPM_STATE_FRAGMENT_UNSUPPORTED", "Instance Store cannot restore the supplied state fragment.", {
         expectedSchema: stateSchema,
         expectedVersion: 1,
         actualSchema: fragment?.semanticSchema ?? null,
@@ -145,7 +146,7 @@ export function createService() {
     for (const saved of fragment.payload.instances) {
       const definition = definitions.get(saved.instanceId);
       if (!definition || definition.definitionId !== saved.definitionId) {
-        fail("FPM_STATE_DEFINITION_MISSING", "A saved world instance references an unavailable definition.", {
+        fail("FGPM_STATE_DEFINITION_MISSING", "A saved world instance references an unavailable definition.", {
           instanceId: saved.instanceId,
           definitionId: saved.definitionId,
         });
@@ -159,10 +160,28 @@ export function createService() {
 
   return {
     async activate(context) {
-      if (context.artifact?.schema !== "fpm.render-scene/1" || !Array.isArray(context.artifact.objects)) {
-        fail("FPM_RUNTIME_WORLD_INVALID", "The instance store requires a built render-scene world definition.");
+      if (context.artifact?.reference?.semanticType !== "fgpm.render-bundle/1"
+        || typeof context.artifact.readEntry !== "function") {
+        fail("FGPM_RUNTIME_ARTIFACT_TYPE_UNSUPPORTED",
+          "The instance-store specialist does not support the selected activation artifact type.", {
+            semanticType: context.artifact?.reference?.semanticType ?? null,
+          });
       }
-      for (const object of context.artifact.objects) {
+      let document;
+      try {
+        const bytes = await context.artifact.readEntry();
+        document = JSON.parse(Buffer.from(bytes).toString("utf8"));
+      } catch (error) {
+        fail("FGPM_RUNTIME_WORLD_INVALID", "The instance-store specialist could not decode the activation artifact.", {
+          cause: error.message,
+        });
+      }
+      if (document?.schema !== "fgpm.render-scene/1" || !Array.isArray(document.objects)) {
+        fail("FGPM_RUNTIME_WORLD_INVALID", "The instance store requires a built render-scene world definition.");
+      }
+      world = frozen({ schema: document.schema, profile: document.profile, entryPoint: document.entryPoint,
+        camera: clone(document.camera), artifact: clone(context.artifact.reference) });
+      for (const object of document.objects) {
         if (!definitions.has(object.instance)) {
           definitions.set(object.instance, { instanceId: object.instance, definitionId: object.definition, objects: [] });
         }
@@ -172,6 +191,7 @@ export function createService() {
         persistent.set(definition.instanceId, { ...clone(definition), materialization: null });
       }
       const read = frozen({
+        world: () => world,
         list: () => [...persistent.values()].map((entry) => frozen({
           instanceId: entry.instanceId,
           definitionId: entry.definitionId,
@@ -187,7 +207,7 @@ export function createService() {
         exists: (instanceId) => persistent.has(instanceId),
       });
       const stateOwner = frozen({
-        protocol: "fpm.state-owner/1",
+        protocol: "fgpm.state-owner/1",
         semanticSchema: stateSchema,
         schemaVersion: 1,
         required: true,
@@ -199,7 +219,7 @@ export function createService() {
         restore,
       });
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: {
           "runtime.instances.read": read,
           "runtime.instances.materialize": frozen({ acquire, release }),
@@ -215,6 +235,7 @@ export function createService() {
       leases.clear();
       slots.length = 0;
       stateRevision = 0;
+      world = null;
     },
   };
 }

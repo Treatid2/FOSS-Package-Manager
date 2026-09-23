@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-package-manager.example/schema/phase-9/control-v1.schema.json",
+  "title": "FGPM generic manager control request, progress, and response",
+  "x-fgpm-license": "Apache-2.0",
+  "x-fgpm-steward": "fgpm.manager-control/1",
+  "x-fgpm-status": "experimental-no-compatibility-promise",
+  "x-fgpm-classification": "public-cross-process",
+  "x-fgpm-identity-rule": "Request identity is caller supplied for idempotent replay; responses and progress reference that request identity and are not durable manager records.",
+  "x-fgpm-operation-catalogue": "../../public/schemas/control-operation-catalogue-v1.json",
+  "oneOf": [
+    { "$ref": "#/$defs/request" },
+    { "$ref": "#/$defs/event" },
+    { "$ref": "#/$defs/response" }
+  ],
+  "$defs": {
+    "requestId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+    "transportReplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["replayed", "dispatched", "authorityMoved", "originalRequestId", "canonicalRequestRoot"],
+      "properties": {
+        "replayed": { "const": true },
+        "dispatched": { "const": false },
+        "authorityMoved": { "const": false },
+        "originalRequestId": { "$ref": "#/$defs/requestId" },
+        "canonicalRequestRoot": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "requestId", "operation", "parameters"],
+      "properties": {
+        "schema": { "const": "fgpm.control-request/1" },
+        "requestId": { "$ref": "#/$defs/requestId" },
+        "operation": { "type": "string", "minLength": 1 },
+        "parameters": { "type": "object" }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "requestId", "operation", "state", "current"],
+      "properties": {
+        "schema": { "const": "fgpm.control-event/1" },
+        "requestId": { "$ref": "#/$defs/requestId" },
+        "operation": { "type": "string" },
+        "state": { "const": "started" },
+        "current": { "type": "string" }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "requestId", "operation", "state", "ok", "authority"],
+      "allOf": [
+        {
+          "if": { "required": ["replay"], "properties": { "replay": { "const": true } } },
+          "then": { "required": ["transportReplay"] }
+        },
+        {
+          "if": { "required": ["transportReplay"] },
+          "then": { "required": ["replay"], "properties": { "replay": { "const": true } } }
+        }
+      ],
+      "properties": {
+        "schema": { "const": "fgpm.control-response/1" },
+        "requestId": { "type": ["string", "null"] },
+        "operation": { "type": ["string", "null"] },
+        "state": { "enum": ["completed", "failed"] },
+        "ok": { "type": "boolean" },
+        "authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["projection", "moved", "managerMoved", "runtimeMoved", "before", "after", "managerBefore", "managerAfter", "runtimeBefore", "runtimeAfter", "basis"],
+          "properties": {
+            "projection": { "const": "combined-manager-runtime" },
+            "moved": { "type": "boolean" },
+            "managerMoved": { "type": "boolean" },
+            "runtimeMoved": { "type": "boolean" },
+            "before": { "type": ["string", "null"] },
+            "after": { "type": ["string", "null"] },
+            "managerBefore": { "type": ["string", "null"] },
+            "managerAfter": { "type": ["string", "null"] },
+            "runtimeBefore": { "type": ["string", "null"] },
+            "runtimeAfter": { "type": ["string", "null"] },
+            "basis": { "type": "string" }
+          }
+        },
+        "result": {},
+        "diagnostic": { "type": "object" },
+        "replay": { "type": "boolean" },
+        "transportReplay": { "$ref": "#/$defs/transportReplay" }
+      }
+    }
+  }
+}

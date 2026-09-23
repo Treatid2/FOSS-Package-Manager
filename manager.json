@@ -1,9 +1,10 @@
 {
-  "schema": "fpm.manager/1",
+  "schema": "fgpm.manager/1",
   "id": "org.foss-package-manager.reference",
-  "version": "0.7.0",
+  "version": "0.11.0-rc.6",
+  "buildIdentity": "sha256:d81c3091afe45db9020d16bb04fd9b415bc16e735a9a24be54a980aa840cb073",
   "license": "MPL-2.0",
-  "handlerProtocol": "fpm.handler-stdio/1",
-  "runtimeServiceProtocol": "fpm.runtime-service/1",
-  "runtimeLifecycleProtocol": "fpm.runtime-lifecycle/1"
+  "handlerProtocol": "fgpm.handler-stdio/1",
+  "runtimeServiceProtocol": "fgpm.runtime-service/1",
+  "runtimeLifecycleProtocol": "fgpm.runtime-lifecycle/1"
 }

@@ -9,13 +9,13 @@ function response(value) {
 }
 
 function fail(code, message, details = {}) {
-  response({ protocol: "fpm.handler-response/1", ok: false, diagnostic: { code, message, details } });
+  response({ protocol: "fgpm.handler-response/1", ok: false, diagnostic: { code, message, details } });
 }
 
 function requireCondition(condition, message, details = {}) {
   if (!condition) {
     const error = new Error(message);
-    error.code = "FPM_DOMAIN_MANIFEST_INVALID";
+    error.code = "FGPM_DOMAIN_MANIFEST_INVALID";
     error.details = details;
     throw error;
   }
@@ -56,7 +56,7 @@ async function analyze(request) {
   try {
     manifest = JSON.parse(await readFile(request.contribution.manifestPath, "utf8"));
   } catch (error) {
-    fail("FPM_DOMAIN_MANIFEST_MALFORMED", "A texture manifest could not be parsed.", {
+    fail("FGPM_DOMAIN_MANIFEST_MALFORMED", "A texture manifest could not be parsed.", {
       contribution: request.contribution.id,
       path: request.contribution.manifestPath,
       cause: error.message,
@@ -75,44 +75,44 @@ async function analyze(request) {
   let action;
   let outputType;
   let parameters;
-  if (manifest.schema === "fpm.demo.texture-file/1") {
+  if (manifest.schema === "fgpm.demo.texture-file/1") {
     requireCondition(typeof exported.file === "string", "A file-backed texture must declare a source file.");
     parsePpm(await readFile(packagePath(request.contribution.manifestPath, exported.file), "utf8"));
     action = "materialize-texture-file";
     outputType = "texture.runtime.rgba8-srgb/1";
     parameters = { file: exported.file };
-  } else if (manifest.schema === "fpm.demo.solid-colour/1") {
+  } else if (manifest.schema === "fgpm.demo.solid-colour/1") {
     validateColour(exported.colour);
     action = "materialize-solid-colour";
     outputType = exported.semanticType;
     parameters = { colour: exported.colour };
-  } else if (manifest.schema === "fpm.demo.environment-colour/1") {
+  } else if (manifest.schema === "fgpm.demo.environment-colour/1") {
     requireCondition(exported.variants && typeof exported.variants === "object",
       "An environment-controlled colour must declare variants.");
     for (const colour of Object.values(exported.variants)) validateColour(colour);
     action = "materialize-environment-colour";
     outputType = "texture.runtime.rgba8-srgb/1";
     parameters = { variants: exported.variants };
-  } else if (manifest.schema === "fpm.demo.slow-colour/1") {
+  } else if (manifest.schema === "fgpm.demo.slow-colour/1") {
     validateColour(exported.colour);
     requireCondition(Number.isInteger(exported.delayMs) && exported.delayMs >= 50 && exported.delayMs <= 2000,
       "A slow-colour fixture delay must be an integer from 50 to 2000 milliseconds.");
     action = "materialize-slow-colour";
     outputType = "texture.runtime.rgba8-srgb/1";
     parameters = { colour: exported.colour, delayMs: exported.delayMs };
-  } else if (manifest.schema === "fpm.demo.transaction-fail/1") {
+  } else if (manifest.schema === "fgpm.demo.transaction-fail/1") {
     validateColour(exported.colour);
     action = "fail-after-write";
     outputType = "texture.runtime.rgba8-srgb/1";
     parameters = { colour: exported.colour };
   } else {
     throw Object.assign(new Error("The texture toolchain was asked to analyze an unsupported domain schema."), {
-      code: "FPM_DOMAIN_MANIFEST_UNSUPPORTED",
+      code: "FGPM_DOMAIN_MANIFEST_UNSUPPORTED",
       details: { schema: manifest.schema },
     });
   }
   response({
-    protocol: "fpm.handler-response/1",
+    protocol: "fgpm.handler-response/1",
     ok: true,
     analysis: {
       exports: [{ id: exported.id, semanticType: exported.semanticType, payload: { sourceKind: manifest.schema } }],
@@ -156,17 +156,17 @@ async function materialize(request) {
     content = Buffer.from([...parameters.colour, 255]);
   } else if (kind === "fail-after-write") {
     await writeFile(path.join(request.transaction.stagingDirectory, output.relativePath), "partial", "utf8");
-    fail("FPM_HANDLER_MATERIALIZATION_FAILED", "The failure fixture stopped after writing an uncommitted output.", {
+    fail("FGPM_HANDLER_MATERIALIZATION_FAILED", "The failure fixture stopped after writing an uncommitted output.", {
       transaction: request.transaction.id,
     });
     return;
   } else {
-    fail("FPM_HANDLER_ACTION_UNSUPPORTED", "Unsupported texture materialization action.", { kind });
+    fail("FGPM_HANDLER_ACTION_UNSUPPORTED", "Unsupported texture materialization action.", { kind });
     return;
   }
   await writeFile(path.join(request.transaction.stagingDirectory, output.relativePath), content);
   response({
-    protocol: "fpm.handler-response/1",
+    protocol: "fgpm.handler-response/1",
     ok: true,
     output: {
       type: output.type,
@@ -180,10 +180,10 @@ async function materialize(request) {
 
 try {
   const request = await readRequest();
-  requireCondition(request.protocol === "fpm.handler-request/1", "Unsupported handler request protocol.");
+  requireCondition(request.protocol === "fgpm.handler-request/1", "Unsupported handler request protocol.");
   if (request.action === "analyze") await analyze(request);
   else if (request.action === "materialize") await materialize(request);
-  else fail("FPM_HANDLER_ACTION_UNSUPPORTED", "Unsupported handler action.", { action: request.action });
+  else fail("FGPM_HANDLER_ACTION_UNSUPPORTED", "Unsupported handler action.", { action: request.action });
 } catch (error) {
-  fail(error.code ?? "FPM_HANDLER_INTERNAL", error.message, error.details ?? {});
+  fail(error.code ?? "FGPM_HANDLER_INTERNAL", error.message, error.details ?? {});
 }

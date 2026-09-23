@@ -23,8 +23,17 @@ The following paths are licensed under the Apache License 2.0 (`Apache-2.0`):
 - `profiles/**` distribution and user-profile examples;
 - `fixtures/**` conformance and diagnostic fixtures;
 - `test/**` conformance-oriented tests.
+- `authoring-kit/**` public package-authoring contracts, examples, and evaluation material.
 - `tools/generate-wasm-fixtures.mjs`, which generates the portable example and conformance modules.
 - `tools/render-architecture-snapshot.mjs`, which renders the experimental architecture snapshot.
+- `docs/reference-authoring-guide.md` and `docs/reference-tools-readme.md`, which form the public
+  source-free authoring documentation.
+
+`tools/build-reference-distribution.mjs` is manager build tooling and is licensed under MPL-2.0.
+The generated distribution preserves the source licences recorded by its SBOM and source
+correspondence manifest. `LICENSES/Node.js.txt` is the exact complete root licence and third-party
+notice set supplied with the pinned official Node.js runtime distribution; its provenance and hashes
+are declared in `reference-runtime.json` and projected into the generated SBOM.
 
 The canonical Apache-2.0 text is in [LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt).
 

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FOSS Package Manager curator workbench</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to curation controls</a>
+  <header class="site-header">
+    <p class="eyebrow">FOSS Package Manager · generic curator surface</p>
+    <h1 id="project-title">Curator workbench</h1>
+    <p id="project-description">Loading the project’s authoritative descriptor…</p>
+  </header>
+  <nav aria-label="Workbench sections">
+    <a href="#overview">Overview</a><a href="#authority">Authority and inspection</a><a href="#initialize">Initialise</a><a href="#guided">Guided curation</a>
+    <a href="#lifecycle">Lifecycle</a><a href="#why">Impact and Why</a><a href="#advanced">Expert JSON</a>
+  </nav>
+  <main id="main" tabindex="-1">
+    <div id="errors" class="message error" role="alert" tabindex="-1" hidden></div>
+    <div id="announcements" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <section id="overview" aria-labelledby="overview-heading">
+      <div class="section-heading"><div><p class="eyebrow">Read before write</p><h2 id="overview-heading">Authoritative overview</h2></div>
+        <button id="refresh" type="button">Refresh authoritative state</button></div>
+      <div id="summary" class="card-grid" aria-live="polite" aria-busy="true"></div>
+    </section>
+
+    <section id="authority" aria-labelledby="authority-heading">
+      <p class="eyebrow">Server-bound authority · ordinary visible inspection</p>
+      <h2 id="authority-heading">Effective client authority and inspection</h2>
+      <p>These labelled views are part of the ordinary guided Workbench. The expert JSON console is not counted toward human/agent parity.</p>
+      <div id="authority-status" class="message" role="status" aria-live="polite" aria-atomic="true" tabindex="-1">
+        No client-authority denial is present in this session.
+      </div>
+      <div class="card-grid" aria-live="polite">
+        <article id="effective-profile" class="card" tabindex="-1">
+          <h3>Effective client profile</h3>
+          <div id="effective-profile-content"><p>Loading the server-bound profile…</p></div>
+          <details><summary>Visible guided capability map</summary><ul id="guided-capability-map"></ul></details>
+        </article>
+        <article id="workspace-history" class="card" tabindex="-1">
+          <h3>Workspace history</h3><div id="workspace-history-content"><p>Loading immutable revision history…</p></div>
+        </article>
+        <article id="manager-reachability" class="card" tabindex="-1">
+          <h3>Manager reachability</h3><div id="manager-reachability-content"><p>Loading the read-only reachability report…</p></div>
+        </article>
+        <article id="retained-generations" class="card" tabindex="-1">
+          <h3>Retained generations</h3><div id="retained-generations-content"><p>Loading retained generation identities…</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="initialize" aria-labelledby="initialize-heading">
+      <p class="eyebrow">Portable current project</p><h2 id="initialize-heading">Initialise from retained public state</h2>
+      <p>The portable journal dispatches ordinary public manager operations. It never writes durable manager records directly.</p>
+      <form id="initialize-form" class="compact-form">
+        <label for="project-confirmation">Project identity confirmation</label>
+        <input id="project-confirmation" autocomplete="off" aria-describedby="initialise-help">
+        <p id="initialise-help" class="help">Type the exact project identity shown in the overview.</p>
+        <button id="initialize-project" type="submit">Initialise current project through public operations</button>
+      </form>
+      <div id="initialize-status" class="message" role="status" tabindex="-1">Not initialised in this session.</div>
+    </section>
+
+    <section id="guided" aria-labelledby="guided-heading">
+      <p class="eyebrow">Ordinary human route</p><h2 id="guided-heading">Guided curation fixture</h2>
+      <p id="fixture-description">Loading the project-owned fixture…</p>
+      <ol class="step-list">
+        <li class="step" id="step-import-release"><h3>Import baseline release</h3><p>Make the retained generation known without selecting project additions.</p><button id="import-baseline" type="button">Import baseline distribution</button></li>
+        <li class="step" id="step-activate-baseline"><h3>Activate baseline release</h3><p>Establish the baseline runtime state before the later state-preserving G1 transition.</p><button id="activate-baseline" type="button">Activate exact baseline generation</button></li>
+        <li class="step" id="step-fork"><h3>Create curation workspace</h3><p>Import the project’s portable G0 head and verified immutable history through the public workspace boundary.</p><button id="fork-workspace" type="button">Open portable workspace from baseline</button></li>
+        <li class="step" id="step-import-package"><h3>Import project and supporting packages</h3><p>Imported packages become known; import alone does not select them.</p><button id="import-packages" type="button">Import configured packages</button></li>
+        <li class="step" id="step-stage"><h3>Stage the project package</h3><p>The lifecycle table must show known before selected.</p><button id="stage-package" type="button">Stage package addition</button></li>
+        <li class="step" id="step-plan"><h3>Plan and inspect causal impact</h3><p>The manager must expose unresolved choice state before selection.</p><button id="plan-candidate" type="button">Plan candidate</button></li>
+        <li class="step" id="step-choice"><h3>Choose an explicit replacement</h3><fieldset id="choice-fieldset"><legend>Available replacements — no option is preselected</legend><div id="choice-options"></div></fieldset><p>The choice remains uncommitted until the next public stage request; it is never inferred or preselected.</p></li>
+        <li class="step" id="step-generate"><h3>Accept generated integration</h3><p>Review the project-owned request, then submit the explicit replacement and generated-package request together as one ordinary public workspace stage.</p><details><summary>Generated-package request</summary><pre id="generated-request"></pre></details><button id="stage-generated" type="button">Stage explicit choice and generated request</button></li>
+        <li class="step" id="step-replan"><h3>Re-plan the complete candidate</h3><p>Re-plan after the explicit choice and generated-package request so build uses the current workspace head.</p><button id="replan-candidate" type="button">Re-plan complete candidate</button></li>
+        <li class="step" id="step-build"><h3>Build candidate</h3><p id="target-environment-status" class="message" role="status" tabindex="-1">Checking the declared exact-build target against this host.</p><button id="build-candidate" type="button">Build planned candidate on matching target</button></li>
+        <li class="step" id="step-validate"><h3>Validate and review policy consequences</h3><button id="validate-candidate" type="button">Validate complete build</button><div id="validation-findings" class="prose"></div></li>
+        <li class="step" id="step-commit"><h3>Commit generation</h3><button id="commit-generation" type="button">Commit validated generation</button></li>
+        <li class="step" id="step-activate"><h3>Activate, roll back, reactivate</h3><p>Each authority move requires the exact generation identity.</p><div class="button-row"><button id="activate-target" type="button">Activate committed target</button><button id="rollback-baseline" type="button">Roll back to baseline</button><button id="reactivate-target" type="button">Reactivate target</button></div></li>
+      </ol>
+      <div id="guided-status" class="message" role="status" tabindex="-1">Ready for the first guided action.</div>
+      <details><summary>Latest structured guided result</summary><pre id="guided-result">No guided result yet.</pre></details>
+    </section>
+
+    <section id="lifecycle" aria-labelledby="lifecycle-heading">
+      <p class="eyebrow">Truthful textual state</p><h2 id="lifecycle-heading">Package lifecycle</h2>
+      <div class="table-scroll"><table><caption>Package state derived from manager package, workspace, candidate, generation, active and retained records</caption><thead><tr><th scope="col">Package</th><th scope="col">Root</th><th scope="col">Lifecycle states</th></tr></thead><tbody id="package-rows"></tbody></table></div>
+      <h3>Additional staging controls</h3>
+      <div class="form-grid">
+        <form id="stage-root-form"><h4>Add or update</h4><label for="stage-root-type">Action</label><select id="stage-root-type"><option value="add">Add</option><option value="update">Update</option></select><label for="stage-package-id">Package identity (required for update)</label><input id="stage-package-id"><label for="stage-package-root">Immutable package root</label><input id="stage-package-root" required><button type="submit">Stage add or update</button></form>
+        <form id="remove-form"><h4>Remove</h4><label for="remove-package-id">Package identity</label><input id="remove-package-id" required><button type="submit">Stage removal</button></form>
+        <form id="abandon-form"><h4>Abandon staged operation</h4><label for="abandon-operation-id">Operation identity</label><input id="abandon-operation-id" required><button type="submit">Stage abandonment</button></form>
+        <form id="selection-form"><h4>Explicit provider, adapter or replacement choice</h4><label for="selection-type">Choice kind</label><select id="selection-type"><option value="select-provider">Provider</option><option value="select-adapter">Adapter</option><option value="select-replacement">Replacement</option></select><label for="selection-target">Requirement, relation or replacement target</label><input id="selection-target" required><label for="selection-value">Chosen provider, adapter or replacement</label><input id="selection-value" required aria-describedby="selection-help"><p id="selection-help" class="help">No value is selected automatically. Enter the reviewed public identity.</p><button type="submit">Stage explicit choice</button></form>
+      </div>
+    </section>
+
+    <section id="why" aria-labelledby="why-heading">
+      <p class="eyebrow">Manager-derived explanation</p><h2 id="why-heading">Impact and Why</h2>
+      <div id="why-content" class="prose"><p>Plan a candidate to obtain current causal impact and explanation records.</p></div>
+      <details><summary>Text alternative for dependency and impact graph</summary><div id="impact-text"></div></details>
+    </section>
+
+    <section id="scenes" aria-labelledby="scenes-heading" hidden>
+      <p class="eyebrow">Optional visible evidence</p><h2 id="scenes-heading">Configured scene evidence</h2><div id="scene-grid" class="scene-grid"></div>
+    </section>
+
+    <section id="advanced" aria-labelledby="advanced-heading">
+      <p class="eyebrow">Expert/debug only</p><h2 id="advanced-heading">Advanced JSON console</h2>
+      <details><summary>Open advanced public-operation console</summary>
+        <form id="action-form"><label for="operation">Operation</label><select id="operation"></select><label for="parameters">Parameters (JSON object)</label><textarea id="parameters" rows="8" spellcheck="false">{}</textarea><label for="confirmation">Exact generation confirmation when required</label><input id="confirmation" autocomplete="off"><button id="submit-action" type="submit">Run reviewed expert operation</button></form>
+        <div id="action-status" class="message" role="status" tabindex="-1">No expert action in progress.</div><pre id="action-result">No result yet.</pre>
+      </details>
+      <details><summary>Session operation trace</summary><pre id="trace-result">No actions yet.</pre></details>
+    </section>
+  </main>
+  <footer><p>Local experimental manager infrastructure. Project configuration supplies labels; manager public operations retain authority.</p></footer>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

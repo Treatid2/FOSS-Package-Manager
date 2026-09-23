@@ -1,0 +1,65 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.character-marker",
+  "version": "0.6.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.runtime-instance-store",
+      "range": "^0.6.0"
+    }
+  ],
+  "runtimeServices": [
+    {
+      "id": "service:demo.character-marker/1",
+      "protocol": "fgpm.runtime-service/1",
+      "provides": [
+        {
+          "capability": "runtime.marker.read",
+          "version": "1.0.0",
+          "exclusive": true,
+          "binding": "runtime.marker/1"
+        },
+        {
+          "capability": "runtime.marker.write",
+          "version": "1.0.0",
+          "exclusive": true,
+          "binding": "runtime.marker/1"
+        },
+        {
+          "capability": "runtime.state.owner",
+          "version": "1.0.0",
+          "exclusive": false,
+          "cardinality": "collection",
+          "member": "state-owner:demo.character-marker/1",
+          "binding": "runtime.marker/1",
+          "memberDependencies": [
+            "state-owner:demo.instances/1"
+          ],
+          "metadata": {
+            "semanticSchema": "fgpm.demo.character-marker-state",
+            "schemaVersion": 1,
+            "required": false,
+            "governingCapability": "runtime.marker.read"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "capability": "runtime.instances.read",
+          "range": "^1.0.0",
+          "binding": "runtime.instances/1"
+        }
+      ],
+      "execution": {
+        "form": "native-in-process",
+        "securityBoundary": "none",
+        "requestedPowers": [
+          "host-user-authority"
+        ]
+      },
+      "module": "./service.mjs"
+    }
+  ]
+}

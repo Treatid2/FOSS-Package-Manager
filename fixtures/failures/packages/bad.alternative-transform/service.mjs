@@ -33,7 +33,7 @@ export function createService() {
         transforms.set(instance.instanceId, { translation: [0, 0, 0], revision: 0 });
       }
       const snapshot = () => freeze({
-        schema: "fpm.transform-snapshot/1",
+        schema: "fgpm.transform-snapshot/1",
         revision,
         transforms: [...transforms.entries()].map(([instanceId, value]) => ({
           instanceId,
@@ -42,12 +42,12 @@ export function createService() {
         })).sort((left, right) => left.instanceId.localeCompare(right.instanceId)),
       });
       const commitBatch = (batch) => {
-        if (batch?.schema !== "fpm.transform-command-batch/1" || batch.channel !== "runtime.transforms.commands"
-          || batch.checkpoint?.schema !== "fpm.runtime-tick/1" || batch.expectedRevision !== revision
+        if (batch?.schema !== "fgpm.transform-command-batch/1" || batch.channel !== "runtime.transforms.commands"
+          || batch.checkpoint?.schema !== "fgpm.runtime-tick/1" || batch.expectedRevision !== revision
           || !Array.isArray(batch.buffers) || batch.composition?.form !== "ordered"
           || (lastCheckpoint && batch.checkpoint.tick <= lastCheckpoint.tick)) {
           throw Object.assign(new Error("Alternative Transform Authority rejected an invalid or stale batch."), {
-            code: batch?.expectedRevision === revision ? "FPM_RUNTIME_TRANSFORM_BATCH_INVALID" : "FPM_TRANSFORM_BATCH_STALE",
+            code: batch?.expectedRevision === revision ? "FGPM_RUNTIME_TRANSFORM_BATCH_INVALID" : "FGPM_TRANSFORM_BATCH_STALE",
             details: { expectedRevision: batch?.expectedRevision, currentRevision: revision },
           });
         }
@@ -62,7 +62,7 @@ export function createService() {
           if (declaredRoot !== root(content) || !position.has(buffer.task) || position.get(buffer.task) <= previous
             || JSON.stringify(buffer.checkpoint) !== JSON.stringify(batch.checkpoint)) {
             throw Object.assign(new Error("Alternative Transform Authority rejected an incoherent buffer."), {
-              code: "FPM_RUNTIME_TRANSFORM_BATCH_INVALID", details: { task: buffer.task },
+              code: "FGPM_RUNTIME_TRANSFORM_BATCH_INVALID", details: { task: buffer.task },
             });
           }
           previous = position.get(buffer.task);
@@ -72,7 +72,7 @@ export function createService() {
             if (axis === undefined || !target || !Number.isFinite(command.value)
               || !["set-axis", "add-axis"].includes(command.operation)) {
               throw Object.assign(new Error("Alternative Transform Authority rejected a command."), {
-                code: "FPM_RUNTIME_TRANSFORM_COMMAND_INVALID", details: { command },
+                code: "FGPM_RUNTIME_TRANSFORM_COMMAND_INVALID", details: { command },
               });
             }
             target.translation[axis] = command.operation === "set-axis"
@@ -86,12 +86,12 @@ export function createService() {
         transforms.clear();
         for (const [id, entry] of staged) transforms.set(id, entry);
         lastCheckpoint = structuredClone(batch.checkpoint);
-        return freeze({ schema: "fpm.transform-batch-commit/1",
+        return freeze({ schema: "fgpm.transform-batch-commit/1",
           authority: "service:bad.alternative-transform/1", checkpoint: structuredClone(batch.checkpoint),
           inputRevision, revision, appliedBuffers: batch.buffers.map((entry) => entry.root), stateRoot: root(snapshot()) });
       };
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: {
           "runtime.transforms.read": freeze({ snapshot }),
           "runtime.transforms.write": freeze({
@@ -101,22 +101,22 @@ export function createService() {
               revision += 1;
               selected.translation = [...command.translation];
               selected.revision = revision;
-              return freeze({ schema: "fpm.transform-commit/1", authority: "service:bad.alternative-transform/1",
+              return freeze({ schema: "fgpm.transform-commit/1", authority: "service:bad.alternative-transform/1",
                 instanceId: command.instanceId, revision, translation: [...selected.translation] });
             },
             commitBatch,
           }),
           "runtime.state.owner": freeze({
-            protocol: "fpm.state-owner/1",
-            semanticSchema: "fpm.demo.transform-state",
+            protocol: "fgpm.state-owner/1",
+            semanticSchema: "fgpm.demo.transform-state",
             schemaVersion: 1,
             required: true,
             governingCapability: "runtime.transforms.write",
             provider: "service:bad.alternative-transform/1",
-            dependsOn: ["fpm.demo.instance-state"],
+            dependsOn: ["fgpm.demo.instance-state"],
             capture: (checkpoint) => freeze({
-              protocol: "fpm.state-fragment/1",
-              semanticSchema: "fpm.demo.transform-state",
+              protocol: "fgpm.state-fragment/1",
+              semanticSchema: "fgpm.demo.transform-state",
               schemaVersion: 1,
               checkpoint: structuredClone(checkpoint),
               stateRevision: revision,

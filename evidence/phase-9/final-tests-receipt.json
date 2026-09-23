@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "operation": "fgpm-phase-9-final-tests",
+  "requested_executable": "C:\\Program Files\\nodejs\\node.exe",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "arguments": [
+    "--test"
+  ],
+  "working_directory": "L:\\Codex\\projects\\code\\FOSS-Package-Manager",
+  "mutex": "",
+  "lock_wait_ms": 0,
+  "started_utc": "2026-08-25T22:31:21.7438258+00:00",
+  "ended_utc": "2026-08-25T22:31:56.7497628+00:00",
+  "duration_ms": 35006,
+  "process_exit_code": 0,
+  "receipt_exit_code": 0,
+  "timed_out": false,
+  "success": true,
+  "artifacts_satisfied": true,
+  "artifacts": [],
+  "first_actionable_failure": null,
+  "attempts": [
+    {
+      "number": 1,
+      "started_utc": "2026-08-25T22:31:21.7459134+00:00",
+      "ended_utc": "2026-08-25T22:31:56.7398827+00:00",
+      "duration_ms": 34994,
+      "exit_code": 0,
+      "timed_out": false,
+      "stdout_log": "L:\\Codex\\evidence\\FGPM\\phase-9-persistent-workspace-generation-implementation\\FGPM-C2C-000007\\verification\\managed-process\\20260825-233121.736-fgpm-phase-9-final-tests\\attempt-1.stdout.log",
+      "stderr_log": "L:\\Codex\\evidence\\FGPM\\phase-9-persistent-workspace-generation-implementation\\FGPM-C2C-000007\\verification\\managed-process\\20260825-233121.736-fgpm-phase-9-final-tests\\attempt-1.stderr.log"
+    }
+  ],
+  "receipt_path": "L:\\Codex\\evidence\\FGPM\\phase-9-persistent-workspace-generation-implementation\\FGPM-C2C-000007\\verification\\managed-process\\20260825-233121.736-fgpm-phase-9-final-tests\\receipt.json"
+}

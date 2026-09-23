@@ -13,7 +13,7 @@ const content = Buffer.from([...source, 255]);
 const output = request.transaction.outputs[0];
 await writeFile(path.join(request.transaction.stagingDirectory, output.relativePath), content);
 process.stdout.write(`${JSON.stringify({
-  protocol: "fpm.handler-response/1",
+  protocol: "fgpm.handler-response/1",
   ok: true,
   output: {
     type: output.type,

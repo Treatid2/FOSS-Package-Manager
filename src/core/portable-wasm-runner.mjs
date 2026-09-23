@@ -9,7 +9,7 @@ function respond(value) {
 }
 
 function failure(code, message, details = {}) {
-  respond({ protocol: "fpm.handler-response/1", ok: false, diagnostic: { code, message, details } });
+  respond({ protocol: "fgpm.handler-response/1", ok: false, diagnostic: { code, message, details } });
 }
 
 function check(condition, code, message, details = {}) {
@@ -24,11 +24,11 @@ async function readRequest() {
 
 function inside(root, relativePath) {
   check(typeof relativePath === "string" && relativePath.length > 0,
-    "FPM_PORTABLE_OUTPUT_INVALID", "A portable action output path is missing.");
+    "FGPM_PORTABLE_OUTPUT_INVALID", "A portable action output path is missing.");
   const target = path.resolve(root, relativePath);
   const relation = path.relative(root, target);
   check(relation !== "" && !relation.startsWith("..") && !path.isAbsolute(relation),
-    "FPM_PORTABLE_OUTPUT_INVALID", "A portable action output escapes its staging transaction.", { relativePath });
+    "FGPM_PORTABLE_OUTPUT_INVALID", "A portable action output escapes its staging transaction.", { relativePath });
   return target;
 }
 
@@ -42,26 +42,26 @@ const allowedImports = new Set([
 ]);
 
 try {
-  const limits = JSON.parse(process.env.FPM_PORTABLE_LIMITS ?? "{}");
+  const limits = JSON.parse(process.env.FGPM_PORTABLE_LIMITS ?? "{}");
   const request = await readRequest();
-  check(request.protocol === "fpm.handler-request/1" && request.action === "materialize",
-    "FPM_PORTABLE_CONTRACT_INVALID", "The portable byte-transform runner accepts materialization actions only.");
+  check(request.protocol === "fgpm.handler-request/1" && request.action === "materialize",
+    "FGPM_PORTABLE_CONTRACT_INVALID", "The portable byte-transform runner accepts materialization actions only.");
   check(request.inputs?.length === 1 && request.transaction?.outputs?.length === 1,
-    "FPM_PORTABLE_CONTRACT_INVALID", "The portable byte-transform ABI requires exactly one input and one output.");
+    "FGPM_PORTABLE_CONTRACT_INVALID", "The portable byte-transform ABI requires exactly one input and one output.");
   const inputDeclaration = request.inputs[0];
   const outputDeclaration = request.transaction.outputs[0];
   check(inputDeclaration.kind === "blob" && outputDeclaration.kind === "blob",
-    "FPM_PORTABLE_CONTRACT_INVALID", "The portable byte-transform ABI currently accepts blob roots only.");
+    "FGPM_PORTABLE_CONTRACT_INVALID", "The portable byte-transform ABI currently accepts blob roots only.");
 
   const moduleText = await readFile(process.argv[2], "utf8");
   const moduleBytes = Buffer.from(moduleText.trim(), "base64");
   check(moduleBytes.length > 0 && moduleBytes.length <= limits.maxModuleBytes,
-    "FPM_HANDLER_RESOURCE_LIMIT", "A portable module exceeds its byte limit.", {
+    "FGPM_HANDLER_RESOURCE_LIMIT", "A portable module exceeds its byte limit.", {
       actualBytes: moduleBytes.length,
       maximumBytes: limits.maxModuleBytes,
     });
   const input = await readFile(inputDeclaration.path);
-  check(input.length <= limits.maxInputBytes, "FPM_HANDLER_RESOURCE_LIMIT",
+  check(input.length <= limits.maxInputBytes, "FGPM_HANDLER_RESOURCE_LIMIT",
     "A declared portable input exceeds its byte limit.", {
       actualBytes: input.length,
       maximumBytes: limits.maxInputBytes,
@@ -69,8 +69,8 @@ try {
 
   const compiled = await WebAssembly.compile(moduleBytes);
   const imports = WebAssembly.Module.imports(compiled);
-  check(imports.every((entry) => entry.module === "fpm" && entry.kind === "function" && allowedImports.has(entry.name)),
-    "FPM_PORTABLE_IMPORT_DENIED", "A portable module requested an import outside the capability ABI.", { imports });
+  check(imports.every((entry) => entry.module === "fgpm" && entry.kind === "function" && allowedImports.has(entry.name)),
+    "FGPM_PORTABLE_IMPORT_DENIED", "A portable module requested an import outside the capability ABI.", { imports });
 
   const output = [];
   const evidence = {
@@ -84,14 +84,14 @@ try {
     input_length: () => input.length,
     read_input_byte: (index) => {
       check(Number.isInteger(index) && index >= 0 && index < input.length,
-        "FPM_PORTABLE_INPUT_BOUNDS", "A portable module read outside its declared input.", { index, length: input.length });
+        "FGPM_PORTABLE_INPUT_BOUNDS", "A portable module read outside its declared input.", { index, length: input.length });
       evidence.allowedInputReads += 1;
       return input[index];
     },
     write_output_byte: (value) => {
       check(Number.isInteger(value) && value >= 0 && value <= 255,
-        "FPM_PORTABLE_OUTPUT_INVALID", "A portable module emitted a non-byte output value.", { value });
-      check(output.length < limits.maxOutputBytes, "FPM_HANDLER_RESOURCE_LIMIT",
+        "FGPM_PORTABLE_OUTPUT_INVALID", "A portable module emitted a non-byte output value.", { value });
+      check(output.length < limits.maxOutputBytes, "FGPM_HANDLER_RESOURCE_LIMIT",
         "A portable module exceeded its output byte limit.", { maximumBytes: limits.maxOutputBytes });
       output.push(value);
       evidence.allowedOutputWrites += 1;
@@ -109,17 +109,17 @@ try {
       return -1;
     },
   };
-  const instance = await WebAssembly.instantiate(compiled, { fpm: capabilities });
-  check(typeof instance.exports.transform === "function", "FPM_PORTABLE_CONTRACT_INVALID",
+  const instance = await WebAssembly.instantiate(compiled, { fgpm: capabilities });
+  check(typeof instance.exports.transform === "function", "FGPM_PORTABLE_CONTRACT_INVALID",
     "A portable byte-transform module must export transform().");
   instance.exports.transform();
-  check(output.length > 0, "FPM_PORTABLE_OUTPUT_INVALID", "A portable module produced an empty output.");
+  check(output.length > 0, "FGPM_PORTABLE_OUTPUT_INVALID", "A portable module produced an empty output.");
 
   const bytes = Buffer.from(output);
   const target = inside(request.transaction.stagingDirectory, outputDeclaration.relativePath);
   await writeFile(target, bytes);
   if (evidence.deniedHostReads || evidence.deniedHostWrites || evidence.deniedNetworkAttempts) {
-    failure("FPM_SANDBOX_VIOLATION_CONFIRMED",
+    failure("FGPM_SANDBOX_VIOLATION_CONFIRMED",
       "The portable violation fixture exercised allowed capabilities and was denied ambient authority.", {
         boundary: "wasm-capability-imports",
         evidence,
@@ -127,7 +127,7 @@ try {
       });
   } else {
     respond({
-      protocol: "fpm.handler-response/1",
+      protocol: "fgpm.handler-response/1",
       ok: true,
       output: {
         type: outputDeclaration.type,
@@ -139,5 +139,5 @@ try {
     });
   }
 } catch (error) {
-  failure(error.code ?? "FPM_PORTABLE_EXECUTION_FAILED", error.message, error.details ?? {});
+  failure(error.code ?? "FGPM_PORTABLE_EXECUTION_FAILED", error.message, error.details ?? {});
 }

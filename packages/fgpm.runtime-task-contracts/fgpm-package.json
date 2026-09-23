@@ -1,0 +1,9 @@
+{
+  "format": "fgpm.package/2",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "fgpm.runtime-task-contracts",
+  "version": "2.0.0",
+  "license": "Apache-2.0",
+  "dependencies": [],
+  "runtimeServices": []
+}

@@ -3,11 +3,11 @@
 export async function runTask(context) {
   context.snapshot("runtime.transforms.read");
   context.emit("runtime.transforms.commands", {
-    schema: "fpm.transform-operation/1",
+    schema: "fgpm.transform-operation/1",
     operation: "add-axis",
     instanceId: "world:demo/character-1",
     axis: "x",
     value: 0.25,
   });
-  return { schema: "fpm.task-result/1" };
+  return { schema: "fgpm.task-result/1" };
 }

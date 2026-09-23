@@ -1,8 +1,8 @@
 {
-  "schema": "fpm.profile/1",
+  "schema": "fgpm.profile/1",
   "name": "failure-no-handler",
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.no-handler", "demo.scene-toolchain"],
   "entryPoint": "pkg:bad.no-handler/content/unknown",
-  "artifact": { "type": "fpm.render-bundle/1" }
+  "artifact": { "type": "fgpm.render-bundle/1" }
 }

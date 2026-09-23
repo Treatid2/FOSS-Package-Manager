@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foss-package-manager.example/schema/pre-public-migration-operation-v1.schema.json",
+  "title": "FGPM restartable pre-public package migration operation",
+  "x-fgpm-license": "Apache-2.0",
+  "x-fgpm-steward": "fgpm.manager-core/3",
+  "x-fgpm-status": "experimental-no-compatibility-promise",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "version", "identity", "request", "plan", "phase", "commit", "result", "continuation", "createdAt", "updatedAt", "diagnostic"],
+  "properties": {
+    "schema": { "const": "fgpm.pre-public-migration-operation/1" },
+    "version": { "const": 1 },
+    "identity": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "source", "sourceRoot", "namespace", "output"],
+      "properties": {
+        "schema": { "const": "fgpm.pre-public-migration-request/1" },
+        "source": { "type": "string", "minLength": 1 },
+        "sourceRoot": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "namespace": { "type": "string", "format": "uuid" },
+        "output": { "type": "string", "minLength": 1 }
+      }
+    },
+    "plan": { "type": "object" },
+    "phase": { "enum": ["prepared", "ready-to-commit", "unresolved", "committed"] },
+    "commit": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "object", "additionalProperties": false, "required": ["outputRoot"], "properties": {
+          "outputRoot": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+        } }
+      ]
+    },
+    "result": { "type": ["object", "null"] },
+    "continuation": { "type": "object", "required": ["action"], "properties": { "action": { "type": "string" } } },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "diagnostic": { "type": ["object", "null"] }
+  }
+}

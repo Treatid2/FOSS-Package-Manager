@@ -1,11 +1,11 @@
 {
-  "schema": "fpm.profile/2",
+  "schema": "fgpm.profile/2",
   "name": "environment-widened",
   "packageRoots": ["../packages"],
   "distribution": {
     "roots": ["demo.environment-head", "demo.simple-runtime", "demo.solid-colour-adapter", "demo.worldspace"],
     "entryPoint": "pkg:demo.worldspace/world/demo",
-    "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
+    "artifact": { "type": "fgpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" },
     "activation": "runtime:demo.simple-runtime/browser-svg"
   },
   "target": {

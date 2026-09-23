@@ -1,0 +1,8 @@
+{
+  "schema": "fgpm.runtime-service-activation/2",
+  "service": "service:demo.deterministic-scheduler-v2/1",
+  "capabilities": {
+    "runtime.scheduler.barrier": { "protocol": "fgpm.runtime-scheduler/2" },
+    "runtime.scheduler.records": { "protocol": "fgpm.runtime-scheduler-records/2" }
+  }
+}

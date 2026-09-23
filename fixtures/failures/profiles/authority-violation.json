@@ -1,17 +1,17 @@
 {
-  "schema": "fpm.profile/2",
+  "schema": "fgpm.profile/2",
   "name": "failure-authority",
   "packageRoots": ["../../../packages", "../packages"],
   "distribution": {
     "roots": ["demo.simple-runtime", "demo.solid-colour-adapter", "demo.worldspace"],
     "entryPoint": "pkg:demo.worldspace/world/demo",
-    "artifact": { "type": "fpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" }
+    "artifact": { "type": "fgpm.render-bundle/1", "builder": "handler:demo.scene-toolchain/1" }
   },
   "target": { "platform": "portable-demo" },
   "policy": {},
   "user": {
     "roots": [],
     "replacements": {},
-    "artifact": { "type": "fpm.render-scene/1" }
+    "artifact": { "type": "fgpm.render-scene/1" }
   }
 }

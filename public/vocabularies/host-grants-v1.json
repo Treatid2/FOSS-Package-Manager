@@ -1,0 +1,48 @@
+{
+  "schema": "fgpm.public-vocabulary/1",
+  "identity": "fgpm.host-grants-vocabulary/1",
+  "status": "experimental-no-compatibility-promise",
+  "license": "Apache-2.0",
+  "stewardPackage": "fgpm.manager-core",
+  "unknownTermPolicy": "deny",
+  "trustLimit": "These grants constrain cooperating native services; they do not sandbox hostile native code.",
+  "grants": [
+    {
+      "identity": "fgpm.host.renderer-output/1",
+      "classification": "observational",
+      "fields": ["snapshotPath"]
+    },
+    {
+      "identity": "fgpm.host.runtime-interaction/1",
+      "classification": "observational",
+      "fields": ["interactive", "openBrowser"]
+    },
+    {
+      "identity": "fgpm.host.persistence-input/1",
+      "classification": "deterministic",
+      "fields": [
+        "loadSaveId", "distributionIdentity", "runtimePlanIdentity", "runtimePlan"
+      ]
+    },
+    {
+      "identity": "fgpm.host.persistence-records/1",
+      "classification": "observational",
+      "fields": ["sessionRecordPath"]
+    },
+    {
+      "identity": "fgpm.host.persistence-conformance/1",
+      "classification": "conformance",
+      "fields": ["interruptSaveBeforePublication"]
+    },
+    {
+      "identity": "fgpm.host.scheduler-records/1",
+      "classification": "observational",
+      "fields": ["tickRecordPath", "tickTracePath"]
+    },
+    {
+      "identity": "fgpm.host.scheduler-conformance/1",
+      "classification": "conformance",
+      "fields": ["workerCount", "memberDelays", "timeoutMs"]
+    }
+  ]
+}

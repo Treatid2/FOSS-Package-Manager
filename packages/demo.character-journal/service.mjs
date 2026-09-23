@@ -13,7 +13,7 @@ function freeze(value) {
 }
 
 const character = "world:demo/character-1";
-const stateSchema = "fpm.demo.character-journal-state";
+const stateSchema = "fgpm.demo.character-journal-state";
 const serviceId = "service:demo.character-journal/1";
 
 export function createService() {
@@ -30,20 +30,20 @@ export function createService() {
     async activate(context) {
       instances = context.require("runtime.instances.read");
       if (!instances.exists(character)) {
-        fail("FPM_JOURNAL_TARGET_MISSING", "Character Journal requires its declared world instance.", {
+        fail("FGPM_JOURNAL_TARGET_MISSING", "Character Journal requires its declared world instance.", {
           instanceId: character,
         });
       }
       const owner = freeze({
-        protocol: "fpm.state-owner/1",
+        protocol: "fgpm.state-owner/1",
         semanticSchema: stateSchema,
         schemaVersion: 1,
         required: false,
         governingCapability: "runtime.journal.read",
         provider: serviceId,
-        dependsOn: ["fpm.demo.instance-state"],
+        dependsOn: ["fgpm.demo.instance-state"],
         capture: (checkpoint) => freeze({
-          protocol: "fpm.state-fragment/1",
+          protocol: "fgpm.state-fragment/1",
           semanticSchema: stateSchema,
           schemaVersion: 1,
           checkpoint: structuredClone(checkpoint),
@@ -52,11 +52,11 @@ export function createService() {
         }),
         prepareRestore: () => {},
         restore: (fragment) => {
-          if (fragment?.protocol !== "fpm.state-fragment/1" || fragment.semanticSchema !== stateSchema
+          if (fragment?.protocol !== "fgpm.state-fragment/1" || fragment.semanticSchema !== stateSchema
             || fragment.schemaVersion !== 1 || fragment.payload?.instanceId !== character
             || typeof fragment.payload.note !== "string" || !Number.isInteger(fragment.payload.visits)
             || !instances.exists(character)) {
-            fail("FPM_STATE_FRAGMENT_UNSUPPORTED", "Character Journal cannot restore the supplied state fragment.", {
+            fail("FGPM_STATE_FRAGMENT_UNSUPPORTED", "Character Journal cannot restore the supplied state fragment.", {
               semanticSchema: fragment?.semanticSchema ?? null,
               schemaVersion: fragment?.schemaVersion ?? null,
             });
@@ -68,12 +68,12 @@ export function createService() {
         },
       });
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: {
           "runtime.journal.read": freeze({ current }),
           "runtime.journal.write": freeze({ record: (nextNote, nextVisits) => {
             if (typeof nextNote !== "string" || !Number.isInteger(nextVisits) || nextVisits < 0) {
-              fail("FPM_JOURNAL_COMMAND_INVALID", "A journal command is malformed.", { nextNote, nextVisits });
+              fail("FGPM_JOURNAL_COMMAND_INVALID", "A journal command is malformed.", { nextNote, nextVisits });
             }
             note = nextNote;
             visits = nextVisits;

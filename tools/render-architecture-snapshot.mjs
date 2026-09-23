@@ -32,7 +32,7 @@ function render(value) {
   return lines.join("\n");
 }
 
-if (snapshot.schema !== "fpm.architecture-snapshot/0" || snapshot.status !== "experimental"
+if (snapshot.schema !== "fgpm.architecture-snapshot/0" || snapshot.status !== "experimental"
   || snapshot.compatibilityPromise !== false || !Array.isArray(snapshot.sections)) {
   throw new Error("The architecture snapshot source is malformed or overstates compatibility.");
 }

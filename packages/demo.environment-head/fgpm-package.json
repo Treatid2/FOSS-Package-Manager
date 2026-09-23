@@ -1,0 +1,32 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.environment-head",
+  "version": "0.3.0",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "package": "demo.character",
+      "range": "^0.1.0"
+    }
+  ],
+  "requires": [
+    {
+      "capability": "fgpm.handler.texture",
+      "range": "^1.0.0"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "pkg:demo.environment-head/texture/head",
+      "manifestType": "fgpm.demo.environment-colour/1",
+      "manifest": "head.json"
+    }
+  ],
+  "replacements": [
+    {
+      "target": "pkg:demo.character/appearance/head/base-colour",
+      "with": "pkg:demo.environment-head/texture/head"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://foss-package-manager.example/schema/phase-9/runtime-transition-v1.schema.json",
+  "title": "FGPM Phase 9 transition, attempt, session, and active-reference records", "x-fgpm-license": "Apache-2.0", "x-fgpm-steward": "fgpm.runtime-coordinator/1",
+  "x-fgpm-status": "experimental-no-compatibility-promise", "x-fgpm-classification": "public-cross-process",
+  "x-fgpm-identity-rule": "Immutable checkpoint, attempt, and session identities hash identityInputs; the active reference is an explicitly mutable pointer.",
+  "oneOf": [{ "$ref": "#/$defs/checkpoint" }, { "$ref": "#/$defs/attempt" }, { "$ref": "#/$defs/session" }, { "$ref": "#/$defs/active" }],
+  "$defs": {
+    "root": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "checkpoint": { "type": "object", "additionalProperties": false, "required": ["schema", "version", "identity", "identityInputs", "fromGeneration", "toGeneration", "saveId", "root", "fragments"],
+      "properties": { "schema": { "const": "fgpm.generation-transition-checkpoint/1" }, "version": { "const": 1 }, "identity": { "$ref": "#/$defs/root" }, "identityInputs": { "type": "object" }, "fromGeneration": { "$ref": "#/$defs/root" },
+        "toGeneration": { "$ref": "#/$defs/root" }, "saveId": { "type": "string" }, "root": {}, "fragments": { "type": "array" } } },
+    "attempt": { "type": "object", "additionalProperties": false, "required": ["schema", "version", "identity", "identityInputs", "fromGeneration", "toGeneration", "checkpoint", "priorSession", "status", "cause"],
+      "properties": { "schema": { "const": "fgpm.generation-transition-attempt/1" }, "version": { "const": 1 }, "identity": { "$ref": "#/$defs/root" }, "identityInputs": { "type": "object" }, "fromGeneration": {}, "toGeneration": { "$ref": "#/$defs/root" },
+        "checkpoint": {}, "priorSession": {}, "status": { "const": "failed" }, "cause": { "type": "string" } } },
+    "session": { "type": "object", "additionalProperties": false, "required": ["schema", "version", "identity", "identityInputs", "generation", "runtimePlanRoot", "checkpoint", "preflight", "committed", "priorSession", "failedAttempt", "reason"],
+      "properties": { "schema": { "const": "fgpm.runtime-generation-session/1" }, "version": { "const": 1 }, "identity": { "$ref": "#/$defs/root" }, "identityInputs": { "type": "object" }, "generation": { "$ref": "#/$defs/root" },
+        "runtimePlanRoot": { "$ref": "#/$defs/root" }, "checkpoint": {}, "preflight": { "type": "object" }, "committed": { "type": "object" }, "priorSession": {}, "failedAttempt": {}, "reason": { "type": "string" } } },
+    "active": { "type": "object", "additionalProperties": false, "required": ["schema", "version", "generation", "session", "movedAt"],
+      "properties": { "schema": { "const": "fgpm.active-generation-reference/1" }, "version": { "const": 1 }, "generation": { "$ref": "#/$defs/root" }, "session": { "$ref": "#/$defs/root" }, "movedAt": { "type": "string", "format": "date-time" } } }
+  }
+}

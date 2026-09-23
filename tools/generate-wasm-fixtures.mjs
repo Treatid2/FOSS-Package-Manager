@@ -49,7 +49,7 @@ function functionType(parameters, results) {
 }
 
 function functionImport(name, typeIndex) {
-  return [...string("fpm"), ...string(name), 0x00, ...unsigned(typeIndex)];
+  return [...string("fgpm"), ...string(name), 0x00, ...unsigned(typeIndex)];
 }
 
 function call(index) {

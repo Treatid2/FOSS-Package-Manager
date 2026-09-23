@@ -1,0 +1,18 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "6d7092e8-6f8a-4e25-bb6e-a0bf6588e5b4",
+  "name": "demo.texture-vocabulary",
+  "version": "0.3.0",
+  "license": "Apache-2.0",
+  "semanticRelations": [
+    {
+      "id": "relation:demo.texture/base-colour-solid-to-runtime/1",
+      "version": "1.0.0",
+      "source": "texture.solid-colour/1",
+      "target": "texture.runtime.rgba8-srgb/1",
+      "roles": [
+        "base-colour"
+      ]
+    }
+  ]
+}

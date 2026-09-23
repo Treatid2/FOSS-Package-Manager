@@ -1,0 +1,14 @@
+{
+  "format": "fgpm.package/1",
+  "namespace": "258690c4-84c4-4eb4-af4f-8584ae81fc2b",
+  "name": "bad.handler-failure",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "contributions": [
+    {
+      "id": "pkg:bad.handler-failure/content/fail",
+      "manifestType": "fgpm.demo.fail/1",
+      "manifest": "fail.json"
+    }
+  ]
+}

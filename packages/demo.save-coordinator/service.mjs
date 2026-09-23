@@ -51,7 +51,7 @@ function ownerOrder(owners) {
   function visit(owner) {
     if (state.get(owner.member) === "done") return;
     if (state.get(owner.member) === "visiting") {
-      fail("FPM_STATE_OWNER_CYCLE", "Persistent-state owner dependencies contain a cycle.", {
+      fail("FGPM_STATE_OWNER_CYCLE", "Persistent-state owner dependencies contain a cycle.", {
         member: owner.member,
       });
     }
@@ -71,12 +71,12 @@ function ownerOrder(owners) {
 
 function validateOwner(member) {
   const owner = member?.value;
-  if (owner?.protocol !== "fpm.state-owner/1" || typeof owner.semanticSchema !== "string"
+  if (owner?.protocol !== "fgpm.state-owner/1" || typeof owner.semanticSchema !== "string"
     || !Number.isInteger(owner.schemaVersion) || typeof owner.required !== "boolean"
     || typeof owner.governingCapability !== "string" || typeof owner.provider !== "string"
     || typeof owner.capture !== "function"
     || typeof owner.restore !== "function") {
-    fail("FPM_STATE_OWNER_INVALID", "A runtime state owner returned an invalid persistence contract.", {
+    fail("FGPM_STATE_OWNER_INVALID", "A runtime state owner returned an invalid persistence contract.", {
       member: member?.id ?? null,
       owner: owner?.semanticSchema ?? null,
     });
@@ -85,7 +85,7 @@ function validateOwner(member) {
   if (metadata?.semanticSchema !== owner.semanticSchema || metadata.schemaVersion !== owner.schemaVersion
     || metadata.required !== owner.required || metadata.governingCapability !== owner.governingCapability
     || member.providerInstance !== owner.provider) {
-    fail("FPM_STATE_OWNER_METADATA_MISMATCH",
+    fail("FGPM_STATE_OWNER_METADATA_MISMATCH",
       "A state owner runtime value does not match its attributed collection declaration.", {
         member: member.id,
         metadata,
@@ -121,21 +121,23 @@ export function createService() {
   let owners = [];
   let migration = null;
   let session;
-  let options;
+  let persistenceInput;
+  let persistenceRecords;
+  let persistenceConformance;
 
   async function save(saveId) {
     if (typeof saveId !== "string" || saveId.length === 0) {
-      fail("FPM_SAVE_ID_INVALID", "A save requires a non-empty identity.", { saveId });
+      fail("FGPM_SAVE_ID_INVALID", "A save requires a non-empty identity.", { saveId });
     }
     const checkpoint = clock.now();
     const files = {};
     const fragments = [];
     for (const [index, owner] of ownerOrder(owners).entries()) {
       const fragment = owner.capture(checkpoint);
-      if (fragment?.protocol !== "fpm.state-fragment/1" || fragment.semanticSchema !== owner.semanticSchema
+      if (fragment?.protocol !== "fgpm.state-fragment/1" || fragment.semanticSchema !== owner.semanticSchema
         || fragment.schemaVersion !== owner.schemaVersion
         || JSON.stringify(fragment.checkpoint) !== JSON.stringify(checkpoint)) {
-        fail("FPM_STATE_CAPTURE_INCOHERENT", "A state owner returned an incompatible checkpoint fragment.", {
+        fail("FGPM_STATE_CAPTURE_INCOHERENT", "A state owner returned an incompatible checkpoint fragment.", {
           owner: owner.semanticSchema,
           expectedCheckpoint: checkpoint,
           actualCheckpoint: fragment?.checkpoint ?? null,
@@ -163,11 +165,11 @@ export function createService() {
       });
     }
     const manifest = {
-      schema: "fpm.world-save/1",
+      schema: "fgpm.world-save/1",
       save: { id: saveId, version: 1 },
       checkpoint,
-      distributionIdentity: options.distributionIdentity,
-      runtimePlanIdentity: options.runtimePlanIdentity,
+      distributionIdentity: persistenceInput.distributionIdentity,
+      runtimePlanIdentity: persistenceInput.runtimePlanIdentity,
       fragments,
       migrationHistory: [],
     };
@@ -175,10 +177,10 @@ export function createService() {
     const reference = await store.publishTreeReference("world-saves", saveId, files, {
       schema: manifest.schema,
       checkpoint,
-      distributionIdentity: options.distributionIdentity,
-      runtimePlanIdentity: options.runtimePlanIdentity,
-    }, { interruptBeforeReference: options.interruptSaveBeforePublication });
-    return freeze({ schema: "fpm.world-save-commit/1", saveId, root: reference.root, manifest });
+      distributionIdentity: persistenceInput.distributionIdentity,
+      runtimePlanIdentity: persistenceInput.runtimePlanIdentity,
+    }, { interruptBeforeReference: persistenceConformance.interruptSaveBeforePublication });
+    return freeze({ schema: "fgpm.world-save-commit/1", saveId, root: reference.root, manifest });
   }
 
   async function restore(saveId) {
@@ -187,11 +189,11 @@ export function createService() {
     try {
       manifest = JSON.parse(loaded.files["save-manifest.json"]);
     } catch (error) {
-      fail("FPM_SAVE_MANIFEST_INVALID", "The save manifest is missing or malformed.", { saveId, cause: error.message });
+      fail("FGPM_SAVE_MANIFEST_INVALID", "The save manifest is missing or malformed.", { saveId, cause: error.message });
     }
-    if (manifest.schema !== "fpm.world-save/1" || manifest.save?.id !== saveId
+    if (manifest.schema !== "fgpm.world-save/1" || manifest.save?.id !== saveId
       || !Array.isArray(manifest.fragments)) {
-      fail("FPM_SAVE_MANIFEST_INVALID", "The selected save manifest has an unsupported shape.", { saveId });
+      fail("FGPM_SAVE_MANIFEST_INVALID", "The selected save manifest has an unsupported shape.", { saveId });
     }
     const byMember = new Map(owners.map((owner) => [owner.member, owner]));
     const bySchema = new Map(owners.map((owner) => [owner.semanticSchema, owner]));
@@ -202,7 +204,7 @@ export function createService() {
       const owner = entry.member ? byMember.get(entry.member) : bySchema.get(entry.semanticSchema);
       if (!owner) {
         if (entry.required) {
-          fail("FPM_STATE_OWNER_REQUIRED_MISSING", "A required saved state owner is unavailable.", {
+          fail("FGPM_STATE_OWNER_REQUIRED_MISSING", "A required saved state owner is unavailable.", {
             requiredStateSchema: entry.semanticSchema,
             requiredCollectionMember: entry.member ?? null,
             schemaVersion: entry.schemaVersion,
@@ -220,19 +222,19 @@ export function createService() {
       }
       const content = loaded.files[entry.path];
       if (typeof content !== "string" || hash(content) !== entry.root) {
-        fail("FPM_STATE_FRAGMENT_INVALID", "A saved state fragment does not match its declared root.", {
+        fail("FGPM_STATE_FRAGMENT_INVALID", "A saved state fragment does not match its declared root.", {
           semanticSchema: entry.semanticSchema,
           root: entry.root,
         });
       }
       let fragment = JSON.parse(content);
       if (entry.schemaVersion !== owner.schemaVersion) {
-        if (!migration || migration.protocol !== "fpm.state-migration/1"
+        if (!migration || migration.protocol !== "fgpm.state-migration/1"
           || migration.from.semanticSchema !== entry.semanticSchema
           || migration.from.schemaVersion !== entry.schemaVersion
           || migration.to.semanticSchema !== owner.semanticSchema
           || migration.to.schemaVersion !== owner.schemaVersion) {
-          fail("FPM_STATE_MIGRATION_MISSING", "No selected one-step migration can adapt a required state fragment.", {
+          fail("FGPM_STATE_MIGRATION_MISSING", "No selected one-step migration can adapt a required state fragment.", {
             semanticSchema: entry.semanticSchema,
             savedVersion: entry.schemaVersion,
             requiredVersion: owner.schemaVersion,
@@ -240,10 +242,10 @@ export function createService() {
           });
         }
         const migrated = migration.migrate(freeze(structuredClone(fragment)));
-        if (migrated?.protocol !== "fpm.state-fragment/1"
+        if (migrated?.protocol !== "fgpm.state-fragment/1"
           || migrated.semanticSchema !== owner.semanticSchema
           || migrated.schemaVersion !== owner.schemaVersion) {
-          fail("FPM_STATE_MIGRATION_INVALID", "A selected migration returned an incompatible fragment.", {
+          fail("FGPM_STATE_MIGRATION_INVALID", "A selected migration returned an incompatible fragment.", {
             migration: migration.provider,
             expectedSchema: owner.semanticSchema,
             expectedVersion: owner.schemaVersion,
@@ -256,14 +258,14 @@ export function createService() {
         const migrationReference = await store.publishTreeReference("state-migrations", migrationIdentity, {
           "fragment.json": migratedContent,
         }, {
-          schema: "fpm.state-migration-record/1",
+          schema: "fgpm.state-migration-record/1",
           package: migration.package,
           implementation: migration.provider,
-          implementationHash: options.runtimePlan.services.find((service) => service.id === migration.provider)
+          implementationHash: persistenceInput.runtimePlan.services.find((service) => service.id === migration.provider)
             ?.packageContentHash ?? null,
           input: entry.root,
           output: hash(migratedContent),
-          policy: options.runtimePlan.selections.find((selection) => selection.provider === migration.provider)
+          policy: persistenceInput.runtimePlan.selections.find((selection) => selection.provider === migration.provider)
             ?.reason ?? "sole-compatible-provider",
         });
         fragment = migrated;
@@ -273,12 +275,12 @@ export function createService() {
           toVersion: owner.schemaVersion,
           package: migration.package,
           implementation: migration.provider,
-          implementationHash: options.runtimePlan.services.find((service) => service.id === migration.provider)
+          implementationHash: persistenceInput.runtimePlan.services.find((service) => service.id === migration.provider)
             ?.packageContentHash ?? null,
           input: entry.root,
           output: hash(migratedContent),
           artifactRoot: migrationReference.root.hash,
-          policy: options.runtimePlan.selections.find((selection) => selection.provider === migration.provider)
+          policy: persistenceInput.runtimePlan.selections.find((selection) => selection.provider === migration.provider)
             ?.reason ?? "sole-compatible-provider",
         });
       }
@@ -286,7 +288,7 @@ export function createService() {
     }
     const missingCurrentRequired = owners.filter((owner) => owner.required && !restoreFragments.has(owner.member));
     if (missingCurrentRequired.length > 0) {
-      fail("FPM_STATE_FRAGMENT_REQUIRED_MISSING", "The save omits state required by the current runtime graph.", {
+      fail("FGPM_STATE_FRAGMENT_REQUIRED_MISSING", "The save omits state required by the current runtime graph.", {
         members: missingCurrentRequired.map((owner) => owner.member).sort(),
         schemas: missingCurrentRequired.map((owner) => owner.semanticSchema).sort(),
       });
@@ -296,22 +298,22 @@ export function createService() {
     const restored = [];
     for (const owner of ordered) restored.push(await owner.restore(restoreFragments.get(owner.member)));
     return {
-      schema: "fpm.runtime-session/1",
+      schema: "fgpm.runtime-session/1",
       state: "restored-pending-commit",
       saveId,
       saveRoot: loaded.record.root.hash,
       savedCheckpoint: manifest.checkpoint,
       distribution: {
         saved: manifest.distributionIdentity,
-        current: options.distributionIdentity,
-        compatible: manifest.distributionIdentity === options.distributionIdentity,
+        current: persistenceInput.distributionIdentity,
+        compatible: manifest.distributionIdentity === persistenceInput.distributionIdentity,
       },
       runtimePlan: {
         saved: manifest.runtimePlanIdentity,
-        current: options.runtimePlanIdentity,
-        compatible: manifest.runtimePlanIdentity === options.runtimePlanIdentity,
+        current: persistenceInput.runtimePlanIdentity,
+        compatible: manifest.runtimePlanIdentity === persistenceInput.runtimePlanIdentity,
       },
-      stateOwnerCollection: options.runtimePlan.collections.find((entry) => entry.capability === "runtime.state.owner"),
+      stateOwnerCollection: persistenceInput.runtimePlan.collections.find((entry) => entry.capability === "runtime.state.owner"),
       restored,
       retainedOpaque,
       migrations,
@@ -322,30 +324,32 @@ export function createService() {
     async activate(context) {
       store = context.artifactStore;
       clock = context.require("runtime.clock.tick");
-      options = context.options;
+      persistenceInput = context.grant("fgpm.host.persistence-input/1");
+      persistenceRecords = context.grant("fgpm.host.persistence-records/1");
+      persistenceConformance = context.grant("fgpm.host.persistence-conformance/1");
       ownerCollection = context.require("runtime.state.owner");
       owners = ownerCollection.members.map(validateOwner);
       migration = context.require("runtime.transforms.migration");
       const duplicate = owners.map((owner) => owner.semanticSchema)
         .find((schema, index, entries) => entries.indexOf(schema) !== index);
-      if (duplicate) fail("FPM_STATE_OWNER_AMBIGUOUS", "Two active services own the same persistent-state schema.", {
+      if (duplicate) fail("FGPM_STATE_OWNER_AMBIGUOUS", "Two active services own the same persistent-state schema.", {
         semanticSchema: duplicate,
       });
-      await rm(options.sessionRecordPath, { force: true });
-      session = options.loadSaveId ? await restore(options.loadSaveId) : {
-        schema: "fpm.runtime-session/1",
+      await rm(persistenceRecords.sessionRecordPath, { force: true });
+      session = persistenceInput.loadSaveId ? await restore(persistenceInput.loadSaveId) : {
+        schema: "fgpm.runtime-session/1",
         state: "fresh-pending-commit",
         saveId: null,
-        distribution: { current: options.distributionIdentity },
-        runtimePlan: { current: options.runtimePlanIdentity },
-        stateOwnerCollection: options.runtimePlan.collections.find((entry) => entry.capability === "runtime.state.owner"),
+        distribution: { current: persistenceInput.distributionIdentity },
+        runtimePlan: { current: persistenceInput.runtimePlanIdentity },
+        stateOwnerCollection: persistenceInput.runtimePlan.collections.find((entry) => entry.capability === "runtime.state.owner"),
         restored: [],
         retainedOpaque: [],
         migrations: [],
       };
       const ready = freeze({ report: () => freeze(structuredClone(session)) });
       return {
-        protocol: "fpm.runtime-service-response/1",
+        protocol: "fgpm.runtime-service-response/1",
         capabilities: {
           "runtime.persistence.world": freeze({ save, report: ready.report }),
           "runtime.restore.ready": ready,
@@ -355,7 +359,7 @@ export function createService() {
     async commit() {
       session.state = session.saveId ? "restored" : "fresh";
       session.committed = true;
-      await writeAtomic(options.sessionRecordPath, session);
+      await writeAtomic(persistenceRecords.sessionRecordPath, session);
     },
     async deactivate() {
       owners = [];
@@ -363,6 +367,9 @@ export function createService() {
       migration = null;
       store = null;
       clock = null;
+      persistenceInput = null;
+      persistenceRecords = null;
+      persistenceConformance = null;
     },
   };
 }

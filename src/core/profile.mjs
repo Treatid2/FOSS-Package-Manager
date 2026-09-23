@@ -3,6 +3,7 @@
 import path from "node:path";
 import { invariant } from "./errors.mjs";
 import { readJson } from "./io.mjs";
+import { PUBLIC_CONTRACT, validatePublicProfileDocument } from "./public-contracts.mjs";
 
 const PROFILE_2_KEYS = new Set(["schema", "name", "packageRoots", "distribution", "target", "policy", "user"]);
 const DISTRIBUTION_KEYS = new Set(["roots", "entryPoint", "artifact", "activation"]);
@@ -13,7 +14,7 @@ const USER_KEYS = new Set(["roots", "replacements", "activation"]);
 
 function validateKeys(value, allowed, layer, profilePath) {
   for (const key of Object.keys(value ?? {})) {
-    invariant(allowed.has(key), "FPM_PROFILE_AUTHORITY_UNRESOLVED",
+    invariant(allowed.has(key), "FGPM_PROFILE_AUTHORITY_UNRESOLVED",
       "A profile statement has no declared authority or merge rule in its layer.", {
         path: profilePath,
         layer,
@@ -30,20 +31,23 @@ function authorityRecord(field, value, sourceLayer, statementKind, mergeRule) {
     sourceLayer,
     statementKind,
     mergeRule,
-    ruleOwner: "spec:fpm.profile/2",
+    ruleOwner: "spec:fgpm.profile/2",
   };
 }
 
-export async function loadProfile(profilePath) {
+export async function loadProfile(profilePath, options = {}) {
   const absolutePath = path.resolve(profilePath);
-  const profile = await readJson(absolutePath, "FPM_PROFILE_MALFORMED");
-  invariant(["fpm.profile/1", "fpm.profile/2"].includes(profile?.schema), "FPM_PROFILE_SCHEMA_UNSUPPORTED",
+  const profile = await readJson(absolutePath, "FGPM_PROFILE_MALFORMED");
+  invariant(["fgpm.profile/1", "fgpm.profile/2", PUBLIC_CONTRACT.profileSchema].includes(profile?.schema),
+    "FGPM_PROFILE_SCHEMA_UNSUPPORTED",
     "Unsupported or missing profile schema.", { path: absolutePath, schema: profile?.schema });
+  const corrected = profile.schema === PUBLIC_CONTRACT.profileSchema;
+  if (corrected) validatePublicProfileDocument(profile, absolutePath);
   invariant(typeof profile.name === "string" && /^[a-z0-9][a-z0-9-]*$/.test(profile.name),
-    "FPM_PROFILE_INVALID", "Profile name is invalid.", { path: absolutePath, name: profile.name });
+    "FGPM_PROFILE_INVALID", "Profile name is invalid.", { path: absolutePath, name: profile.name });
   invariant(Array.isArray(profile.packageRoots) && profile.packageRoots.length > 0,
-    "FPM_PROFILE_INVALID", "A profile must declare at least one package root.", { path: absolutePath });
-  const layered = profile.schema === "fpm.profile/2";
+    "FGPM_PROFILE_INVALID", "A profile must declare at least one package root.", { path: absolutePath });
+  const layered = ["fgpm.profile/2", PUBLIC_CONTRACT.profileSchema].includes(profile.schema);
   if (layered) validateKeys(profile, PROFILE_2_KEYS, "document", absolutePath);
   const distribution = layered ? profile.distribution : {
     roots: profile.roots,
@@ -66,35 +70,35 @@ export async function loadProfile(profilePath) {
   }
 
   invariant(distribution && Array.isArray(distribution.roots) && distribution.roots.length > 0,
-    "FPM_PROFILE_INVALID", "A profile distribution must declare at least one root package.", { path: absolutePath });
+    "FGPM_PROFILE_INVALID", "A profile distribution must declare at least one root package.", { path: absolutePath });
   invariant(typeof distribution.artifact?.type === "string" && typeof distribution.entryPoint === "string",
-    "FPM_PROFILE_INVALID", "A profile distribution must declare an artifact type and entry point.", {
+    "FGPM_PROFILE_INVALID", "A profile distribution must declare an artifact type and entry point.", {
       path: absolutePath,
     });
   invariant(target === undefined || (target && typeof target === "object" && !Array.isArray(target)),
-    "FPM_PROFILE_INVALID", "A profile target layer must be an object.", { path: absolutePath });
+    "FGPM_PROFILE_INVALID", "A profile target layer must be an object.", { path: absolutePath });
   invariant(policy === undefined || (policy && typeof policy === "object" && !Array.isArray(policy)),
-    "FPM_PROFILE_INVALID", "A profile policy layer must be an object.", { path: absolutePath });
+    "FGPM_PROFILE_INVALID", "A profile policy layer must be an object.", { path: absolutePath });
   invariant(user === undefined || (user && typeof user === "object" && !Array.isArray(user)),
-    "FPM_PROFILE_INVALID", "A profile user layer must be an object.", { path: absolutePath });
+    "FGPM_PROFILE_INVALID", "A profile user layer must be an object.", { path: absolutePath });
 
   const userRoots = user?.roots ?? [];
-  invariant(Array.isArray(userRoots), "FPM_PROFILE_INVALID", "A profile user roots field must be an array.", {
+  invariant(Array.isArray(userRoots), "FGPM_PROFILE_INVALID", "A profile user roots field must be an array.", {
     path: absolutePath,
   });
   invariant(policy?.environmentKey === undefined || (Array.isArray(policy.environmentKey?.widen)
-    && policy.environmentKey.widen.every((entry) => typeof entry === "string")), "FPM_PROFILE_INVALID",
+    && policy.environmentKey.widen.every((entry) => typeof entry === "string")), "FGPM_PROFILE_INVALID",
   "Policy environment-key widening must be a string array.", { path: absolutePath });
   invariant(policy?.validation === undefined || (typeof policy.validation?.id === "string"
     && Array.isArray(policy.validation.requiredValidators ?? [])
-    && Array.isArray(policy.validation.waivers ?? [])), "FPM_PROFILE_INVALID",
+    && Array.isArray(policy.validation.waivers ?? [])), "FGPM_PROFILE_INVALID",
   "Profile validation policy is malformed.", { path: absolutePath });
   invariant(policy?.collectionPolicy === undefined || (policy.collectionPolicy
     && typeof policy.collectionPolicy === "object" && !Array.isArray(policy.collectionPolicy)
     && Object.values(policy.collectionPolicy).every((entry) => typeof entry?.id === "string" && entry.id.length > 0
       && Array.isArray(entry.exclude) && entry.exclude.every((member) => typeof member === "string" && member.length > 0)
       && new Set(entry.exclude).size === entry.exclude.length)),
-  "FPM_PROFILE_INVALID", "Profile collection policy is malformed.", { path: absolutePath });
+  "FGPM_PROFILE_INVALID", "Profile collection policy is malformed.", { path: absolutePath });
 
   const effectiveRoots = [...new Set([...distribution.roots, ...userRoots])];
   const effectiveActivation = user?.activation ?? distribution.activation;
@@ -134,18 +138,21 @@ export async function loadProfile(profilePath) {
     entryPoint: distribution.entryPoint,
     artifact: distribution.artifact,
     activation: effectiveActivation,
-    resolvedPackageRoots: profile.packageRoots.map((root) => path.resolve(directory, root)),
+    resolvedPackageRoots: [...new Set([
+      ...profile.packageRoots.map((root) => path.resolve(directory, root)),
+      ...(options.packageRoots ?? []).map((root) => path.resolve(root)),
+    ])],
     providers: policy?.providers ?? {},
     handlerSelections: policy?.handlerSelections ?? {},
     adapterSelections: policy?.adapterSelections ?? {},
     collectionPolicy: policy?.collectionPolicy ?? {},
     validationPolicy: policy?.validation ?? {
-      id: "policy:fpm.validation/no-unwaived-failures/1",
+      id: "policy:fgpm.validation/no-unwaived-failures/1",
       requiredValidators: [],
       waivers: [],
     },
     environmentKeyWidening: policy?.environmentKey?.widen ?? [],
-    permissions: policy?.permissions ?? {},
+    permissions: corrected ? {} : (policy?.permissions ?? {}),
     replacements: user?.replacements ?? {},
   };
 }

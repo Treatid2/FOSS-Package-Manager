@@ -1,5 +1,5 @@
 {
-  "schema": "fpm.demo.transaction-fail/1",
+  "schema": "fgpm.demo.transaction-fail/1",
   "export": {
     "id": "pkg:bad.transaction-failure/texture/head",
     "semanticType": "texture.runtime.rgba8-srgb/1",

@@ -1,0 +1,205 @@
+{
+  "claims": {
+    "completionOrderObservational": true,
+    "deterministicRecordInvariant": true,
+    "svgInvariant": true,
+    "transformInvariant": true
+  },
+  "composition": [
+    {
+      "channel": "runtime.transforms.commands",
+      "commitOrder": [
+        "task:demo.motion-v2/set-x/1",
+        "task:demo.external-nudge-v2/add-x/1",
+        "task:demo.motion-offset-v2/add-x/1",
+        "task:demo.wind-offset-v2/add-x/1",
+        "task:example.external-pulse-v2/add-y/1"
+      ],
+      "rule": "fpm.transform.staged-axis-compose/1",
+      "schema": "fpm.command-channel-composition/1",
+      "stages": [
+        {
+          "contributors": [
+            "task:demo.motion-v2/set-x/1"
+          ],
+          "id": "set-axis",
+          "law": "exclusive-per-target"
+        },
+        {
+          "contributors": [
+            "task:demo.external-nudge-v2/add-x/1",
+            "task:demo.motion-offset-v2/add-x/1",
+            "task:demo.wind-offset-v2/add-x/1",
+            "task:example.external-pulse-v2/add-y/1"
+          ],
+          "id": "add-axis",
+          "law": "deterministic-sum-per-target"
+        }
+      ],
+      "steward": "fpm.transform-task-contracts@1.0.0",
+      "vocabulary": "fpm.transform-task-vocabulary/1"
+    }
+  ],
+  "profile": "D:\\CodexScratch\\allocations\\20260821T154506461Z-foss-package-manager-81cff7ef\\work\\external-clean-df06593\\profile.json",
+  "runs": [
+    {
+      "configuration": {
+        "id": "single-worker",
+        "memberDelays": {},
+        "workerCount": 1
+      },
+      "deterministicIdentity": "sha256:4aa8cf862b641db2dcb5a07ab31b3864ccbd6337999c041830e6fd1ed9fff289",
+      "observational": {
+        "completionOrder": [
+          "task:demo.external-nudge-v2/add-x/1",
+          "task:demo.motion-offset-v2/add-x/1",
+          "task:demo.motion-v2/set-x/1",
+          "task:demo.wind-offset-v2/add-x/1",
+          "task:example.external-pulse-v2/add-y/1"
+        ],
+        "executions": [
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.external-nudge-v2/add-x/1",
+            "threadId": 1,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.motion-offset-v2/add-x/1",
+            "threadId": 2,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.motion-v2/set-x/1",
+            "threadId": 3,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.wind-offset-v2/add-x/1",
+            "threadId": 4,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:example.external-pulse-v2/add-y/1",
+            "threadId": 5,
+            "threadKind": "worker"
+          }
+        ],
+        "workerCount": 1
+      },
+      "transformRoot": "sha256:64e11600a75de5dcbca78ebdcd8a57273d363ff9e8e54664d1c6e886869e35ee"
+    },
+    {
+      "configuration": {
+        "id": "nudge-delayed",
+        "memberDelays": {
+          "task:demo.external-nudge-v2/add-x/1": 40
+        },
+        "workerCount": 4
+      },
+      "deterministicIdentity": "sha256:4aa8cf862b641db2dcb5a07ab31b3864ccbd6337999c041830e6fd1ed9fff289",
+      "observational": {
+        "completionOrder": [
+          "task:demo.motion-offset-v2/add-x/1",
+          "task:demo.motion-v2/set-x/1",
+          "task:demo.wind-offset-v2/add-x/1",
+          "task:example.external-pulse-v2/add-y/1",
+          "task:demo.external-nudge-v2/add-x/1"
+        ],
+        "executions": [
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.motion-offset-v2/add-x/1",
+            "threadId": 7,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.motion-v2/set-x/1",
+            "threadId": 8,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.wind-offset-v2/add-x/1",
+            "threadId": 9,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:example.external-pulse-v2/add-y/1",
+            "threadId": 10,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.external-nudge-v2/add-x/1",
+            "threadId": 6,
+            "threadKind": "worker"
+          }
+        ],
+        "workerCount": 4
+      },
+      "transformRoot": "sha256:64e11600a75de5dcbca78ebdcd8a57273d363ff9e8e54664d1c6e886869e35ee"
+    },
+    {
+      "configuration": {
+        "id": "wind-delayed",
+        "memberDelays": {
+          "task:demo.wind-offset-v2/add-x/1": 40
+        },
+        "workerCount": 2
+      },
+      "deterministicIdentity": "sha256:4aa8cf862b641db2dcb5a07ab31b3864ccbd6337999c041830e6fd1ed9fff289",
+      "observational": {
+        "completionOrder": [
+          "task:demo.motion-offset-v2/add-x/1",
+          "task:demo.external-nudge-v2/add-x/1",
+          "task:demo.motion-v2/set-x/1",
+          "task:example.external-pulse-v2/add-y/1",
+          "task:demo.wind-offset-v2/add-x/1"
+        ],
+        "executions": [
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.motion-offset-v2/add-x/1",
+            "threadId": 12,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.external-nudge-v2/add-x/1",
+            "threadId": 11,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.motion-v2/set-x/1",
+            "threadId": 13,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:example.external-pulse-v2/add-y/1",
+            "threadId": 15,
+            "threadKind": "worker"
+          },
+          {
+            "affinity": "any-worker",
+            "task": "task:demo.wind-offset-v2/add-x/1",
+            "threadId": 14,
+            "threadKind": "worker"
+          }
+        ],
+        "workerCount": 2
+      },
+      "transformRoot": "sha256:64e11600a75de5dcbca78ebdcd8a57273d363ff9e8e54664d1c6e886869e35ee"
+    }
+  ],
+  "schema": "fpm.runtime-task-conformance-report/1",
+  "status": "pass"
+}

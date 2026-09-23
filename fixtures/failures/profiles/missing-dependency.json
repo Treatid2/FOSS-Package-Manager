@@ -1,8 +1,8 @@
 {
-  "schema": "fpm.profile/1",
+  "schema": "fgpm.profile/1",
   "name": "failure-missing-dependency",
   "packageRoots": ["../../../packages", "../packages"],
   "roots": ["bad.missing-dependency"],
   "entryPoint": "pkg:bad.missing-dependency/none",
-  "artifact": { "type": "fpm.render-bundle/1" }
+  "artifact": { "type": "fgpm.render-bundle/1" }
 }
